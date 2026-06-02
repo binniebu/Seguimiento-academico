@@ -1,0 +1,130 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f7fb;
+}
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+}
+
+.info-panel {
+    width: 50%;
+    background: linear-gradient(135deg, #003b8e, #0057d8);
+    color: white;
+    padding: 90px 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.info-panel::after {
+    content: "";
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    background: #ffc400;
+    border-radius: 50%;
+    bottom: -180px;
+    left: -120px;
+}
+
+.info-panel h1 {
+    font-size: 55px;
+    font-weight: bold;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+.info-panel h1 span {
+    color: #ffc400;
+}
+
+.info-panel p {
+    font-size: 20px;
+    max-width: 430px;
+    margin-top: 20px;
+    z-index: 1;
+}
+
+.form-panel {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
+}
+
+.card-login {
+    width: 430px;
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+}
+
+.card-login h2 {
+    color: #003b8e;
+    font-weight: bold;
+    text-align: center;
+}
+
+.card-login label {
+    font-weight: bold;
+    color: #003b8e;
+}
+
+.form-control,
+.form-select {
+    height: 48px;
+    border-radius: 10px;
+}
+
+.btn-primary {
+    background: #003b8e;
+    border: none;
+    height: 48px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    background: #002c6b;
+}
+
+.card-login a {
+    color: #003b8e;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.card-login a:hover {
+    color: #ffc400;
+}
+
+@media (max-width: 900px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .info-panel,
+    .form-panel {
+        width: 100%;
+    }
+
+    .info-panel {
+        padding: 50px 30px;
+        text-align: center;
+    }
+
+    .info-panel h1 {
+        font-size: 38px;
+    }
+}

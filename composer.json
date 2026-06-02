@@ -1,0 +1,16 @@
+{
+    "name": "jasielhp/nweb",
+    "description": "Sistema web para seguimiento academico desarrollado en PHP Y Mysql",
+    "autoload": {
+        "psr-4": {
+            "Jasielhp\\Nweb\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "JRAMOS11",
+            "email": "davidjasiel11@icloud.com"
+        }
+    ],
+    "require": {}
+}
