@@ -11,54 +11,54 @@ switch ($page) {
 
     // Autenticación
     case "login":
-        if ($_SERVER["REQUEST_METHOD"] === "POST") {
-            require_once __DIR__ . "/src/dao/UsuarioDao.php";
+    if ($_SERVER["REQUEST_METHOD"] === "POST") {
+        require_once __DIR__ . "/src/dao/UsuarioDao.php";
 
-            $correo = $_POST["correo"];
-            $password = $_POST["password"];
+        $correo = $_POST["correo"];
+        $password = $_POST["password"];
 
-            $usuario = \Dao\UsuarioDao::obtenerUsuarioPorCorreo($correo);
+        $usuario = \Dao\UsuarioDao::obtenerUsuarioPorCorreo($correo);
 
-            if ($usuario && password_verify($password, $usuario["password"])) {
-                $_SESSION["usuario"] = $usuario["nombre"];
-                $_SESSION["correo"] = $usuario["correo"];
-                $_SESSION["rol"] = $usuario["nombre_rol"];
+        if ($usuario && password_verify($password, $usuario["password"])) {
+            $_SESSION["usuario"] = $usuario["nombre"];
+            $_SESSION["correo"] = $usuario["correo"];
+            $_SESSION["rol"] = $usuario["nombre_rol"];
 
-                header("Location: index.php?page=dashboard");
-                exit();
-            } else {
-                echo "<script>alert('Correo o contraseña incorrectos'); window.location='index.php?page=login';</script>";
-                exit();
-            }
+            header("Location: index.php?page=dashboard");
+            exit();
+        } else {
+            echo "<script>alert('Correo o contraseña incorrectos'); window.location='index.php?page=login';</script>";
+            exit();
         }
+    }
 
-        require_once __DIR__ . "/src/views/templates/auth/login.view.tpl";
-        break;
+    require_once __DIR__ . "/src/views/templates/auth/login.view.tpl";
+    break;
 
     case "register":
-        if ($_SERVER["REQUEST_METHOD"] === "POST") {
-            require_once __DIR__ . "/src/dao/UsuarioDao.php";
+    if ($_SERVER["REQUEST_METHOD"] === "POST") {
+        require_once __DIR__ . "/src/dao/UsuarioDao.php";
 
-            $nombre = $_POST["nombre"];
-            $correo = $_POST["correo"];
-            $password = $_POST["password"];
-            $rol = $_POST["rol"];
+        $nombre = $_POST["nombre"];
+        $correo = $_POST["correo"];
+        $password = $_POST["password"];
+        $rol = $_POST["rol"];
 
-            $existe = \Dao\UsuarioDao::existeCorreo($correo);
+        $existe = \Dao\UsuarioDao::existeCorreo($correo);
 
-            if ($existe) {
-                echo "<script>alert('Este correo ya está registrado'); window.location='index.php?page=register';</script>";
-                exit();
-            }
-
-            \Dao\UsuarioDao::registrarUsuario($nombre, $correo, $password, $rol);
-
-            echo "<script>alert('Usuario registrado correctamente'); window.location='index.php?page=login';</script>";
+        if ($existe) {
+            echo "<script>alert('Este correo ya está registrado'); window.location='index.php?page=register';</script>";
             exit();
         }
 
-        require_once __DIR__ . "/src/views/templates/auth/register.view.tpl";
-        break;
+        \Dao\UsuarioDao::registrarUsuario($nombre, $correo, $password, $rol);
+
+        echo "<script>alert('Usuario registrado correctamente'); window.location='index.php?page=login';</script>";
+        exit();
+    }
+
+    require_once __DIR__ . "/src/views/templates/auth/register.view.tpl";
+    break;
 
     case "logout":
         session_destroy();
@@ -97,18 +97,6 @@ switch ($page) {
         require_once __DIR__ . "/src/views/templates/materias/materias_form.view.tpl";
         break;
 
-    // ==========================================
-    // NUEVO MÓDULO: GESTIÓN DE USUARIOS
-    // ==========================================
-    case "usuarios":
-        require_once __DIR__ . "/src/views/templates/usuarios/users.view.tpl";
-        break;
-
-    case "usuario_nuevo":
-    case "usuario_editar":
-        require_once __DIR__ . "/src/views/templates/usuarios/user.view.tpl";
-        break;
-
     // Calificaciones
     case "calificaciones":
     case "Calificaciones":
@@ -120,9 +108,9 @@ switch ($page) {
         require_once __DIR__ . "/src/views/templates/calificaciones/form.view.tpl";
         break;
 
-
+    // Reportes
     case "reportes":
-        require_once __DIR__ . "/src/views/templates/reportes/dashboard.view.tpl";
+        require_once __DIR__ . "/src/views/templates/reportes/reportes.view.tpl";
         break;
 
     // Página no encontrada

@@ -118,3 +118,4 @@ class CalificacionDao extends Table
         return self::obtenerRegistros($sqlstr);
     }
 }
+
