@@ -69,6 +69,10 @@ switch ($page) {
     case "dashboard":
         require_once __DIR__ . "/src/views/templates/dashboard/dashboard.view.tpl";
         break;
+        // Home
+    case "home":
+        require_once __DIR__ . "/src/views/templates/home.view.tpl";
+        break;
 
     // Estudiantes
     case "estudiantes":
@@ -80,14 +84,19 @@ switch ($page) {
         break;
 
     // Maestros
+    
     case "maestros":
-        require_once __DIR__ . "/src/views/templates/maestros/maestros.view.tpl";
-        break;
+    require_once __DIR__ . "/src/views/templates/maestros/maestros.view.tpl";
+    break;
 
-    case "maestro_nuevo":
-        require_once __DIR__ . "/src/views/templates/maestros/maestro_nuevo.view.tpl";
-        break;
+case "maestro_nuevo":
+    require_once __DIR__ . "/src/views/templates/maestros/maestros_form.view.tpl";
+    break;
 
+case "maestro_guardar":
+    require_once __DIR__ . "/src/controllers/MaestrosController.php";
+    \Controllers\MaestrosController::guardar();
+    break;
     // Materias
     case "materias":
         require_once __DIR__ . "/src/views/templates/materias/materias.view.tpl";

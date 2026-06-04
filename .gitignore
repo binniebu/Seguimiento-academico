@@ -1,0 +1,11 @@
+/vendor/
+
+.vscode/
+
+*.log
+
+.DS_Store
+Thumbs.db
+
+/debug_maestros.php
+/insert_maestro.php

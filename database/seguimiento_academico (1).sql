@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 03-06-2026 a las 17:18:28
+-- Tiempo de generación: 04-06-2026 a las 08:41:59
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -68,7 +68,9 @@ CREATE TABLE `maestros` (
 --
 
 INSERT INTO `maestros` (`id_maestro`, `id_usuario`, `codigo`, `especialidad`, `telefono`) VALUES
-(1, 4, 'MAE-001', 'Matemáticas', '99999999');
+(1, 4, 'MAE-001', 'Matemáticas', '99999999'),
+(2, 8, 'PRG-001', 'programacion', '777777777'),
+(3, 9, 'LOG-003', 'Logistica', '87897876');
 
 -- --------------------------------------------------------
 
@@ -150,7 +152,9 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `correo`, `password`, `id_rol`, 
 (2, 'Jasiel David Ramos', 'davidjasiel11@icloud.com', '$2y$10$XXn/J7QWsQP88j1gJHafKOEMs6xThlF1r/fW/2Qxey8mZR6XmLZ2S', 3, 'activo', '2026-06-02 18:22:18'),
 (3, 'Jose Guillemro Rosa', 'joseguillermorosa200519@gmail.com', '$2y$10$mvouDgM2qqHtamRIfTpNP.eFSB56eaC94UyoIfpqu3dbNKzchz7AW', 1, 'activo', '2026-06-03 14:25:44'),
 (4, 'Juan Perez', 'juanperez@gmail.com', '$2y$10$83O5Ba8u7h7oVtI2oyuFl.EVih2kJulEYbgCAQN0wNiuYLlnu/ZKa', 2, 'activo', '2026-06-03 14:47:38'),
-(5, 'Prof. Juan García', 'juan.garcia@escuela.com', '$2y$10$XXn/J7QWsQP88j1gJHafKOEMs6xThlF1r/fW/2Qxey8mZR6XmLZ2S', 2, 'activo', '2026-06-03 14:50:31');
+(5, 'Prof. Juan García', 'juan.garcia@escuela.com', '$2y$10$XXn/J7QWsQP88j1gJHafKOEMs6xThlF1r/fW/2Qxey8mZR6XmLZ2S', 2, 'activo', '2026-06-03 14:50:31'),
+(8, 'Carlos eduardo espina', 'carlosedu@gmail.com', '$2y$10$zBsarKNIXD6LpEDOiz/UzunzvgRNPKY.Dy1nbB5x1fhxkZWXQl2/e', 2, 'activo', '2026-06-04 06:19:38'),
+(9, 'David Ramos', 'davidr11@gmail.com', '$2y$10$UaDcNX/D7BBI0Glcfz2apOM9KWgbwJYCWrF104hBRNHZTaYRSeyZ2', 2, 'activo', '2026-06-04 06:24:09');
 
 --
 -- Índices para tablas volcadas
@@ -230,7 +234,7 @@ ALTER TABLE `estudiantes`
 -- AUTO_INCREMENT de la tabla `maestros`
 --
 ALTER TABLE `maestros`
-  MODIFY `id_maestro` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_maestro` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `materias`
@@ -254,7 +258,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Restricciones para tablas volcadas
