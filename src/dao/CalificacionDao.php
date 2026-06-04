@@ -26,7 +26,8 @@ class CalificacionDao extends Table
                         FROM calificaciones c
                         INNER JOIN matriculas mat ON c.id_matricula = mat.id_matricula
                         INNER JOIN estudiantes e ON mat.id_estudiante = e.id_estudiante
-                        INNER JOIN usuarios u ON e.id_usuario = u.id_usuario";
+                        INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                        INNER JOIN materias m ON mat.id_materia = m.id_materia";
         
         $conditions = [];
         $params = [];

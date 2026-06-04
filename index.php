@@ -111,11 +111,13 @@ switch ($page) {
 
     // Calificaciones
     case "calificaciones":
-        require_once __DIR__. "/src/views/templates/calificaciones/calificaciones.view.tpl";
+    case "Calificaciones":
+        require_once __DIR__. "/src/views/templates/calificaciones/list.view.tpl";
         break;
 
     case "calificacion_nueva":
-        require_once __DIR__ . "/src/views/templates/calificaciones/calificacion_nueva.view.tpl";
+    case "Calificacion":
+        require_once __DIR__ . "/src/views/templates/calificaciones/form.view.tpl";
         break;
 
 
