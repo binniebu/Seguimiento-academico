@@ -83,6 +83,11 @@ switch ($page) {
         require_once __DIR__ . "/src/views/templates/estudiantes/estudiante_nuevo.view.tpl";
         break;
 
+    case "estudiante_guardar":
+        require_once __DIR__ . "/src/controllers/EstudiantesController.php";
+        \Controllers\EstudiantesController::guardar();
+        break;
+
     // Maestros
     
     case "maestros":
