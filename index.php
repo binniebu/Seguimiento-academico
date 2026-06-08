@@ -24,7 +24,7 @@ switch ($page) {
             $_SESSION["correo"] = $usuario["correo"];
             $_SESSION["rol"] = $usuario["nombre_rol"];
 
-            header("Location: index.php?page=dashboard");
+            header("Location: index.php?page=home");
             exit();
         } else {
             echo "<script>alert('Correo o contraseña incorrectos'); window.location='index.php?page=login';</script>";
@@ -65,15 +65,12 @@ switch ($page) {
         header("Location: index.php?page=login");
         exit();
 
-    // Dashboard
-    case "dashboard":
-        require_once __DIR__ . "/src/views/templates/dashboard/dashboard.view.tpl";
-        break;
-        // Home
+     // Home
     case "home":
         require_once __DIR__ . "/src/views/templates/home.view.tpl";
         break;
-
+      
+     
     // Estudiantes
     case "estudiantes":
         require_once __DIR__ . "/src/views/templates/estudiantes/estudiantes.view.tpl";
@@ -134,7 +131,7 @@ case "maestro_guardar":
 
     // Reportes
     case "reportes":
-        require_once __DIR__ . "/src/views/templates/reportes/reportes.view.tpl";
+        require_once __DIR__ . "/src/views/templates/reportes/dashboard.view.tpl";
         break;
 
     // Página no encontrada

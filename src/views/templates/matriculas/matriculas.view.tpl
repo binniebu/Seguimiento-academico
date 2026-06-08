@@ -33,11 +33,7 @@ $matriculas = \Controllers\MatriculasController::listar();
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php?page=dashboard">
-                            <i class="bi bi-house-door"></i> Dashboard
-                        </a>
-                    </li>
+                
 
                     <li class="nav-item">
                         <a class="nav-link" href="index.php?page=estudiantes">

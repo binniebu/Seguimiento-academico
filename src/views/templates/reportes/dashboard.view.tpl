@@ -27,7 +27,7 @@ $totalCupos = intval($resumen["total_cupos_matriculados"] ?? 0);
                 <div class="sidebar-sticky pt-3">
                     <h6 class="sidebar-heading px-3 mt-4 mb-2 text-muted">Menu</h6>
                     <ul class="nav flex-column">
-                        <li class="nav-item"><a class="nav-link" href="index.php?page=dashboard"><i class="bi bi-house-door"></i> Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="index.php?page=home"><i class="bi bi-house-door"></i> home</a></li>
                         <li class="nav-item"><a class="nav-link" href="index.php?page=estudiantes"><i class="bi bi-people"></i> Estudiantes</a></li>
                         <li class="nav-item"><a class="nav-link" href="index.php?page=maestros"><i class="bi bi-person-badge"></i> Maestros</a></li>
                         <li class="nav-item"><a class="nav-link" href="index.php?page=materias"><i class="bi bi-book"></i> Materias</a></li>

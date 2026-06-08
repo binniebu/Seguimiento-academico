@@ -17,8 +17,8 @@
                     <h6 class="sidebar-heading px-3 mt-4 mb-2 text-muted">Menu</h6>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="index.php?page=dashboard">
-                                <i class="bi bi-house-door"></i> Dashboard
+                           <a class="nav-link" href="index.php?page=home">
+                               <i class="bi bi-house-fill"></i> Home
                             </a>
                         </li>
                         <li class="nav-item">
