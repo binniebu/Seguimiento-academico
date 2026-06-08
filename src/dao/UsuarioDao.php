@@ -91,6 +91,53 @@ class UsuarioDao extends Table
 
         return self::obtenerRegistros($sqlstr, array());
     }
+    public static function getUsers($buscar = "", $estado = "", $orderBy = "id_usuario", $descending = false, $page = 0, $itemsPerPage = 10)
+    {
+        $offset = $page * $itemsPerPage;
+        $orderDirection = $descending ? "DESC" : "ASC";
+
+        $where = " WHERE 1=1 ";
+        $params = array();
+
+       if ($buscar !== "") {
+           $where .= " AND (u.nombre LIKE :buscar OR u.correo LIKE :buscar) ";
+           $params["buscar"] = "%" . $buscar . "%";
+    }
+
+    if ($estado !== "") {
+        $where .= " AND u.estado = :estado ";
+        $params["estado"] = $estado;
+    }
+
+    $sqlTotal = "SELECT COUNT(*) AS total
+                 FROM usuarios u
+                 INNER JOIN roles r ON u.id_rol = r.id_rol
+                 " . $where;
+
+    $totalRegistro = self::obtenerUnRegistro($sqlTotal, $params);
+    $total = intval($totalRegistro["total"] ?? 0);
+
+    $sqlstr = "SELECT 
+                    u.id_usuario,
+                    u.nombre,
+                    u.correo,
+                    u.estado,
+                    u.fecha_creacion,
+                    r.nombre_rol
+               FROM usuarios u
+               INNER JOIN roles r ON u.id_rol = r.id_rol
+               " . $where . "
+               ORDER BY u." . $orderBy . " " . $orderDirection . "
+               LIMIT " . intval($itemsPerPage) . " OFFSET " . intval($offset);
+
+        $usuarios = self::obtenerRegistros($sqlstr, $params);
+
+        return array(
+        "usuarios" => $usuarios,
+        "total" => $total,
+        "itemsPerPage" => $itemsPerPage
+    );
+   }
 
     public static function getReporteMaestros()
 {

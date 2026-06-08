@@ -128,6 +128,14 @@ case "maestro_guardar":
     case "Calificacion":
         require_once __DIR__ . "/src/views/templates/calificaciones/form.view.tpl";
         break;
+    // Usuarios
+    case "usuarios":
+        require_once __DIR__ . "/src/views/templates/usuarios/users.view.tpl";
+        break;
+
+    case "usuario_nuevo":
+        require_once __DIR__ . "/src/views/templates/usuarios/user.view.tpl";
+        break;   
 
     // Reportes
     case "reportes":
