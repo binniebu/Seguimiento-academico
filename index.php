@@ -191,10 +191,65 @@ case "maestro_guardar":
         require_once __DIR__ . "/src/views/templates/usuarios/user.view.tpl";
         break;   
 
-    // Reportes
-    case "reportes":
-        require_once __DIR__ . "/src/views/templates/reportes/dashboard.view.tpl";
+    // --- Nuevas Rutas de Reingeniería ---
+    
+    // Gestión de Carreras
+    case "carreras":
+        require_once __DIR__ . "/src/views/templates/carreras/carreras.view.tpl";
         break;
+    case "carrera_nueva":
+        require_once __DIR__ . "/src/views/templates/carreras/carreras_form.view.tpl";
+        break;
+    case "carrera_guardar":
+        require_once __DIR__ . "/src/controllers/CarrerasController.php";
+        \Controllers\CarrerasController::guardar();
+        break;
+
+    // Gestión de Secciones
+    case "secciones":
+        require_once __DIR__ . "/src/views/templates/materias/secciones.view.tpl";
+        break;
+    case "seccion_nueva":
+        require_once __DIR__ . "/src/views/templates/materias/secciones_form.view.tpl";
+        break;
+    case "seccion_guardar":
+        require_once __DIR__ . "/src/controllers/MateriasController.php";
+        \Controllers\MateriasController::guardarSeccion();
+        break;
+
+    // Gestión de Pre-registro y Admisiones
+    case "solicitudes_registro":
+        require_once __DIR__ . "/src/views/templates/usuarios/solicitudes.view.tpl";
+        break;
+    case "solicitud_detalle":
+        require_once __DIR__ . "/src/views/templates/usuarios/solicitud.view.tpl";
+        break;
+    case "solicitud_procesar":
+        require_once __DIR__ . "/src/controllers/UsuariosController.php";
+        \Controllers\UsuariosController::procesarSolicitud();
+        break;
+
+    // Historial Académico
+    case "historial_academico":
+        require_once __DIR__ . "/src/views/templates/estudiantes/historial.view.tpl";
+        break;
+
+    // Conmutador de Roles (Switch Role)
+    case "switch_role":
+        $nuevoRol = $_GET["rol"] ?? "";
+        if (isset($_SESSION["usuario"]) && isset($_SESSION["correo"])) {
+            require_once __DIR__ . "/src/dao/UsuarioDao.php";
+            $rolesUsuario = \Dao\UsuarioDao::obtenerRolesPorCorreo($_SESSION["correo"]);
+            if (in_array($nuevoRol, $rolesUsuario)) {
+                $_SESSION["rol"] = $nuevoRol;
+                header("Location: index.php?page=home");
+                exit();
+            }
+        }
+        header("Location: index.php?page=home&mensaje=Rol invalido o no asignado");
+        exit();
+
+
 
     // Página no encontrada
     default:

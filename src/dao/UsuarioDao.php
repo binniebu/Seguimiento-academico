@@ -188,5 +188,19 @@ public static function existeDirector()
 
     return intval($resultado["total"] ?? 0) > 0;
 }
+public static function obtenerRolesPorCorreo($correo)
+{
+    $sqlstr = "SELECT r.nombre_rol 
+               FROM usuarios_roles ur
+               INNER JOIN usuarios u ON ur.id_usuario = u.id_usuario
+               INNER JOIN roles r ON ur.id_rol = r.id_rol
+               WHERE u.correo = :correo";
+    $roles = self::obtenerRegistros($sqlstr, array("correo" => $correo));
+    $rolesArray = array();
+    foreach ($roles as $r) {
+        $rolesArray[] = $r["nombre_rol"];
+    }
+    return $rolesArray;
+}
 }
 ?>

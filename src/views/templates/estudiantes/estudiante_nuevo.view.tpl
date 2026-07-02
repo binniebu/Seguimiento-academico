@@ -38,7 +38,7 @@
             if (!function_exists('fixDoubleEncoding')) {
                 function fixDoubleEncoding($str) {
                     if (strpos($str, '├') !== false || strpos($str, '┬') !== false) {
-                        return utf8_decode($str);
+                        return mb_convert_encoding($str, 'ISO-8859-1', 'UTF-8');
                     }
                     return $str;
                 }

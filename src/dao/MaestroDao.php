@@ -131,14 +131,8 @@ class MaestroDao extends Table
     {
         $conn = self::getConn();
 
-        $sqlMaestro = "DELETE FROM maestros 
-                       WHERE id_maestro = :id_maestro";
-
-        self::executeNonQuery($sqlMaestro, array(
-            "id_maestro" => $id_maestro
-        ), $conn);
-
-        $sqlUsuario = "DELETE FROM usuarios 
+        $sqlUsuario = "UPDATE usuarios 
+                       SET estado = 'inactivo' 
                        WHERE id_usuario = :id_usuario";
 
         return self::executeNonQuery($sqlUsuario, array(

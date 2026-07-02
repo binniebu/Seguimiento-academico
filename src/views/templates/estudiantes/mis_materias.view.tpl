@@ -85,18 +85,7 @@ $disponibles = \Dao\MisMateriasDao::obtenerMateriasDisponibles($idEstudiante);
 <div class="container-fluid">
     <div class="row">
 
-        <nav class="col-md-2 d-md-block bg-light sidebar">
-            <div class="sidebar-sticky pt-3">
-                <h6 class="sidebar-heading px-3 mt-4 mb-2 text-muted">Menu</h6>
-                <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="index.php?page=home"><i class="bi bi-house-fill"></i> Home</a></li>
-                    
-                    <li class="nav-item"><a class="nav-link active" href="index.php?page=mis_materias"><i class="bi bi-journal-plus"></i> Mis Materias</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?page=calificaciones"><i class="bi bi-graph-up"></i> Calificaciones</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?page=logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
-                </ul>
-            </div>
-        </nav>
+        <?php require_once __DIR__ . "/../sidebar.view.tpl"; ?>
 
         <main class="col-md-10 ml-sm-auto px-md-4">
             <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">

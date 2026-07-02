@@ -11,59 +11,7 @@
 <body>
 <div class="container-fluid">
     <div class="row">
-
-        <nav class="col-md-2 d-md-block bg-light sidebar">
-            <div class="sidebar-sticky pt-3">
-                <div class="d-flex justify-content-between align-items-center px-3 mt-4 mb-2">
-                    <h6 class="sidebar-heading p-0 m-0 text-muted">Menu</h6>
-                    <button class="btn btn-sm text-white p-0 toggleSidebarBtn" style="font-size: 16px; border: none; background: transparent;">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                       <a class="nav-link" href="index.php?page=home">
-                           <i class="bi bi-house-fill"></i> Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php?page=dashboard">
-                            <i class="bi bi-house-door"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="index.php?page=estudiantes">
-                            <i class="bi bi-people"></i> Estudiantes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php?page=maestros">
-                            <i class="bi bi-person-badge"></i> Maestros
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php?page=materias">
-                            <i class="bi bi-book"></i> Materias
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php?page=calificaciones">
-                            <i class="bi bi-graph-up"></i> Calificaciones
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php?page=reportes">
-                            <i class="bi bi-file-text"></i> Reportes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php?page=logout">
-                            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+        <?php require_once __DIR__ . "/../sidebar.view.tpl"; ?>
 
         <?php
         $verInactivos = ($_GET['ver'] ?? '') === 'inactivos';
