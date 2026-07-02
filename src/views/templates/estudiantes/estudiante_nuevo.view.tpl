@@ -34,6 +34,15 @@
             }
 
             $isEdit = !empty($estudiante);
+
+            if (!function_exists('fixDoubleEncoding')) {
+                function fixDoubleEncoding($str) {
+                    if (strpos($str, '├') !== false || strpos($str, '┬') !== false) {
+                        return utf8_decode($str);
+                    }
+                    return $str;
+                }
+            }
             ?>
 
             <form method="POST" action="index.php?page=estudiante_guardar">
@@ -63,14 +72,15 @@
                                required>
                     </div>
 
+                    <?php if (!$isEdit): ?>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Contraseña</label>
                            <input type="password"
                                name="password"
                                class="form-control"
-                               <?php echo $isEdit ? '' : 'required'; ?>
-                               <?php if ($isEdit): ?>placeholder="Dejar en blanco para mantener la contraseña"<?php endif; ?> >
+                               required>
                     </div>
+                    <?php endif; ?>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Cuenta</label>
@@ -84,11 +94,25 @@
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Carrera</label>
-                           <input type="text"
-                               name="carrera"
-                               class="form-control"
-                               value="<?php echo htmlspecialchars($estudiante['carrera'] ?? ''); ?>"
-                               required>
+                        <?php if ($isEdit): ?>
+                            <?php $carreraFixed = fixDoubleEncoding($estudiante['carrera'] ?? ''); ?>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($carreraFixed); ?>" disabled>
+                            <input type="hidden" name="carrera" value="<?php echo htmlspecialchars($estudiante['carrera'] ?? ''); ?>">
+                        <?php else: ?>
+                            <input type="text" name="carrera" id="carreraInput" class="form-control" list="carrerasList" placeholder="Escriba para buscar carrera..." required autocomplete="off">
+                            <datalist id="carrerasList">
+                                <?php
+                                require_once __DIR__ . "/../../../dao/CarreraDao.php";
+                                $carrerasList = \Dao\CarreraDao::obtenerCarrerasParaRegistro();
+                                foreach ($carrerasList as $c):
+                                    $nombreFixed = fixDoubleEncoding($c['nombre_carrera']);
+                                ?>
+                                    <option value="<?php echo htmlspecialchars($c['nombre_carrera']); ?>">
+                                        <?php echo htmlspecialchars($nombreFixed); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </datalist>
+                        <?php endif; ?>
                     </div>
 
                     <div class="col-md-6 mb-3">
@@ -125,6 +149,22 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
+<script>
+document.querySelector('form').addEventListener('submit', function(e) {
+    const input = document.getElementById('carreraInput');
+    if (!input) return; // si está editando no existe este input
+    const options = document.querySelectorAll('#carrerasList option');
+    let valid = false;
+    options.forEach(opt => {
+        if (opt.value === input.value) {
+            valid = true;
+        }
+    });
+    if (!valid) {
+        alert('Por favor seleccione una carrera válida de la lista.');
+        e.preventDefault();
+    }
+});
+</script>
 </body>
 </html>

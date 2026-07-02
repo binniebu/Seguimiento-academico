@@ -9,8 +9,9 @@ use PDOException;
 
 class EstudianteDao extends Table
 {
-    public static function obtenerEstudiantes($buscar = "")
+    public static function obtenerEstudiantes($buscar = "", $soloInactivos = false, $limit = 10, $offset = 0)
     {
+        $estadoCondicion = $soloInactivos ? "LOWER(e.estado) = 'inactivo'" : "LOWER(e.estado) != 'inactivo'";
         $sqlstr = "SELECT 
                         e.id_estudiante,
                         e.id_usuario,
@@ -19,17 +20,40 @@ class EstudianteDao extends Table
                         e.telefono,
                         u.nombre,
                         u.correo,
-                        u.estado
+                        e.estado
                    FROM estudiantes e
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
-                   WHERE u.nombre LIKE :buscar
-                      OR u.correo LIKE :buscar
-                      OR e.cuenta LIKE :buscar
-                   ORDER BY e.id_estudiante DESC";
+                    WHERE (u.nombre LIKE :buscar
+                       OR u.correo LIKE :buscar
+                       OR e.cuenta LIKE :buscar
+                       OR CAST(e.id_estudiante AS CHAR) = :buscar_exacto)
+                       AND $estadoCondicion
+                    ORDER BY e.id_estudiante DESC
+                    LIMIT " . intval($limit) . " OFFSET " . intval($offset);
 
         return self::obtenerRegistros($sqlstr, array(
-            "buscar" => "%" . $buscar . "%"
+            "buscar" => "%" . $buscar . "%",
+            "buscar_exacto" => $buscar
         ));
+    }
+
+    public static function obtenerTotalEstudiantes($buscar = "", $soloInactivos = false)
+    {
+        $estadoCondicion = $soloInactivos ? "LOWER(e.estado) = 'inactivo'" : "LOWER(e.estado) != 'inactivo'";
+        $sqlstr = "SELECT COUNT(*) as total
+                   FROM estudiantes e
+                   INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                   WHERE (u.nombre LIKE :buscar
+                      OR u.correo LIKE :buscar
+                      OR e.cuenta LIKE :buscar
+                      OR CAST(e.id_estudiante AS CHAR) = :buscar_exacto)
+                      AND $estadoCondicion";
+
+        $res = self::obtenerUnRegistro($sqlstr, array(
+            "buscar" => "%" . $buscar . "%",
+            "buscar_exacto" => $buscar
+        ));
+        return intval($res['total'] ?? 0);
     }
 
     public static function obtenerEstudiantePorId($id_estudiante)
@@ -60,6 +84,17 @@ class EstudianteDao extends Table
 
         return self::obtenerUnRegistro($sqlstr, array(
             "correo" => $correo
+        ));
+    }
+
+    public static function existeCuenta($cuenta)
+    {
+        $sqlstr = "SELECT id_estudiante, id_usuario 
+                   FROM estudiantes 
+                   WHERE cuenta = :cuenta";
+
+        return self::obtenerUnRegistro($sqlstr, array(
+            "cuenta" => $cuenta
         ));
     }
 
@@ -131,14 +166,36 @@ class EstudianteDao extends Table
     {
         $conn = self::getConn();
 
-        $sqlEstudiante = "DELETE FROM estudiantes 
-                       WHERE id_estudiante = :id_estudiante";
+        $sqlEstudiante = "UPDATE estudiantes 
+                          SET estado = 'inactivo' 
+                          WHERE id_estudiante = :id_estudiante";
 
         self::executeNonQuery($sqlEstudiante, array(
             "id_estudiante" => $id_estudiante
         ), $conn);
 
-        $sqlUsuario = "DELETE FROM usuarios 
+        $sqlUsuario = "UPDATE usuarios 
+                       SET estado = 'inactivo' 
+                       WHERE id_usuario = :id_usuario";
+
+        return self::executeNonQuery($sqlUsuario, array(
+            "id_usuario" => $id_usuario
+        ), $conn);
+    }
+    public static function activarEstudiante($id_estudiante, $id_usuario)
+    {
+        $conn = self::getConn();
+
+        $sqlEstudiante = "UPDATE estudiantes 
+                          SET estado = 'activo' 
+                          WHERE id_estudiante = :id_estudiante";
+
+        self::executeNonQuery($sqlEstudiante, array(
+            "id_estudiante" => $id_estudiante
+        ), $conn);
+
+        $sqlUsuario = "UPDATE usuarios 
+                       SET estado = 'activo' 
                        WHERE id_usuario = :id_usuario";
 
         return self::executeNonQuery($sqlUsuario, array(

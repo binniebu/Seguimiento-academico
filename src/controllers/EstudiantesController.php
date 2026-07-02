@@ -11,12 +11,16 @@ class EstudiantesController
     public static function listar()
     {
         $buscar = $_GET["buscar"] ?? "";
-        return EstudianteDao::obtenerEstudiantes($buscar);
+        $ver = $_GET["ver"] ?? "";
+        $soloInactivos = ($ver === "inactivos");
+        return EstudianteDao::obtenerEstudiantes($buscar, $soloInactivos);
     }
 
     public static function buscar($buscar)
     {
-        return EstudianteDao::obtenerEstudiantes($buscar);
+        $ver = $_GET["ver"] ?? "";
+        $soloInactivos = ($ver === "inactivos");
+        return EstudianteDao::obtenerEstudiantes($buscar, $soloInactivos);
     }
 
     public static function guardar()
@@ -60,6 +64,15 @@ class EstudiantesController
                 exit();
             }
 
+            $cuentaExistente = EstudianteDao::existeCuenta($cuenta);
+            if ($cuentaExistente && $cuentaExistente['id_estudiante'] != $id_estudiante) {
+                echo "<script>
+                        alert('El DNI/Número de cuenta ya está registrado por otro estudiante');
+                        window.location='index.php?page=estudiante_nuevo&id=" . intval($id_estudiante) . "';
+                      </script>";
+                exit();
+            }
+
             $resultado = EstudianteDao::actualizarEstudiante(
                 $id_estudiante,
                 $id_usuario,
@@ -97,6 +110,14 @@ class EstudiantesController
         if (EstudianteDao::existeCorreo($correo)) {
             echo "<script>
                     alert('El correo ya está registrado');
+                    window.location='index.php?page=estudiante_nuevo';
+                  </script>";
+            exit();
+        }
+
+        if (EstudianteDao::existeCuenta($cuenta)) {
+            echo "<script>
+                    alert('El DNI/Número de cuenta ya está registrado');
                     window.location='index.php?page=estudiante_nuevo';
                   </script>";
             exit();
@@ -150,7 +171,30 @@ class EstudiantesController
 
             return array(
                 "exito" => true,
-                "mensaje" => "Estudiante eliminado correctamente"
+                "mensaje" => "Estudiante dado de baja correctamente"
+            );
+        }
+
+        return array(
+            "exito" => false,
+            "mensaje" => "No se encontró el estudiante"
+        );
+    }
+
+    public static function activar($id = null)
+    {
+        if ($id == null) {
+            $id = $_GET["id"] ?? 0;
+        }
+
+        $estudiante = EstudianteDao::obtenerEstudiantePorId($id);
+
+        if ($estudiante) {
+            EstudianteDao::activarEstudiante($estudiante["id_estudiante"], $estudiante["id_usuario"]);
+
+            return array(
+                "exito" => true,
+                "mensaje" => "Estudiante reactivado correctamente"
             );
         }
 
