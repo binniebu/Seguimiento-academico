@@ -160,10 +160,6 @@ case "maestro_guardar":
     break;
     
     // Materias
-    case "materias":
-        require_once __DIR__ . "/src/views/templates/materias/materias.view.tpl";
-        break;
-        
     case "mis_materias":
     require_once __DIR__ . "/src/views/templates/estudiantes/mis_materias.view.tpl";
     break;
@@ -193,6 +189,18 @@ case "maestro_guardar":
 
     // --- Nuevas Rutas de Reingeniería ---
     
+    // Gestión de Facultades
+    case "facultades":
+        require_once __DIR__ . "/src/views/templates/facultades/facultades.view.tpl";
+        break;
+    case "facultad_nueva":
+        require_once __DIR__ . "/src/views/templates/facultades/facultades_form.view.tpl";
+        break;
+    case "facultad_guardar":
+        require_once __DIR__ . "/src/controllers/FacultadesController.php";
+        \Controllers\FacultadesController::guardar();
+        break;
+    
     // Gestión de Carreras
     case "carreras":
         require_once __DIR__ . "/src/views/templates/carreras/carreras.view.tpl";
@@ -203,6 +211,11 @@ case "maestro_guardar":
     case "carrera_guardar":
         require_once __DIR__ . "/src/controllers/CarrerasController.php";
         \Controllers\CarrerasController::guardar();
+        break;
+        
+    case "carrera_flujograma":
+        require_once __DIR__ . "/src/controllers/MateriasController.php";
+        \Controllers\MateriasController::verFlujograma();
         break;
 
     // Gestión de Secciones

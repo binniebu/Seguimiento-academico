@@ -27,6 +27,11 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?php echo $currentPage === 'facultades' ? 'active' : ''; ?>" href="index.php?page=facultades">
+                        <i class="bi bi-building"></i> Facultades
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'carreras' ? 'active' : ''; ?>" href="index.php?page=carreras">
                         <i class="bi bi-tags"></i> Carreras
                     </a>
@@ -37,12 +42,14 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if (in_array($_SESSION["rol"], ["director", "maestro"])): ?>
+            <?php if ($_SESSION["rol"] === "maestro"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'materias' ? 'active' : ''; ?>" href="index.php?page=materias">
                         <i class="bi bi-book"></i> Materias
                     </a>
                 </li>
+            <?php endif; ?>
+            <?php if (in_array($_SESSION["rol"], ["director", "maestro"])): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'secciones' ? 'active' : ''; ?>" href="index.php?page=secciones">
                         <i class="bi bi-calendar-event"></i> Secciones
