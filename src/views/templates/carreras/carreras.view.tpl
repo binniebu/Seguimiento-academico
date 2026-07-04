@@ -26,7 +26,11 @@ if (($_GET['accion'] ?? '') === 'activar' && isset($_GET['id'])) {
 
 // 2. Obtener lista de carreras de la DB
 $id_facultad = $_GET['id_facultad'] ?? null;
-$carreras = \Dao\CarreraDao::obtenerCarreras($verInactivas, $id_facultad);
+if ($_SESSION["rol"] === "coordinador" && isset($_SESSION["id_facultad"])) {
+    $carreras = \Dao\CarreraDao::obtenerCarreras($verInactivas, $_SESSION["id_facultad"]);
+} else {
+    $carreras = \Dao\CarreraDao::obtenerCarreras($verInactivas, $id_facultad);
+}
 
 if (!function_exists('fixDoubleEncoding')) {
     function fixDoubleEncoding($str) {
@@ -67,17 +71,19 @@ if (!function_exists('fixDoubleEncoding')) {
                         </h1>
                     </div>
                     <div class="d-flex gap-2">
-                        <?php if ($verInactivas): ?>
-                            <a href="index.php?page=carreras" class="btn btn-outline-primary">
-                                <i class="bi bi-tags-fill"></i> Ver Carreras Activas
-                            </a>
-                        <?php else: ?>
-                            <a href="index.php?page=carreras&ver=inactivas" class="btn btn-outline-secondary">
-                                <i class="bi bi-eye-slash"></i> Ver Inactivas
-                            </a>
-                            <a href="index.php?page=carrera_nueva" class="btn btn-primary">
-                                <i class="bi bi-plus-circle"></i> Nueva Carrera
-                            </a>
+                        <?php if ($_SESSION["rol"] !== "coordinador"): ?>
+                            <?php if ($verInactivas): ?>
+                                <a href="index.php?page=carreras" class="btn btn-outline-primary">
+                                    <i class="bi bi-tags-fill"></i> Ver Carreras Activas
+                                </a>
+                            <?php else: ?>
+                                <a href="index.php?page=carreras&ver=inactivas" class="btn btn-outline-secondary">
+                                    <i class="bi bi-eye-slash"></i> Ver Inactivas
+                                </a>
+                                <a href="index.php?page=carrera_nueva" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Nueva Carrera
+                                </a>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -147,22 +153,26 @@ if (!function_exists('fixDoubleEncoding')) {
                                         </td>
                                         <td class="actions-cell text-end">
                                             <div class="d-flex gap-2 justify-content-end">
-                                                <?php if ($estadoLower === 'inactiva'): ?>
-                                                    <a href="index.php?page=carreras&ver=inactivas&accion=activar&id=<?php echo $c['id_carrera']; ?>"
-                                                       class="btn btn-sm btn-success"
-                                                       onclick="return confirm('¿Estás seguro de que deseas reactivar esta carrera?');">
-                                                        <i class="bi bi-check-circle"></i> Activar
-                                                    </a>
+                                                <?php if ($_SESSION["rol"] === "coordinador"): ?>
+                                                    <span class="text-muted small"><i class="bi bi-info-circle"></i> Solo consulta</span>
                                                 <?php else: ?>
-                                                    <a href="index.php?page=carrera_nueva&id=<?php echo $c['id_carrera']; ?>"
-                                                       class="btn btn-sm btn-warning">
-                                                        <i class="bi bi-pencil"></i> Editar
-                                                    </a>
-                                                    <a href="index.php?page=carreras&accion=inactivar&id=<?php echo $c['id_carrera']; ?>"
-                                                       class="btn btn-sm btn-danger"
-                                                       onclick="return confirm('¿Estás seguro de que deseas dar de baja esta carrera?');">
-                                                        <i class="bi bi-trash"></i> Dar de baja
-                                                    </a>
+                                                    <?php if ($estadoLower === 'inactiva'): ?>
+                                                        <a href="index.php?page=carreras&ver=inactivas&accion=activar&id=<?php echo $c['id_carrera']; ?>"
+                                                           class="btn btn-sm btn-success"
+                                                           onclick="return confirm('¿Estás seguro de que deseas reactivar esta carrera?');">
+                                                            <i class="bi bi-check-circle"></i> Activar
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <a href="index.php?page=carrera_nueva&id=<?php echo $c['id_carrera']; ?>"
+                                                           class="btn btn-sm btn-warning">
+                                                            <i class="bi bi-pencil"></i> Editar
+                                                        </a>
+                                                        <a href="index.php?page=carreras&accion=inactivar&id=<?php echo $c['id_carrera']; ?>"
+                                                           class="btn btn-sm btn-danger"
+                                                           onclick="return confirm('¿Estás seguro de que deseas dar de baja esta carrera?');">
+                                                            <i class="bi bi-trash"></i> Dar de baja
+                                                        </a>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                             </div>
                                         </td>

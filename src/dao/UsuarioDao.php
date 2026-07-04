@@ -202,5 +202,12 @@ public static function obtenerRolesPorCorreo($correo)
     }
     return $rolesArray;
 }
+
+public static function obtenerFacultadCoordinador($id_usuario)
+{
+    $sqlstr = "SELECT id_facultad FROM coordinadores WHERE id_usuario = :id_usuario LIMIT 1";
+    $result = self::obtenerUnRegistro($sqlstr, array("id_usuario" => $id_usuario));
+    return $result ? intval($result["id_facultad"]) : null;
+}
 }
 ?>

@@ -15,12 +15,14 @@ $currentPage = $_GET['page'] ?? 'home';
                     <i class="bi bi-house-fill"></i> Home
                 </a>
             </li>
-            <?php if ($_SESSION["rol"] === "director"): ?>
+            <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'estudiantes' ? 'active' : ''; ?>" href="index.php?page=estudiantes">
                         <i class="bi bi-people"></i> Estudiantes
                     </a>
                 </li>
+            <?php endif; ?>
+            <?php if ($_SESSION["rol"] === "director"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'maestros' ? 'active' : ''; ?>" href="index.php?page=maestros">
                         <i class="bi bi-person-badge"></i> Maestros
@@ -31,11 +33,15 @@ $currentPage = $_GET['page'] ?? 'home';
                         <i class="bi bi-building"></i> Facultades
                     </a>
                 </li>
+            <?php endif; ?>
+            <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'carreras' ? 'active' : ''; ?>" href="index.php?page=carreras">
                         <i class="bi bi-tags"></i> Carreras
                     </a>
                 </li>
+            <?php endif; ?>
+            <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'solicitudes_registro' ? 'active' : ''; ?>" href="index.php?page=solicitudes_registro">
                         <i class="bi bi-clipboard-check"></i> Solicitudes
@@ -49,7 +55,7 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if (in_array($_SESSION["rol"], ["director", "maestro"])): ?>
+            <?php if (in_array($_SESSION["rol"], ["director", "maestro", "coordinador"])): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'secciones' ? 'active' : ''; ?>" href="index.php?page=secciones">
                         <i class="bi bi-calendar-event"></i> Secciones

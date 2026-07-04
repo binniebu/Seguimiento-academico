@@ -53,4 +53,15 @@ Este documento sirve para registrar de manera clara y descriptiva todos los camb
   * **Interfaz de Usuario (UX/UI Formulario):** Se implementó la librería `SweetAlert2` en `materias_form.view.tpl` para reemplazar las alertas de error de Bootstrap por modales estéticos centrales.
   * **Interfaz de Usuario (Formulario):** Se solucionó el problema de pérdida de datos. Ahora, al presentarse un error de validación (como lógica de periodos o nombres duplicados), el sistema retiene los campos previamente rellenados mediante `$_POST`, optimizando la experiencia del coordinador académico.
 
-* **Estado final de los preparativos:** Completados con éxito. El entorno de Materias, Carreras y Base de Datos está blindado, y el trabajo puede ser delegado al equipo.
+### 04/07/2026 - Solicitud de Admisión Completa, Secciones y Plantillas Guía (Completado)
+* **Estado:** Re-estructuración del pre-registro de admisión y preparación de guías para el equipo de desarrollo finalizados con éxito.
+* **Cambios realizados:**
+  * **Base de Datos (Migración):** Se reemplazó el campo `documento_pdf` por `documento_dni` y se añadió `documento_titulo` en la tabla `usuarios` para obligar al aspirante a subir ambos documentos por separado en formatos PDF o imagen.
+  * **Página de Registro Público (Admisión):** Se rediseñó por completo `register.view.tpl` con estilo premium heredado del login y centrado en una sola tarjeta. Se añadieron campos de DNI, Teléfono, Carrera, y dos casillas de carga obligatoria para el DNI y el Título Académico.
+  * **Registro con Retención de Datos:** Se implementó repoblado automático en los campos del registro mediante `$_POST` en caso de error, y se integró SweetAlert2 para mostrar alertas emergentes estéticas en el frontend al fallar alguna regla del backend.
+  * **Controlador y Enrutamiento:** Se programó el backend de `index.php` para procesar y almacenar de forma segura ambos archivos cargados en `/public/uploads/` y llamar a `registrarPreRegistro` de `SolicitudDao.php`.
+  * **Bandeja de Solicitudes y Permisos:** Se habilitó el acceso del Coordinador a la bandeja de solicitudes en `RoleMiddleware.php` y en `sidebar.view.tpl`.
+  * **Plantilla Guía de Solicitudes (`solicitudes.view.tpl`):** Se limpió la vista dejándola como una plantilla instructiva con el contexto de las variables listas en el backend (filtrado de solicitudes según el rol) para el desarrollador a cargo de este módulo.
+  * **Plantilla Guía de Secciones (`secciones.view.tpl` y `secciones_form.view.tpl`):** Se re-maquetaron ambas vistas para integrarlas de forma limpia con la barra lateral lateral del sistema, dejando comentarios detallados de las validaciones de traslape y clonación de secciones que el integrante asignado debe programar.
+
+* **Estado final de los preparativos:** Completados con éxito. El entorno de registro de admisión, secciones y solicitudes está debidamente estructurado y documentado para la delegación segura al resto de los integrantes del equipo.

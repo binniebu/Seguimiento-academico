@@ -114,6 +114,26 @@ class RoleMiddleware
     "historial_academico",
     "switch_role"
 ),
+            "coordinador" => array(
+                "home",
+                "dashboard",
+                "estudiantes",
+                "estudiante_editar",
+                "estudiante_guardar",
+                "carreras",
+                "materias",
+                "materia_nueva",
+                "carrera_flujograma",
+                "secciones",
+                "seccion_nueva",
+                "seccion_guardar",
+                "solicitudes_registro",
+                "solicitud_procesar",
+                "matriculas",
+                "matricula_nueva",
+                "logout",
+                "switch_role"
+            ),
         );
 
         if (!isset($permisos[$rol])) {

@@ -9,7 +9,7 @@ class SolicitudDao extends Table
 {
     public static function obtenerSolicitudesPendientes()
     {
-        $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_pdf, u.fecha_creacion,
+        $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
                           e.cuenta as dni, e.carrera, e.telefono
                    FROM usuarios u
                    INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
@@ -18,9 +18,22 @@ class SolicitudDao extends Table
         return self::obtenerRegistros($sqlstr);
     }
 
+    public static function obtenerSolicitudesPendientesPorFacultad($id_facultad)
+    {
+        $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
+                          e.cuenta as dni, e.carrera, e.telefono
+                   FROM usuarios u
+                   INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
+                   INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
+                   WHERE u.estado = 'pendiente' 
+                     AND c.id_facultad = :id_facultad
+                   ORDER BY u.id_usuario DESC";
+        return self::obtenerRegistros($sqlstr, ["id_facultad" => $id_facultad]);
+    }
+
     public static function obtenerSolicitudPorId($idUsuario)
     {
-        $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_pdf, u.fecha_creacion,
+        $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
                           e.cuenta as dni, e.carrera, e.telefono
                    FROM usuarios u
                    INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
@@ -28,21 +41,22 @@ class SolicitudDao extends Table
         return self::obtenerUnRegistro($sqlstr, ["id_usuario" => $idUsuario]);
     }
 
-    public static function registrarPreRegistro($nombre, $correo, $password, $dni, $carrera, $telefono, $documentoPdf)
+    public static function registrarPreRegistro($nombre, $correo, $password, $dni, $carrera, $telefono, $documentoDni, $documentoTitulo)
     {
         $conn = self::getConn();
         try {
             $conn->beginTransaction();
 
             // 1. Crear registro en usuarios (estado pendiente)
-            $sqlUsuario = "INSERT INTO usuarios (nombre, correo, password, id_rol, estado, documento_pdf) 
-                           VALUES (:nombre, :correo, :password, 3, 'pendiente', :documento_pdf)";
+            $sqlUsuario = "INSERT INTO usuarios (nombre, correo, password, id_rol, estado, documento_dni, documento_titulo) 
+                           VALUES (:nombre, :correo, :password, 3, 'pendiente', :documento_dni, :documento_titulo)";
             $stmtUsuario = $conn->prepare($sqlUsuario);
             $stmtUsuario->execute([
                 "nombre" => $nombre,
                 "correo" => $correo,
                 "password" => password_hash($password, PASSWORD_DEFAULT),
-                "documento_pdf" => $documentoPdf
+                "documento_dni" => $documentoDni,
+                "documento_titulo" => $documentoTitulo
             ]);
 
             $idUsuario = $conn->lastInsertId();

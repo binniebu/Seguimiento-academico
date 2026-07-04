@@ -69,9 +69,11 @@
                         <a href="index.php?page=carreras" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left"></i> Volver a Carreras
                         </a>
-                        <a href="index.php?page=materia_nueva&id_carrera_pre=<?php echo $carrera['id_carrera']; ?>" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Agregar Materia
-                        </a>
+                        <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
+                            <a href="index.php?page=materia_nueva&id_carrera_pre=<?php echo $carrera['id_carrera']; ?>" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Agregar Materia
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -180,9 +182,11 @@
                                                         </div>
                                                     <?php endif; ?>
                                                 </div>
-                                                <div class="card-footer bg-transparent border-0 pt-0 text-end">
-                                                    <a href="index.php?page=materia_nueva&id=<?php echo $m['id_materia']; ?>&id_carrera_pre=<?php echo $carrera['id_carrera']; ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
-                                                </div>
+                                                 <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
+                                                     <div class="card-footer bg-transparent border-0 pt-0 text-end">
+                                                         <a href="index.php?page=materia_nueva&id=<?php echo $m['id_materia']; ?>&id_carrera_pre=<?php echo $carrera['id_carrera']; ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>
+                                                     </div>
+                                                 <?php endif; ?>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>

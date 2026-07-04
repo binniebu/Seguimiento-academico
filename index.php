@@ -32,9 +32,16 @@ switch ($page) {
         $usuario = \Dao\UsuarioDao::obtenerUsuarioPorCorreo($correo);
 
         if ($usuario && password_verify($password, $usuario["password"])) {
+            $_SESSION["id_usuario"] = $usuario["id_usuario"];
             $_SESSION["usuario"] = $usuario["nombre"];
             $_SESSION["correo"] = $usuario["correo"];
             $_SESSION["rol"] = $usuario["nombre_rol"];
+
+            if ($usuario["nombre_rol"] === "coordinador") {
+                $_SESSION["id_facultad"] = \Dao\UsuarioDao::obtenerFacultadCoordinador($usuario["id_usuario"]);
+            } else {
+                unset($_SESSION["id_facultad"]);
+            }
 
             header("Location: index.php?page=home");
             exit();
@@ -48,49 +55,89 @@ switch ($page) {
     break;
 
     case "register":
+    $errorMsg = "";
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
         require_once __DIR__ . "/src/dao/UsuarioDao.php";
-       
-
-        $nombre = $_POST["nombre"];
-        $correo = $_POST["correo"];
-        $password = $_POST["password"];
-        $rol = $_POST["rol"];
+        require_once __DIR__ . "/src/dao/SolicitudDao.php";
+        $nombre = $_POST["nombre"] ?? "";
+        $correo = $_POST["correo"] ?? "";
+        $password = $_POST["password"] ?? "";
+        $confirmPassword = $_POST["confirm_password"] ?? "";
+        $dni = $_POST["dni"] ?? "";
+        $carrera = $_POST["carrera"] ?? "";
+        $telefono = $_POST["telefono"] ?? "";
         
-        // Validar que solo pueda existir un Director en el sistema
-          if (intval($rol) === 1 && \Dao\UsuarioDao::existeDirector()) {
-           echo "<script>
-            alert('Ya existe un Director registrado. No se puede crear otro Director.');
-            window.location='index.php?page=register';
-          </script>";
-            exit();
-         }
-        $existe = \Dao\UsuarioDao::existeCorreo($correo);
+        if ($password !== $confirmPassword) {
+            $errorMsg = 'Las contraseñas no coinciden';
+        } else {
+            $existe = \Dao\UsuarioDao::existeCorreo($correo);
+            if ($existe) {
+                $errorMsg = 'Este correo ya está registrado';
+            } else {
+                // Procesar subida de archivo DNI
+                $dniPath = "";
+                if (isset($_FILES["documento_dni"]) && $_FILES["documento_dni"]["error"] === UPLOAD_ERR_OK) {
+                    $fileTmpPath = $_FILES["documento_dni"]["tmp_name"];
+                    $fileName = $_FILES["documento_dni"]["name"];
+                    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    if (in_array($fileExtension, ["pdf", "jpg", "jpeg", "png"])) {
+                        $newFileName = md5(time() . "dni_" . $fileName) . '.' . $fileExtension;
+                        $uploadDir = __DIR__ . "/public/uploads/";
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
+                        if (move_uploaded_file($fileTmpPath, $uploadDir . $newFileName)) {
+                            $dniPath = "public/uploads/" . $newFileName;
+                        }
+                    }
+                }
 
-        if ($existe) {
-            echo "<script>alert('Este correo ya está registrado'); window.location='index.php?page=register';</script>";
-            exit();
+                // Procesar subida de archivo Título
+                $tituloPath = "";
+                if (isset($_FILES["documento_titulo"]) && $_FILES["documento_titulo"]["error"] === UPLOAD_ERR_OK) {
+                    $fileTmpPath = $_FILES["documento_titulo"]["tmp_name"];
+                    $fileName = $_FILES["documento_titulo"]["name"];
+                    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    if (in_array($fileExtension, ["pdf", "jpg", "jpeg", "png"])) {
+                        $newFileName = md5(time() . "titulo_" . $fileName) . '.' . $fileExtension;
+                        $uploadDir = __DIR__ . "/public/uploads/";
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
+                        if (move_uploaded_file($fileTmpPath, $uploadDir . $newFileName)) {
+                            $tituloPath = "public/uploads/" . $newFileName;
+                        }
+                    }
+                }
+
+                if (empty($dniPath) || empty($tituloPath)) {
+                    $errorMsg = 'Debe subir obligatoriamente tanto el DNI/Identificación como el Título de respaldo (PDF, JPG, PNG).';
+                } else {
+                    $resultado = \Dao\SolicitudDao::registrarPreRegistro(
+                        $nombre,
+                        $correo,
+                        $password,
+                        $dni,
+                        $carrera,
+                        $telefono,
+                        $dniPath,
+                        $tituloPath
+                    );
+
+                    if ($resultado) {
+                        echo "<script>alert('Solicitud enviada correctamente. Su cuenta estará pendiente de aprobación por el coordinador.'); window.location='index.php?page=login';</script>";
+                        exit();
+                    } else {
+                        $errorMsg = 'Error al procesar el pre-registro.';
+                    }
+                }
+            }
         }
-
-        $idUsuario = \Dao\UsuarioDao::registrarUsuario($nombre, $correo, $password, $rol);
-
-         if (intval($rol) === 3) {
-         $cuenta = "EST-" . str_pad($idUsuario, 3, "0", STR_PAD_LEFT);
-          $carrera = "Sin asignar";
-          $telefono = "";
-
-              \Dao\UsuarioDao::registrarEstudianteDesdeUsuario(
-              $idUsuario,
-              $cuenta,
-              $carrera,
-              $telefono
-    );
-}
-
-echo "<script>alert('Usuario registrado correctamente'); window.location='index.php?page=login';</script>";
-exit();
     }
 
+    // Cargar carreras activas para el select del formulario
+    require_once __DIR__ . "/src/dao/CarreraDao.php";
+    $carrerasActivas = \Dao\CarreraDao::obtenerCarreras(false);
     require_once __DIR__ . "/src/views/templates/auth/register.view.tpl";
     break;
 
@@ -255,6 +302,13 @@ case "maestro_guardar":
             $rolesUsuario = \Dao\UsuarioDao::obtenerRolesPorCorreo($_SESSION["correo"]);
             if (in_array($nuevoRol, $rolesUsuario)) {
                 $_SESSION["rol"] = $nuevoRol;
+                
+                if ($nuevoRol === "coordinador" && isset($_SESSION["id_usuario"])) {
+                    $_SESSION["id_facultad"] = \Dao\UsuarioDao::obtenerFacultadCoordinador($_SESSION["id_usuario"]);
+                } else {
+                    unset($_SESSION["id_facultad"]);
+                }
+                
                 header("Location: index.php?page=home");
                 exit();
             }

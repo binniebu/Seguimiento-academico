@@ -9,9 +9,33 @@ use PDOException;
 
 class EstudianteDao extends Table
 {
-    public static function obtenerEstudiantes($buscar = "", $soloInactivos = false, $limit = 10, $offset = 0)
+    public static function obtenerEstudiantes($buscar = "", $estadoFiltro = "activos", $limit = 10, $offset = 0, $idFacultad = null)
     {
-        $estadoCondicion = $soloInactivos ? "LOWER(e.estado) = 'inactivo'" : "LOWER(e.estado) != 'inactivo'";
+        if (is_bool($estadoFiltro)) {
+            $estadoFiltro = $estadoFiltro ? "inactivos" : "activos";
+        }
+
+        if ($estadoFiltro === "inactivos") {
+            $estadoCondicion = "LOWER(e.estado) = 'inactivo'";
+        } elseif ($estadoFiltro === "graduados") {
+            $estadoCondicion = "LOWER(e.estado) = 'graduado'";
+        } else {
+            $estadoCondicion = "LOWER(e.estado) IN ('activo', 'admitido')";
+        }
+
+        $facultadJoin = "";
+        $facultadCondicion = "";
+        $params = array(
+            "buscar" => "%" . $buscar . "%",
+            "buscar_exacto" => $buscar
+        );
+
+        if ($idFacultad !== null) {
+            $facultadJoin = " INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR)) ";
+            $facultadCondicion = " AND c.id_facultad = :id_facultad ";
+            $params["id_facultad"] = $idFacultad;
+        }
+
         $sqlstr = "SELECT 
                         e.id_estudiante,
                         e.id_usuario,
@@ -23,36 +47,58 @@ class EstudianteDao extends Table
                         e.estado
                    FROM estudiantes e
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                   $facultadJoin
                     WHERE (u.nombre LIKE :buscar
                        OR u.correo LIKE :buscar
                        OR e.cuenta LIKE :buscar
                        OR CAST(e.id_estudiante AS CHAR) = :buscar_exacto)
                        AND $estadoCondicion
+                       $facultadCondicion
                     ORDER BY e.id_estudiante DESC
                     LIMIT " . intval($limit) . " OFFSET " . intval($offset);
 
-        return self::obtenerRegistros($sqlstr, array(
-            "buscar" => "%" . $buscar . "%",
-            "buscar_exacto" => $buscar
-        ));
+        return self::obtenerRegistros($sqlstr, $params);
     }
 
-    public static function obtenerTotalEstudiantes($buscar = "", $soloInactivos = false)
+    public static function obtenerTotalEstudiantes($buscar = "", $estadoFiltro = "activos", $idFacultad = null)
     {
-        $estadoCondicion = $soloInactivos ? "LOWER(e.estado) = 'inactivo'" : "LOWER(e.estado) != 'inactivo'";
+        if (is_bool($estadoFiltro)) {
+            $estadoFiltro = $estadoFiltro ? "inactivos" : "activos";
+        }
+
+        if ($estadoFiltro === "inactivos") {
+            $estadoCondicion = "LOWER(e.estado) = 'inactivo'";
+        } elseif ($estadoFiltro === "graduados") {
+            $estadoCondicion = "LOWER(e.estado) = 'graduado'";
+        } else {
+            $estadoCondicion = "LOWER(e.estado) IN ('activo', 'admitido')";
+        }
+
+        $facultadJoin = "";
+        $facultadCondicion = "";
+        $params = array(
+            "buscar" => "%" . $buscar . "%",
+            "buscar_exacto" => $buscar
+        );
+
+        if ($idFacultad !== null) {
+            $facultadJoin = " INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR)) ";
+            $facultadCondicion = " AND c.id_facultad = :id_facultad ";
+            $params["id_facultad"] = $idFacultad;
+        }
+
         $sqlstr = "SELECT COUNT(*) as total
                    FROM estudiantes e
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                   $facultadJoin
                    WHERE (u.nombre LIKE :buscar
                       OR u.correo LIKE :buscar
                       OR e.cuenta LIKE :buscar
                       OR CAST(e.id_estudiante AS CHAR) = :buscar_exacto)
-                      AND $estadoCondicion";
+                      AND $estadoCondicion
+                      $facultadCondicion";
 
-        $res = self::obtenerUnRegistro($sqlstr, array(
-            "buscar" => "%" . $buscar . "%",
-            "buscar_exacto" => $buscar
-        ));
+        $res = self::obtenerUnRegistro($sqlstr, $params);
         return intval($res['total'] ?? 0);
     }
 

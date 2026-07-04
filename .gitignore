@@ -2,7 +2,7 @@
 
 .vscode/
 
-.parameters.env
+parameters.env
 
 *.log
 
@@ -11,3 +11,4 @@ Thumbs.db
 
 /debug_maestros.php
 /insert_maestro.php
+/public/uploads/

@@ -14,7 +14,9 @@
         <?php require_once __DIR__ . "/../sidebar.view.tpl"; ?>
 
         <?php
-        $verInactivos = ($_GET['ver'] ?? '') === 'inactivos';
+        $ver = $_GET['ver'] ?? 'activos';
+        $verInactivos = ($ver === 'inactivos');
+        $verGraduados = ($ver === 'graduados');
         ?>
         <main role="main" class="col-md-10 ml-sm-auto px-md-4 py-4">
             <div class="main-content-card">
@@ -23,18 +25,26 @@
                         <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn">
                             <i class="bi bi-list"></i>
                         </button>
-                        <h1 class="h2 page-title mb-0"><?php echo $verInactivos ? 'Gestión de Estudiantes - Bajas / Reingresos' : 'Gestión de Estudiantes'; ?></h1>
+                        <h1 class="h2 page-title mb-0">
+                            <?php 
+                                if ($ver === 'inactivos') echo 'Gestión de Estudiantes - Bajas / Reingresos';
+                                elseif ($ver === 'graduados') echo 'Gestión de Estudiantes - Graduados';
+                                else echo 'Gestión de Estudiantes';
+                            ?>
+                        </h1>
                     </div>
-                    <div class="d-flex gap-2">
-                        <?php if ($verInactivos): ?>
-                            <a href="index.php?page=estudiantes" class="btn btn-outline-primary">
-                                <i class="bi bi-people-fill"></i> Ver Estudiantes Activos
-                            </a>
-                        <?php else: ?>
-                            <a href="index.php?page=estudiantes&ver=inactivos" class="btn btn-outline-secondary">
-                                <i class="bi bi-person-slash"></i> Ver Bajas / Reingresos
-                            </a>
-                            <a href="index.php?page=estudiante_nuevo" class="btn btn-primary">
+                    <div class="d-flex gap-2 align-items-center">
+                        <a href="index.php?page=estudiantes" class="btn btn-sm <?php echo ($ver === 'activos') ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                            <i class="bi bi-people-fill"></i> Activos
+                        </a>
+                        <a href="index.php?page=estudiantes&ver=graduados" class="btn btn-sm <?php echo ($ver === 'graduados') ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                            <i class="bi bi-mortarboard-fill"></i> Graduados
+                        </a>
+                        <a href="index.php?page=estudiantes&ver=inactivos" class="btn btn-sm <?php echo ($ver === 'inactivos') ? 'btn-primary' : 'btn-outline-secondary'; ?>">
+                            <i class="bi bi-person-slash"></i> Bajas / Reingresos
+                        </a>
+                        <?php if ($ver === 'activos'): ?>
+                            <a href="index.php?page=estudiante_nuevo" class="btn btn-sm btn-success ms-2">
                                 <i class="bi bi-plus-circle"></i> Nuevo Estudiante
                             </a>
                         <?php endif; ?>
@@ -44,8 +54,8 @@
                 <div class="mb-4">
                     <form method="GET" action="index.php" class="d-flex gap-2">
                         <input type="hidden" name="page" value="estudiantes">
-                        <?php if ($verInactivos): ?>
-                            <input type="hidden" name="ver" value="inactivos">
+                        <?php if ($ver !== 'activos'): ?>
+                            <input type="hidden" name="ver" value="<?php echo htmlspecialchars($ver); ?>">
                         <?php endif; ?>
                         <input type="text" name="buscar" class="form-control" placeholder="Buscar por nombre, correo o cuenta..."
                                value="<?php echo htmlspecialchars($_GET['buscar'] ?? ''); ?>">
@@ -53,7 +63,7 @@
                             <i class="bi bi-search"></i> Buscar
                         </button>
                         <?php if (!empty($_GET['buscar'])): ?>
-                            <a href="index.php?page=estudiantes<?php echo $verInactivos ? '&ver=inactivos' : ''; ?>" class="btn btn-outline-danger">
+                            <a href="index.php?page=estudiantes<?php echo ($ver !== 'activos') ? '&ver=' . urlencode($ver) : ''; ?>" class="btn btn-outline-danger">
                                 <i class="bi bi-x-circle"></i> Limpiar
                             </a>
                         <?php endif; ?>
@@ -70,7 +80,10 @@
             $limit = 5; // 5 estudiantes por página
             $offset = ($p - 1) * $limit;
 
-            $totalEstudiantes = \Dao\EstudianteDao::obtenerTotalEstudiantes($buscar, $verInactivos);
+            // Determinar si es coordinador para filtrar por su facultad
+            $idFacultad = ($_SESSION["rol"] === "coordinador") ? ($_SESSION["id_facultad"] ?? null) : null;
+
+            $totalEstudiantes = \Dao\EstudianteDao::obtenerTotalEstudiantes($buscar, $ver, $idFacultad);
             $totalPages = ceil($totalEstudiantes / $limit);
             if ($totalPages < 1) $totalPages = 1;
             if ($p > $totalPages) {
@@ -78,7 +91,7 @@
                 $offset = ($p - 1) * $limit;
             }
 
-            $estudiantes = \Dao\EstudianteDao::obtenerEstudiantes($buscar, $verInactivos, $limit, $offset);
+            $estudiantes = \Dao\EstudianteDao::obtenerEstudiantes($buscar, $ver, $limit, $offset, $idFacultad);
 
             if (!empty($estudiantes)): ?>
                 <div class="table-responsive">
@@ -120,12 +133,14 @@
                                      </td>
                                       <td class="actions-cell">
                                          <div class="d-flex flex-column gap-1">
-                                            <?php if ($verInactivos): ?>
+                                            <?php if ($ver === 'inactivos'): ?>
                                                 <a href="index.php?page=estudiantes&ver=inactivos&accion=activar&id=<?php echo $estudiante['id_estudiante']; ?>"
                                                    class="btn btn-sm btn-success"
                                                    onclick="return confirm('¿Estás seguro de que deseas reactivar este estudiante?');">
                                                     <i class="bi bi-person-check"></i> Activar Cuenta
                                                 </a>
+                                            <?php elseif ($ver === 'graduados'): ?>
+                                                <span class="text-muted small text-center">Sin acciones</span>
                                             <?php else: ?>
                                                  <a href="index.php?page=estudiante_nuevo&id=<?php echo $estudiante['id_estudiante']; ?>"
                                                     class="btn btn-sm btn-warning">
@@ -153,7 +168,7 @@
                             <!-- Anterior -->
                             <li class="page-item <?php echo $p <= 1 ? 'disabled' : ''; ?>">
                                 <a class="page-link" href="index.php?page=estudiantes<?php 
-                                    echo ($verInactivos ? '&ver=inactivos' : '') . 
+                                    echo ($ver !== 'activos' ? '&ver=' . urlencode($ver) : '') . 
                                          ($buscar !== '' ? '&buscar=' . urlencode($buscar) : '') . 
                                          '&p=' . ($p - 1); 
                                 ?>" aria-label="Anterior">
@@ -165,7 +180,7 @@
                             <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                                 <li class="page-item <?php echo $p === $i ? 'active' : ''; ?>">
                                     <a class="page-link" href="index.php?page=estudiantes<?php 
-                                        echo ($verInactivos ? '&ver=inactivos' : '') . 
+                                        echo ($ver !== 'activos' ? '&ver=' . urlencode($ver) : '') . 
                                              ($buscar !== '' ? '&buscar=' . urlencode($buscar) : '') . 
                                              '&p=' . $i; 
                                     ?>">
@@ -177,7 +192,7 @@
                             <!-- Siguiente -->
                             <li class="page-item <?php echo $p >= $totalPages ? 'disabled' : ''; ?>">
                                 <a class="page-link" href="index.php?page=estudiantes<?php 
-                                    echo ($verInactivos ? '&ver=inactivos' : '') . 
+                                    echo ($ver !== 'activos' ? '&ver=' . urlencode($ver) : '') . 
                                          ($buscar !== '' ? '&buscar=' . urlencode($buscar) : '') . 
                                          '&p=' . ($p + 1); 
                                 ?>" aria-label="Siguiente">
@@ -191,8 +206,10 @@
                 <div class="alert alert-info">
                     <?php if ($buscar !== ''): ?>
                         No se encontraron estudiantes que coincidan con la búsqueda: "<strong><?php echo htmlspecialchars($buscar); ?></strong>".
-                    <?php elseif ($verInactivos): ?>
+                    <?php elseif ($ver === 'inactivos'): ?>
                         No hay estudiantes de baja o suspendidos en este momento.
+                    <?php elseif ($ver === 'graduados'): ?>
+                        No hay estudiantes graduados registrados en este momento.
                     <?php else: ?>
                         No hay estudiantes activos registrados. <a href="index.php?page=estudiante_nuevo" class="alert-link">Registrar uno nuevo</a>
                     <?php endif; ?>

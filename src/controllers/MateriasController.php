@@ -130,7 +130,22 @@ class MateriasController
      */
     public static function verFlujograma()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
         $id_carrera = $_GET['id'] ?? null;
+        
+        // Bloquear si el coordinador intenta ver otra carrera fuera de su facultad
+        if (isset($_SESSION["rol"]) && $_SESSION["rol"] === "coordinador") {
+            require_once __DIR__ . "/../dao/CarreraDao.php";
+            $carreraContext = \Dao\CarreraDao::obtenerCarreraPorId($id_carrera);
+            if (!$carreraContext || $carreraContext["id_facultad"] != ($_SESSION["id_facultad"] ?? null)) {
+                echo "<script>alert('No tiene permiso para gestionar el flujograma de esta carrera'); window.location='index.php?page=carreras';</script>";
+                exit();
+            }
+        }
+
         if (!$id_carrera) {
             header("Location: index.php?page=carreras");
             exit;
