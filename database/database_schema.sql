@@ -188,14 +188,14 @@ INSERT INTO materias (id_materia, codigo, nombre, descripcion, creditos, periodo
 
 -- Inserción del Director Ramos (Contraseña: '123456' encriptada)
 INSERT INTO usuarios (id_usuario, nombre, correo, password, id_rol, estado) VALUES
-(15, 'Director Ramos', 'ramos11@gmail.com', '$2y$10$w0d1gB4.yXJ4x3mYc40qTOrC.527p0aG27/N3fS3q0nfeE9K9W94G', 1, 'activo');
+(15, 'Director Ramos', 'ramos11@gmail.com', '$2y$10$GWAc6HK.BZkAezb3rt3ACOzSkdQlp1cUhqIUgKKz23lSt90Q3EVs2', 1, 'activo');
 
 INSERT INTO usuarios_roles (id_usuario, id_rol) VALUES
 (15, 1);
 
 -- Inserción de Juan Delarca (Coordinador de Ingeniería, Contraseña: '123456' encriptada)
 INSERT INTO usuarios (id_usuario, nombre, correo, password, id_rol, estado, titulo) VALUES
-(13, 'Juan Delarca', 'delarca@gmail.com', '$2y$10$w0d1gB4.yXJ4x3mYc40qTOrC.527p0aG27/N3fS3q0nfeE9K9W94G', 4, 'activo', 'Ingeniero de Software y Doctor en Computación');
+(13, 'Juan Delarca', 'delarca@gmail.com', '$2y$10$GWAc6HK.BZkAezb3rt3ACOzSkdQlp1cUhqIUgKKz23lSt90Q3EVs2', 4, 'activo', 'Ingeniero de Software y Doctor en Computación');
 
 INSERT INTO usuarios_roles (id_usuario, id_rol) VALUES
 (13, 4);
@@ -206,7 +206,7 @@ INSERT INTO coordinadores (id_usuario, id_facultad) VALUES
 
 -- Inserción de un Maestro de Prueba (Contraseña: '123456' encriptada)
 INSERT INTO usuarios (id_usuario, nombre, correo, password, id_rol, estado, titulo) VALUES
-(14, 'Carlos Fuentes', 'cfuentes@gmail.com', '$2y$10$w0d1gB4.yXJ4x3mYc40qTOrC.527p0aG27/N3fS3q0nfeE9K9W94G', 2, 'activo', 'Licenciado en Matemáticas Puras');
+(14, 'Carlos Fuentes', 'cfuentes@gmail.com', '$2y$10$GWAc6HK.BZkAezb3rt3ACOzSkdQlp1cUhqIUgKKz23lSt90Q3EVs2', 2, 'activo', 'Licenciado en Matemáticas Puras');
 
 INSERT INTO usuarios_roles (id_usuario, id_rol) VALUES
 (14, 2);
