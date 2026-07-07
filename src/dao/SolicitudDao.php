@@ -10,10 +10,10 @@ class SolicitudDao extends Table
     public static function obtenerSolicitudesPendientes()
     {
         $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
-                          e.cuenta as dni, e.carrera, e.telefono
+                          e.cuenta as dni, e.carrera, e.telefono, e.estado as estado_estudiante
                    FROM usuarios u
                    INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
-                   WHERE u.estado = 'pendiente' 
+                   WHERE u.estado = 'pendiente'
                    ORDER BY u.id_usuario DESC";
         return self::obtenerRegistros($sqlstr);
     }
@@ -21,11 +21,11 @@ class SolicitudDao extends Table
     public static function obtenerSolicitudesPendientesPorFacultad($id_facultad)
     {
         $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
-                          e.cuenta as dni, e.carrera, e.telefono
+                          e.cuenta as dni, e.carrera, e.telefono, e.estado as estado_estudiante
                    FROM usuarios u
                    INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
                    INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
-                   WHERE u.estado = 'pendiente' 
+                   WHERE u.estado = 'pendiente'
                      AND c.id_facultad = :id_facultad
                    ORDER BY u.id_usuario DESC";
         return self::obtenerRegistros($sqlstr, ["id_facultad" => $id_facultad]);
@@ -34,11 +34,27 @@ class SolicitudDao extends Table
     public static function obtenerSolicitudPorId($idUsuario)
     {
         $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
-                          e.cuenta as dni, e.carrera, e.telefono
+                          e.cuenta as dni, e.carrera, e.telefono, e.estado as estado_estudiante
                    FROM usuarios u
                    INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
                    WHERE u.id_usuario = :id_usuario AND u.estado = 'pendiente'";
         return self::obtenerUnRegistro($sqlstr, ["id_usuario" => $idUsuario]);
+    }
+
+    public static function obtenerSolicitudPorIdYFacultad($idUsuario, $id_facultad)
+    {
+        $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
+                          e.cuenta as dni, e.carrera, e.telefono, e.estado as estado_estudiante
+                   FROM usuarios u
+                   INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
+                   INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
+                   WHERE u.id_usuario = :id_usuario
+                     AND u.estado = 'pendiente'
+                     AND c.id_facultad = :id_facultad";
+        return self::obtenerUnRegistro($sqlstr, [
+            "id_usuario" => $idUsuario,
+            "id_facultad" => $id_facultad
+        ]);
     }
 
     public static function registrarPreRegistro($nombre, $correo, $password, $dni, $carrera, $telefono, $documentoDni, $documentoTitulo)
@@ -47,8 +63,7 @@ class SolicitudDao extends Table
         try {
             $conn->beginTransaction();
 
-            // 1. Crear registro en usuarios (estado pendiente)
-            $sqlUsuario = "INSERT INTO usuarios (nombre, correo, password, id_rol, estado, documento_dni, documento_titulo) 
+            $sqlUsuario = "INSERT INTO usuarios (nombre, correo, password, id_rol, estado, documento_dni, documento_titulo)
                            VALUES (:nombre, :correo, :password, 3, 'pendiente', :documento_dni, :documento_titulo)";
             $stmtUsuario = $conn->prepare($sqlUsuario);
             $stmtUsuario->execute([
@@ -61,8 +76,7 @@ class SolicitudDao extends Table
 
             $idUsuario = $conn->lastInsertId();
 
-            // 2. Crear registro en estudiantes (estado 'pendiente' y usando el DNI como número de cuenta)
-            $sqlEstudiante = "INSERT INTO estudiantes (id_usuario, cuenta, carrera, telefono, estado) 
+            $sqlEstudiante = "INSERT INTO estudiantes (id_usuario, cuenta, carrera, telefono, estado)
                               VALUES (:id_usuario, :cuenta, :carrera, :telefono, 'pendiente')";
             $stmtEstudiante = $conn->prepare($sqlEstudiante);
             $stmtEstudiante->execute([
@@ -75,7 +89,9 @@ class SolicitudDao extends Table
             $conn->commit();
             return true;
         } catch (\Throwable $ex) {
-            $conn->rollBack();
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
             return false;
         }
     }
@@ -86,17 +102,14 @@ class SolicitudDao extends Table
         try {
             $conn->beginTransaction();
 
-            // 1. Activar el usuario
-            $sqlstr1 = "UPDATE usuarios SET estado = 'activo' WHERE id_usuario = :id_usuario";
+            $sqlstr1 = "UPDATE usuarios SET estado = 'activo' WHERE id_usuario = :id_usuario AND estado = 'pendiente'";
             $stmt1 = $conn->prepare($sqlstr1);
             $stmt1->execute(["id_usuario" => $idUsuario]);
 
-            // 2. Asociar el rol en usuarios_roles (3 = estudiante)
-            $sqlstr2 = "INSERT INTO usuarios_roles (id_usuario, id_rol) VALUES (:id_usuario, 3)";
+            $sqlstr2 = "INSERT IGNORE INTO usuarios_roles (id_usuario, id_rol) VALUES (:id_usuario, 3)";
             $stmt2 = $conn->prepare($sqlstr2);
             $stmt2->execute(["id_usuario" => $idUsuario]);
 
-            // 3. Cambiar estado en la tabla de estudiantes a 'Admitido'
             $sqlstr3 = "UPDATE estudiantes SET estado = 'Admitido' WHERE id_usuario = :id_usuario";
             $stmt3 = $conn->prepare($sqlstr3);
             $stmt3->execute(["id_usuario" => $idUsuario]);
@@ -104,7 +117,9 @@ class SolicitudDao extends Table
             $conn->commit();
             return true;
         } catch (\Throwable $ex) {
-            $conn->rollBack();
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
             return false;
         }
     }
@@ -113,23 +128,70 @@ class SolicitudDao extends Table
     {
         $conn = self::getConn();
         try {
+            $solicitud = self::obtenerSolicitudPorId($idUsuario);
+            if (!$solicitud) {
+                return false;
+            }
+
             $conn->beginTransaction();
 
-            // 1. Eliminar de estudiantes (si existe)
             $sqlEst = "DELETE FROM estudiantes WHERE id_usuario = :id_usuario";
             $stmtEst = $conn->prepare($sqlEst);
             $stmtEst->execute(["id_usuario" => $idUsuario]);
 
-            // 2. Eliminar de usuarios
+            $sqlRoles = "DELETE FROM usuarios_roles WHERE id_usuario = :id_usuario";
+            $stmtRoles = $conn->prepare($sqlRoles);
+            $stmtRoles->execute(["id_usuario" => $idUsuario]);
+
             $sqlUsr = "DELETE FROM usuarios WHERE id_usuario = :id_usuario AND estado = 'pendiente'";
             $stmtUsr = $conn->prepare($sqlUsr);
             $stmtUsr->execute(["id_usuario" => $idUsuario]);
 
             $conn->commit();
+
+            self::eliminarArchivoSubido($solicitud["documento_dni"] ?? "");
+            self::eliminarArchivoSubido($solicitud["documento_titulo"] ?? "");
+
             return true;
         } catch (\Throwable $ex) {
-            $conn->rollBack();
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
             return false;
         }
     }
+
+    private static function eliminarArchivoSubido(?string $rutaRelativa): bool
+    {
+        if (empty($rutaRelativa)) {
+            return true;
+        }
+
+        $rutaRelativa = ltrim(str_replace("\\", "/", $rutaRelativa), "/");
+        $raizProyecto = realpath(__DIR__ . "/../..");
+
+        if (!$raizProyecto) {
+            return false;
+        }
+
+        $directorioUploads = realpath($raizProyecto . "/public/uploads");
+        if (!$directorioUploads) {
+            return false;
+        }
+
+        $rutaArchivo = realpath($raizProyecto . "/" . $rutaRelativa);
+        if (!$rutaArchivo) {
+            return true;
+        }
+
+        $rutaArchivoNormalizada = strtolower(str_replace("\\", "/", $rutaArchivo));
+        $uploadsNormalizado = strtolower(str_replace("\\", "/", $directorioUploads));
+
+        if (strpos($rutaArchivoNormalizada, $uploadsNormalizado . "/") !== 0) {
+            return false;
+        }
+
+        return is_file($rutaArchivo) ? unlink($rutaArchivo) : true;
+    }
 }
+
