@@ -5,6 +5,8 @@ namespace Dao;
 require_once __DIR__ . "/Dao.php";
 require_once __DIR__ . "/Table.php";
 
+use Throwable;
+
 class UsuarioDao extends Table
 {
    public static function registrarUsuario($nombre, $correo, $password, $idRol)
@@ -208,6 +210,224 @@ public static function obtenerFacultadCoordinador($id_usuario)
     $sqlstr = "SELECT id_facultad FROM coordinadores WHERE id_usuario = :id_usuario LIMIT 1";
     $result = self::obtenerUnRegistro($sqlstr, array("id_usuario" => $id_usuario));
     return $result ? intval($result["id_facultad"]) : null;
+}
+
+public static function getDashboardDirector()
+{
+    return array(
+        "total_estudiantes_activos" => self::safeScalar(
+            "SELECT COUNT(*) AS total
+             FROM estudiantes e
+             INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+             WHERE u.estado = 'activo'
+               AND COALESCE(e.estado, 'Admitido') NOT IN ('Bloqueado', 'Inactivo', 'inactivo')"
+        ),
+        "total_docentes_activos" => self::safeScalar(
+            "SELECT COUNT(*) AS total
+             FROM maestros m
+             INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
+             WHERE u.estado = 'activo'"
+        ),
+        "solicitudes_pendientes" => self::safeScalar(
+            "SELECT COUNT(*) AS total
+             FROM usuarios u
+             INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
+             WHERE u.estado = 'pendiente'"
+        )
+    );
+}
+
+public static function getDashboardCoordinador($idFacultad)
+{
+    if (empty($idFacultad)) {
+        return array(
+            "estudiantes_matriculados" => 0,
+            "secciones_activas" => 0,
+            "secciones_cupo_bajo" => array()
+        );
+    }
+
+    return array(
+        "estudiantes_matriculados" => self::safeScalar(
+            "SELECT COUNT(DISTINCT mt.id_estudiante) AS total
+             FROM matriculas mt
+             INNER JOIN estudiantes e ON mt.id_estudiante = e.id_estudiante
+             INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
+             INNER JOIN periodos_academicos p ON mt.id_periodo = p.id_periodo AND p.estado = 'activo'
+             WHERE c.id_facultad = :id_facultad",
+            array("id_facultad" => intval($idFacultad))
+        ),
+        "secciones_activas" => self::safeScalar(
+            "SELECT COUNT(*) AS total
+             FROM secciones s
+             INNER JOIN materias m ON s.id_materia = m.id_materia
+             LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
+             INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo AND p.estado = 'activo'
+             WHERE s.estado = 'Activa'
+               AND (
+                    m.tipo_materia = 'institucional'
+                    OR m.id_facultad = :id_facultad
+                    OR c.id_facultad = :id_facultad
+               )",
+            array("id_facultad" => intval($idFacultad))
+        ),
+        "secciones_cupo_bajo" => self::safeRows(
+            "SELECT s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin,
+                    s.cupo_maximo, m.nombre AS materia,
+                    COUNT(mt.id_matricula) AS inscritos,
+                    GREATEST(s.cupo_maximo - COUNT(mt.id_matricula), 0) AS cupos_disponibles
+             FROM secciones s
+             INNER JOIN materias m ON s.id_materia = m.id_materia
+             LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
+             INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo AND p.estado = 'activo'
+             LEFT JOIN matriculas mt ON s.id_seccion = mt.id_seccion
+             WHERE s.estado = 'Activa'
+               AND (
+                    m.tipo_materia = 'institucional'
+                    OR m.id_facultad = :id_facultad
+                    OR c.id_facultad = :id_facultad
+               )
+             GROUP BY s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin, s.cupo_maximo, m.nombre
+             HAVING cupos_disponibles < 5
+             ORDER BY cupos_disponibles ASC, m.nombre ASC
+             LIMIT 6",
+            array("id_facultad" => intval($idFacultad))
+        )
+    );
+}
+
+public static function getDashboardMaestro($correo)
+{
+    return array(
+        "secciones" => self::safeRows(
+            "SELECT s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin,
+                    s.cupo_maximo, s.estado, m.codigo AS codigo_materia, m.nombre AS materia,
+                    COUNT(mt.id_matricula) AS inscritos
+             FROM maestros ma
+             INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
+             INNER JOIN secciones s ON ma.id_maestro = s.id_maestro
+             INNER JOIN materias m ON s.id_materia = m.id_materia
+             INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo AND p.estado = 'activo'
+             LEFT JOIN matriculas mt ON s.id_seccion = mt.id_seccion
+             WHERE u.correo = :correo
+               AND s.estado IN ('Activa', 'Borrador')
+             GROUP BY s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin, s.cupo_maximo, s.estado, m.codigo, m.nombre
+             ORDER BY s.dias ASC, s.hora_inicio ASC",
+            array("correo" => $correo)
+        )
+    );
+}
+
+public static function getDashboardEstudiante($correo)
+{
+    $estudiante = self::safeOne(
+        "SELECT e.id_estudiante, e.carrera
+         FROM estudiantes e
+         INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+         WHERE u.correo = :correo
+         LIMIT 1",
+        array("correo" => $correo)
+    );
+
+    if (!$estudiante) {
+        return array(
+            "promedio_global" => 0,
+            "uv_matriculadas" => 0,
+            "horario" => array(),
+            "avance_plan" => 0,
+            "materias_aprobadas" => 0,
+            "materias_plan" => 0
+        );
+    }
+
+    $idEstudiante = intval($estudiante["id_estudiante"]);
+
+    $promedio = self::safeScalar(
+        "SELECT ROUND(AVG(c.nota), 2) AS total
+         FROM calificaciones c
+         INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
+         WHERE mt.id_estudiante = :id_estudiante",
+        array("id_estudiante" => $idEstudiante)
+    );
+
+    $uvMatriculadas = self::safeScalar(
+        "SELECT COALESCE(SUM(m.creditos), 0) AS total
+         FROM matriculas mt
+         INNER JOIN secciones s ON mt.id_seccion = s.id_seccion
+         INNER JOIN materias m ON s.id_materia = m.id_materia
+         INNER JOIN periodos_academicos p ON mt.id_periodo = p.id_periodo AND p.estado = 'activo'
+         WHERE mt.id_estudiante = :id_estudiante",
+        array("id_estudiante" => $idEstudiante)
+    );
+
+    $horario = self::safeRows(
+        "SELECT m.codigo, m.nombre AS materia, s.aula, s.dias, s.hora_inicio, s.hora_fin
+         FROM matriculas mt
+         INNER JOIN secciones s ON mt.id_seccion = s.id_seccion
+         INNER JOIN materias m ON s.id_materia = m.id_materia
+         INNER JOIN periodos_academicos p ON mt.id_periodo = p.id_periodo AND p.estado = 'activo'
+         WHERE mt.id_estudiante = :id_estudiante
+         ORDER BY s.dias ASC, s.hora_inicio ASC",
+        array("id_estudiante" => $idEstudiante)
+    );
+
+    $materiasPlan = self::safeScalar(
+        "SELECT COUNT(*) AS total
+         FROM materias m
+         LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
+         WHERE m.estado = 'activa'
+           AND (
+                m.tipo_materia = 'institucional'
+                OR c.nombre_carrera = :carrera
+                OR CAST(c.id_carrera AS CHAR) = CAST(:carrera AS CHAR)
+           )",
+        array("carrera" => $estudiante["carrera"])
+    );
+
+    $materiasAprobadas = self::safeScalar(
+        "SELECT COUNT(DISTINCT s.id_materia) AS total
+         FROM calificaciones c
+         INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
+         INNER JOIN secciones s ON mt.id_seccion = s.id_seccion
+         WHERE mt.id_estudiante = :id_estudiante
+           AND c.nota >= 65",
+        array("id_estudiante" => $idEstudiante)
+    );
+
+    $avance = $materiasPlan > 0 ? round(($materiasAprobadas / $materiasPlan) * 100) : 0;
+
+    return array(
+        "promedio_global" => $promedio,
+        "uv_matriculadas" => $uvMatriculadas,
+        "horario" => $horario,
+        "avance_plan" => min(100, intval($avance)),
+        "materias_aprobadas" => $materiasAprobadas,
+        "materias_plan" => $materiasPlan
+    );
+}
+
+private static function safeScalar($sqlstr, $params = array())
+{
+    $registro = self::safeOne($sqlstr, $params);
+    return $registro ? floatval($registro["total"] ?? 0) : 0;
+}
+
+private static function safeOne($sqlstr, $params = array())
+{
+    try {
+        return self::obtenerUnRegistro($sqlstr, $params);
+    } catch (Throwable $ex) {
+        return false;
+    }
+}
+
+private static function safeRows($sqlstr, $params = array())
+{
+    try {
+        return self::obtenerRegistros($sqlstr, $params);
+    } catch (Throwable $ex) {
+        return array();
+    }
 }
 }
 ?>
