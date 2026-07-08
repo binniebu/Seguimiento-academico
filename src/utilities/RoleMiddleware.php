@@ -49,6 +49,7 @@ class RoleMiddleware
                 "maestros",
                 "maestro_nuevo",
                 "maestro_guardar",
+                "maestro_actualizar",
                 "maestro_editar",
                 "maestro_eliminar",
                 "materias",

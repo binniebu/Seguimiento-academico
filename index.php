@@ -201,6 +201,7 @@ break;
         break;
 
   // Maestros
+  // Maestros
 
     case "maestros":
 
@@ -230,6 +231,11 @@ break;
     case "maestro_guardar":
         require_once __DIR__ . "/src/controllers/MaestrosController.php";
         \Controllers\MaestrosController::guardar();
+        break;
+
+    case "maestro_actualizar":
+        require_once __DIR__ . "/src/controllers/MaestrosController.php";
+        \Controllers\MaestrosController::actualizar();
         break;
     
     // Materias

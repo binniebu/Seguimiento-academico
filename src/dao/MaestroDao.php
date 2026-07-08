@@ -21,6 +21,7 @@ class MaestroDao extends Table
                     u.id_usuario, 
                     u.nombre, 
                     u.correo, 
+                    u.documento_dni,
                     u.titulo, 
                     u.estado
                 FROM maestros m
@@ -38,9 +39,11 @@ class MaestroDao extends Table
     {
         $sql = "SELECT
                     c.id_coordinador,
+                    c.id_facultad,
                     u.id_usuario,
                     u.nombre,
                     u.correo,
+                    u.documento_dni,
                     u.titulo,
                     u.estado,
                     f.nombre_facultad
@@ -52,6 +55,85 @@ class MaestroDao extends Table
                 ORDER BY u.nombre";
 
         return self::obtenerRegistros($sql);
+    }
+
+    //====================================
+    // OBTENER UN MAESTRO (para editar)
+    //====================================
+
+    public static function obtenerMaestroPorId($id)
+    {
+        $sql = "SELECT
+                    m.id_maestro,
+                    m.numero_empleado,
+                    m.telefono,
+                    u.id_usuario,
+                    u.nombre,
+                    u.correo,
+                    u.documento_dni,
+                    u.titulo,
+                    u.estado
+                FROM maestros m
+                INNER JOIN usuarios u
+                    ON m.id_usuario = u.id_usuario
+                WHERE m.id_maestro = :id";
+
+        return self::obtenerUnRegistro($sql, ["id" => $id]);
+    }
+
+    //====================================
+    // OBTENER UN COORDINADOR (para editar)
+    //====================================
+
+    public static function obtenerCoordinadorPorId($id)
+    {
+        $sql = "SELECT
+                    c.id_coordinador,
+                    c.id_facultad,
+                    u.id_usuario,
+                    u.nombre,
+                    u.correo,
+                    u.documento_dni,
+                    u.titulo,
+                    u.estado
+                FROM coordinadores c
+                INNER JOIN usuarios u
+                    ON c.id_usuario = u.id_usuario
+                WHERE c.id_coordinador = :id";
+
+        return self::obtenerUnRegistro($sql, ["id" => $id]);
+    }
+
+    //====================================
+    // LISTAR FACULTADES (para el select)
+    //====================================
+
+    public static function obtenerFacultades()
+    {
+        $sql = "SELECT id_facultad, nombre_facultad
+                FROM facultades
+                ORDER BY nombre_facultad";
+
+        return self::obtenerRegistros($sql);
+    }
+
+    //====================================
+    // VERIFICAR SI EL MAESTRO TIENE CLASES
+    // EN EL PERIODO ACTIVO
+    //====================================
+
+    public static function tieneClasesActivas($idMaestro)
+    {
+        $sql = "SELECT COUNT(*) AS total
+                FROM secciones s
+                INNER JOIN periodos_academicos p
+                    ON s.id_periodo = p.id_periodo
+                WHERE s.id_maestro = :id_maestro
+                  AND p.estado = 'activo'";
+
+        $resultado = self::obtenerUnRegistro($sql, ["id_maestro" => $idMaestro]);
+
+        return $resultado && (int)$resultado["total"] > 0;
     }
 
     //====================================
@@ -67,6 +149,7 @@ class MaestroDao extends Table
                     u.id_usuario,
                     u.nombre,
                     u.correo,
+                    u.documento_dni,
                     u.titulo,
                     u.estado
                 FROM maestros m
@@ -76,6 +159,7 @@ class MaestroDao extends Table
                     u.nombre LIKE :buscar
                     OR u.correo LIKE :buscar
                     OR m.numero_empleado LIKE :buscar
+                    OR u.documento_dni LIKE :buscar
                 ORDER BY u.nombre";
 
         return self::obtenerRegistros(
@@ -94,9 +178,11 @@ class MaestroDao extends Table
     {
         $sql = "SELECT
                     c.id_coordinador,
+                    c.id_facultad,
                     u.id_usuario,
                     u.nombre,
                     u.correo,
+                    u.documento_dni,
                     u.titulo,
                     u.estado,
                     f.nombre_facultad
@@ -109,6 +195,7 @@ class MaestroDao extends Table
                     u.nombre LIKE :buscar
                     OR u.correo LIKE :buscar
                     OR f.nombre_facultad LIKE :buscar
+                    OR u.documento_dni LIKE :buscar
                 ORDER BY u.nombre";
 
         return self::obtenerRegistros(
@@ -135,6 +222,7 @@ class MaestroDao extends Table
             (
                 nombre,
                 correo,
+                documento_dni,
                 password,
                 id_rol,
                 estado,
@@ -144,6 +232,7 @@ class MaestroDao extends Table
             (
                 :nombre,
                 :correo,
+                :dni,
                 :password,
                 :id_rol,
                 'activo',
@@ -155,6 +244,7 @@ class MaestroDao extends Table
                 [
                     "nombre" => $data["nombre"],
                     "correo" => $data["correo"],
+                    "dni" => $data["dni"],
                     "password" => password_hash($data["password"], PASSWORD_DEFAULT),
                     "id_rol" => $data["id_rol"],
                     "titulo" => $data["titulo"]
@@ -229,6 +319,110 @@ class MaestroDao extends Table
 
         }
 
+    }
+
+    //====================================
+    // ACTUALIZAR PERSONAL (EDITAR)
+    //====================================
+
+    public static function actualizarPersonal($data)
+    {
+        $conn = self::getConn();
+
+        try {
+
+            $conn->beginTransaction();
+
+            // -----------------------------------
+            // 1. Actualizar tabla usuarios
+            // -----------------------------------
+
+            if (!empty($data["password"])) {
+
+                $sql = "UPDATE usuarios SET
+                            nombre = :nombre,
+                            correo = :correo,
+                            documento_dni = :dni,
+                            titulo = :titulo,
+                            password = :password
+                        WHERE id_usuario = :id_usuario";
+
+                $params = [
+                    "nombre" => $data["nombre"],
+                    "correo" => $data["correo"],
+                    "dni" => $data["dni"],
+                    "titulo" => $data["titulo"],
+                    "password" => password_hash($data["password"], PASSWORD_DEFAULT),
+                    "id_usuario" => $data["id_usuario"]
+                ];
+
+            } else {
+
+                $sql = "UPDATE usuarios SET
+                            nombre = :nombre,
+                            correo = :correo,
+                            documento_dni = :dni,
+                            titulo = :titulo
+                        WHERE id_usuario = :id_usuario";
+
+                $params = [
+                    "nombre" => $data["nombre"],
+                    "correo" => $data["correo"],
+                    "dni" => $data["dni"],
+                    "titulo" => $data["titulo"],
+                    "id_usuario" => $data["id_usuario"]
+                ];
+            }
+
+            self::executeNonQuery($sql, $params, $conn);
+
+            // -----------------------------------
+            // 2. Actualizar tabla específica
+            // -----------------------------------
+
+            if ($data["tipo"] === "maestro") {
+
+                $sql = "UPDATE maestros SET
+                            numero_empleado = :numero_empleado,
+                            telefono = :telefono
+                        WHERE id_maestro = :id";
+
+                self::executeNonQuery(
+                    $sql,
+                    [
+                        "numero_empleado" => $data["numero_empleado"],
+                        "telefono" => $data["telefono"],
+                        "id" => $data["id"]
+                    ],
+                    $conn
+                );
+
+            } elseif ($data["tipo"] === "coordinador") {
+
+                $sql = "UPDATE coordinadores SET
+                            id_facultad = :id_facultad
+                        WHERE id_coordinador = :id";
+
+                self::executeNonQuery(
+                    $sql,
+                    [
+                        "id_facultad" => $data["id_facultad"],
+                        "id" => $data["id"]
+                    ],
+                    $conn
+                );
+            }
+
+            $conn->commit();
+
+            return true;
+
+        } catch (\Exception $e) {
+
+            $conn->rollBack();
+
+            die($e->getMessage());
+        }
     }
 
     //====================================
@@ -328,6 +522,39 @@ class MaestroDao extends Table
             [
                 "correo" => $correo
             ]
+        );
+    }
+
+    public static function existeCorreoExcluyendo($correo, $idUsuario)
+    {
+        return self::obtenerUnRegistro(
+            "SELECT id_usuario
+             FROM usuarios
+             WHERE correo=:correo
+               AND id_usuario != :id_usuario",
+            [
+                "correo" => $correo,
+                "id_usuario" => $idUsuario
+            ]
+        );
+    }
+
+    public static function existeDni($dni)
+    {
+        return self::obtenerUnRegistro(
+            "SELECT id_usuario FROM usuarios WHERE documento_dni=:dni",
+            ["dni" => $dni]
+        );
+    }
+
+    public static function existeDniExcluyendo($dni, $idUsuario)
+    {
+        return self::obtenerUnRegistro(
+            "SELECT id_usuario
+             FROM usuarios
+             WHERE documento_dni=:dni
+               AND id_usuario != :id_usuario",
+            ["dni" => $dni, "id_usuario" => $idUsuario]
         );
     }
 
