@@ -86,13 +86,7 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if ($_SESSION["rol"] === "director"): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'usuarios' ? 'active' : ''; ?>" href="index.php?page=usuarios">
-                        <i class="bi bi-person-gear"></i> Usuarios
-                    </a>
-                </li>
-            <?php endif; ?>
+
             <li class="nav-item">
                 <a class="nav-link <?php echo $currentPage === 'perfil' ? 'active' : ''; ?>" href="index.php?page=perfil">
                     <i class="bi bi-person-circle"></i> Mi Perfil

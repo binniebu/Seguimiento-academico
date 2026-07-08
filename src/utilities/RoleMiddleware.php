@@ -61,11 +61,7 @@ class RoleMiddleware
                 "matricula_guardar",
                 "matricula_editar",
                 "matricula_eliminar",
-                "usuarios",
-                "usuario_nuevo",
-                "usuario_guardar",
-                "usuario_editar",
-                "usuario_eliminar",
+
                 "mis_materias",
                 "logout",
                 "facultades",
