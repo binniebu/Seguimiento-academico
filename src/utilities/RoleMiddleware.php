@@ -72,9 +72,7 @@ class RoleMiddleware
                 "carrera_guardar",
                 "carrera_flujograma",
                 "secciones",
-                "solicitudes_registro",
-                "solicitud_detalle",
-                "solicitud_procesar",
+
                 "switch_role",
                 "perfil",
                 "perfil_actualizar"

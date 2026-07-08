@@ -41,7 +41,7 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
+            <?php if ($_SESSION["rol"] === "coordinador"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'solicitudes_registro' ? 'active' : ''; ?>" href="index.php?page=solicitudes_registro">
                         <i class="bi bi-clipboard-check"></i> Solicitudes
