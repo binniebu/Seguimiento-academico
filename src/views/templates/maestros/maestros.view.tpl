@@ -3,112 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Maestros</title>
+    <title>Gestión de Personal</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="public/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+     <link rel="stylesheet" href="public/css/style.css">
 </head>
+
 <body>
+
 <div class="container-fluid">
-    <div class="row">
+<div class="row">
 
-        <?php require_once __DIR__ . "/../sidebar.view.tpl"; ?>
+<?php require_once __DIR__ . "/../sidebar.view.tpl"; ?>
 
-        <main role="main" class="col-md-10 ml-sm-auto px-md-4">
-            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Gestión de Maestros</h1>
-                <a href="index.php?page=maestro_nuevo" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Nuevo Maestro
-                </a>
-            </div>
+<main class="col-md-10 ms-sm-auto px-md-4">
 
-            <div class="mb-3">
-                <form method="GET" action="index.php" class="d-flex gap-2">
-                    <input type="hidden" name="page" value="maestros">
-                    <input type="text" name="buscar" class="form-control" placeholder="Buscar por nombre, correo o código..."
-                           value="<?php echo htmlspecialchars($_GET['buscar'] ?? ''); ?>">
-                    <button type="submit" class="btn btn-outline-secondary">
-                        <i class="bi bi-search"></i> Buscar
-                    </button>
-                </form>
-            </div>
+<div class="d-flex justify-content-between align-items-center mt-4 mb-4">
 
-            <?php
-            require_once __DIR__ . "/../../../controllers/MaestrosController.php";
+    <h2>Gestión de Personal</h2>
 
-            $buscar = $_GET['buscar'] ?? '';
-            $maestros = $buscar
-                ? \Controllers\MaestrosController::buscar($buscar)
-                : \Controllers\MaestrosController::listar();
+    <a href="index.php?page=maestro_nuevo" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i>
+        Nuevo Personal
+    </a>
 
-            if (!empty($maestros)): ?>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Código</th>
-                                <th>Nombre</th>
-                                <th>Correo</th>
-                                <th>Especialidad</th>
-                                <th>Teléfono</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($maestros as $maestro): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($maestro['codigo']); ?></td>
-                                    <td><?php echo htmlspecialchars($maestro['nombre']); ?></td>
-                                    <td><?php echo htmlspecialchars($maestro['correo']); ?></td>
-                                    <td><?php echo htmlspecialchars($maestro['especialidad']); ?></td>
-                                    <td><?php echo htmlspecialchars($maestro['telefono']); ?></td>
-                                    <td>
-                                        <span class="badge bg-success">
-                                            Activo
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="index.php?page=maestro_nuevo&id=<?php echo $maestro['id_maestro']; ?>"
-                                           class="btn btn-sm btn-warning">
-                                            <i class="bi bi-pencil"></i> Editar
-                                        </a>
+</div>
 
-                                        <a href="index.php?page=maestros&accion=eliminar&id=<?php echo $maestro['id_maestro']; ?>"
-                                           class="btn btn-sm btn-danger"
-                                           onclick="return confirm('¿Estás seguro de que deseas eliminar este maestro?');">
-                                            <i class="bi bi-trash"></i> Eliminar
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php else: ?>
-                <div class="alert alert-info">
-                    No hay maestros registrados. <a href="index.php?page=maestro_nuevo">Registrar uno nuevo</a>
-                </div>
-            <?php endif; ?>
+<form method="GET" action="index.php" class="row mb-4">
 
-            <?php
-            if (($_GET['accion'] ?? '') === 'eliminar' && isset($_GET['id'])) {
-                $resultado = \Controllers\MaestrosController::eliminar($_GET['id']);
+    <input type="hidden" name="page" value="maestros">
 
-                if ($resultado['exito']) {
-                    echo '<script>
-                        alert("' . htmlspecialchars($resultado['mensaje']) . '");
-                        window.location = "index.php?page=maestros";
-                    </script>';
-                } else {
-                    echo '<div class="alert alert-danger">' . htmlspecialchars($resultado['mensaje']) . '</div>';
-                }
-            }
-            ?>
-        </main>
+    <div class="col-md-10">
+        <input
+            type="text"
+            class="form-control"
+            name="buscar"
+            placeholder="Buscar por nombre, correo o DNI"
+            value="<?= htmlspecialchars($_GET["buscar"] ?? "") ?>">
     </div>
+
+    <div class="col-md-2">
+        <button class="btn btn-success w-100">
+            <i class="bi bi-search"></i> Buscar
+        </button>
+    </div>
+
+</form>
+
+<?php
+
+require_once __DIR__ . "/../../../controllers/MaestrosController.php";
+
+$buscar = $_GET["buscar"] ?? "";
+
+if ($buscar != "") {
+    $maestros = \Controllers\MaestrosController::buscarMaestros($buscar);
+    $coordinadores = \Controllers\MaestrosController::buscarCoordinadores($buscar);
+} else {
+    $maestros = \Controllers\MaestrosController::listarMaestros();
+    $coordinadores = \Controllers\MaestrosController::listarCoordinadores();
+}
+
+?>
+
+<ul class="nav nav-tabs">
+
+    <li class="nav-item">
+        <button class="nav-link active"
+                data-bs-toggle="tab"
+                data-bs-target="#tabMaestros">
+            Ver Maestros
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="nav-link"
+                data-bs-toggle="tab"
+                data-bs-target="#tabCoordinadores">
+            Ver Coordinadores
+        </button>
+    </li>
+
+</ul>
+
+<div class="tab-content mt-4">
+
+<!-- ====================== MAESTROS ===================== -->
+
+<div class="tab-pane fade show active" id="tabMaestros">
+
+<div class="table-responsive">
+
+<table class="table table-striped table-hover table-bordered align-middle">
+
+<thead class="table-primary">
+
+<tr>
+
+<th>No. Empleado</th>
+<th>Nombre</th>
+<th>Correo</th>
+<th>Teléfono</th>
+<th>Título</th>
+<th>Acciones</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<?php if (count($maestros) > 0): ?>
+
+<?php foreach ($maestros as $m): ?>
+
+<tr>
+
+<td><?= htmlspecialchars($m["numero_empleado"]) ?></td>
+
+<td><?= htmlspecialchars($m["nombre"]) ?></td>
+
+<td><?= htmlspecialchars($m["correo"]) ?></td>
+
+<td><?= htmlspecialchars($m["telefono"] ?? 'N/D') ?></td>
+
+<td><?= htmlspecialchars($m["titulo"] ?? 'N/D') ?></td>
+
+<td width="160">
+
+<a href="index.php?page=maestro_nuevo&id=<?= $m["id_maestro"] ?>"
+class="btn btn-warning btn-sm">
+
+<i class="bi bi-pencil"></i>
+
+</a>
+
+<a href="index.php?page=maestros&accion=eliminar&id=<?= $m["id_maestro"] ?>"
+class="btn btn-danger btn-sm"
+onclick="return confirm('¿Desea eliminar este maestro?')">
+
+<i class="bi bi-trash"></i>
+
+</a>
+
+</td>
+
+</tr>
+
+<?php endforeach; ?>
+
+<?php else: ?>
+
+<tr>
+
+<td colspan="6" class="text-center">
+
+No hay maestros registrados.
+
+</td>
+
+</tr>
+
+<?php endif; ?>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- ====================== COORDINADORES ===================== -->
+
+<div class="tab-pane fade" id="tabCoordinadores">
+
+<div class="table-responsive">
+
+<table class="table table-striped table-hover table-bordered align-middle">
+    <thead class="table-primary">
+        <tr>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Facultad</th>
+            <th>Título</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if (count($coordinadores) > 0): ?>
+            <?php foreach ($coordinadores as $c): ?>
+            <tr>
+                <td><?= htmlspecialchars($c["nombre"]) ?></td>
+                <td><?= htmlspecialchars($c["correo"]) ?></td>
+                <td><?= htmlspecialchars($c["nombre_facultad"]) ?></td>
+                <td><?= htmlspecialchars($c["titulo"] ?? 'N/D') ?></td>
+                <td><?= htmlspecialchars($c["estado"] ?? 'N/D') ?></td>
+                <td width="160">
+                    <a href="index.php?page=maestro_nuevo&id_coordinador=<?= $c["id_coordinador"] ?>" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="index.php?page=maestros&accion=eliminar_coordinador&id=<?= $c["id_coordinador"] ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Desea eliminar?')">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <tr><td colspan="6" class="text-center">No hay coordinadores registrados.</td></tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
+
 </html>

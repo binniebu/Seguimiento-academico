@@ -8,87 +8,93 @@ use Dao\MaestroDao;
 
 class MaestrosController
 {
-    public static function listar()
+    //=================================
+    // LISTAR MAESTROS
+    //=================================
+
+    public static function listarMaestros()
     {
-        $buscar = $_GET["buscar"] ?? "";
-        return MaestroDao::obtenerMaestros($buscar);
+        return MaestroDao::obtenerTodos();
     }
 
-    public static function buscar($buscar)
+    //=================================
+    // LISTAR COORDINADORES
+    //=================================
+
+    public static function listarCoordinadores()
     {
-        return MaestroDao::obtenerMaestros($buscar);
+        return MaestroDao::obtenerCoordinadores();
     }
+
+    //=================================
+    // BUSCAR MAESTROS
+    //=================================
+
+    public static function buscarMaestros($buscar)
+    {
+        return MaestroDao::buscar($buscar);
+    }
+
+    //=================================
+    // BUSCAR COORDINADORES
+    //=================================
+
+    public static function buscarCoordinadores($buscar)
+    {
+        return MaestroDao::buscarCoordinadores($buscar);
+    }
+
+    //=================================
+    // ELIMINAR MAESTRO
+    //=================================
+
+    public static function eliminar($id)
+    {
+        return MaestroDao::eliminar($id);
+    }
+
+    //=================================
+    // ELIMINAR COORDINADOR
+    //=================================
+
+    public static function eliminarCoordinador($id)
+    {
+        return MaestroDao::eliminarCoordinador($id);
+    }
+
+    //=================================
+    // GUARDAR
+    //=================================
 
     public static function guardar()
     {
-        $nombre = $_POST["nombre"] ?? "";
-        $correo = $_POST["correo"] ?? "";
-        $password = $_POST["password"] ?? "";
-        $codigo = $_POST["codigo"] ?? "";
-        $especialidad = $_POST["especialidad"] ?? "";
-        $telefono = $_POST["telefono"] ?? "";
+        $data = [
+            "nombre" => $_POST["nombre"],
+            "correo" => $_POST["correo"],
+            "password" => $_POST["password"],
+            "id_rol" => $_POST["rol"],
+            "telefono" => $_POST["telefono"],
+            "titulo" => $_POST["titulo"],
+            "numero_empleado" => $_POST["numero_empleado"] ?? null,
+            "id_facultad" => $_POST["id_facultad"] ?? null
+        ];
 
-        if ($nombre == "" || $correo == "" || $password == "" || $codigo == "" || $especialidad == "" || $telefono == "") {
+        if (MaestroDao::existeCorreo($data["correo"])) {
             echo "<script>
-                    alert('Debe completar todos los campos');
-                    window.location='index.php?page=maestro_nuevo';
+                    alert('El correo ya existe');
+                    history.back();
                   </script>";
             exit();
         }
 
-        if (MaestroDao::existeCorreo($correo)) {
-            echo "<script>
-                    alert('El correo ya está registrado');
-                    window.location='index.php?page=maestro_nuevo';
-                  </script>";
-            exit();
-        }
-
-        $resultado = MaestroDao::insertarMaestro(
-            $nombre,
-            $correo,
-            $password,
-            $codigo,
-            $especialidad,
-            $telefono
-        );
-
-        if ($resultado) {
-            echo "<script>
-                    alert('Maestro registrado correctamente');
-                    window.location='index.php?page=maestros';
-                  </script>";
+        if (MaestroDao::insertarPersonal($data)) {
+            header("Location:index.php?page=maestros");
             exit();
         }
 
         echo "<script>
-                alert('No se pudo registrar el maestro');
-                window.location='index.php?page=maestro_nuevo';
+                alert('Error al guardar');
+                history.back();
               </script>";
-        exit();
-    }
-
-    public static function eliminar($id = null)
-    {
-        if ($id == null) {
-            $id = $_GET["id"] ?? 0;
-        }
-
-        $maestro = MaestroDao::obtenerMaestroPorId($id);
-
-        if ($maestro) {
-            MaestroDao::eliminarMaestro($maestro["id_maestro"], $maestro["id_usuario"]);
-
-            return array(
-                "exito" => true,
-                "mensaje" => "Maestro eliminado correctamente"
-            );
-        }
-
-        return array(
-            "exito" => false,
-            "mensaje" => "No se encontró el maestro"
-        );
     }
 }
-?>

@@ -200,29 +200,37 @@ break;
         \Controllers\EstudiantesController::guardar();
         break;
 
-    // Maestros
-    
+  // Maestros
+
     case "maestros":
-    require_once __DIR__ . "/src/views/templates/maestros/maestros.view.tpl";
-    break;
 
-case "maestro_nuevo":
-    require_once __DIR__ . "/src/views/templates/maestros/maestros_form.view.tpl";
-    break;
+        require_once __DIR__ . "/src/controllers/MaestrosController.php";
 
-case "maestro_guardar":
-    require_once __DIR__ . "/src/controllers/MaestrosController.php";
-    \Controllers\MaestrosController::guardar();
-    break;
-    
-    //matriculas
-    case "matriculas":
-    include_once "src/views/templates/matriculas/matriculas.view.tpl";
-    break;
+        $accion = $_GET["accion"] ?? "";
 
-    case "matricula_nueva":
-    include_once "src/views/templates/matriculas/matriculas_form.view.tpl";
-    break;
+        if ($accion === "eliminar" && isset($_GET["id"])) {
+            \Controllers\MaestrosController::eliminar($_GET["id"]);
+            header("Location: index.php?page=maestros");
+            exit();
+        }
+
+        if ($accion === "eliminar_coordinador" && isset($_GET["id"])) {
+            \Controllers\MaestrosController::eliminarCoordinador($_GET["id"]);
+            header("Location: index.php?page=maestros");
+            exit();
+        }
+
+        require_once __DIR__ . "/src/views/templates/maestros/maestros.view.tpl";
+        break;
+
+    case "maestro_nuevo":
+        require_once __DIR__ . "/src/views/templates/maestros/maestros_form.view.tpl";
+        break;
+
+    case "maestro_guardar":
+        require_once __DIR__ . "/src/controllers/MaestrosController.php";
+        \Controllers\MaestrosController::guardar();
+        break;
     
     // Materias
     case "mis_materias":
