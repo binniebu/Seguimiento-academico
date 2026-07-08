@@ -12,7 +12,7 @@ class MaestroDao extends Table
     // LISTAR MAESTROS
     //====================================
 
-    public static function obtenerTodos()
+    public static function obtenerTodos($estado = 'todos')
     {
         $sql = "SELECT 
                     m.id_maestro, 
@@ -25,16 +25,24 @@ class MaestroDao extends Table
                     u.estado
                 FROM maestros m
                 INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
-                ORDER BY u.nombre";
+                WHERE 1=1";
+        
+        $params = [];
+        if ($estado === 'activo' || $estado === 'inactivo') {
+            $sql .= " AND u.estado = :estado";
+            $params["estado"] = $estado;
+        }
 
-        return self::obtenerRegistros($sql);
+        $sql .= " ORDER BY u.nombre";
+
+        return self::obtenerRegistros($sql, $params);
     }
 
     //====================================
     // LISTAR COORDINADORES
     //====================================
 
-    public static function obtenerCoordinadores()
+    public static function obtenerCoordinadores($estado = 'todos')
     {
         $sql = "SELECT
                     c.id_coordinador,
@@ -49,16 +57,24 @@ class MaestroDao extends Table
                     ON c.id_usuario = u.id_usuario
                 INNER JOIN facultades f
                     ON f.id_facultad = c.id_facultad
-                ORDER BY u.nombre";
+                WHERE 1=1";
 
-        return self::obtenerRegistros($sql);
+        $params = [];
+        if ($estado === 'activo' || $estado === 'inactivo') {
+            $sql .= " AND u.estado = :estado";
+            $params["estado"] = $estado;
+        }
+
+        $sql .= " ORDER BY u.nombre";
+
+        return self::obtenerRegistros($sql, $params);
     }
 
     //====================================
     // BUSCAR MAESTROS
     //====================================
 
-    public static function buscar($buscar)
+    public static function buscar($buscar, $estado = 'todos')
     {
         $sql = "SELECT
                     m.id_maestro,
@@ -72,25 +88,28 @@ class MaestroDao extends Table
                 FROM maestros m
                 INNER JOIN usuarios u
                     ON u.id_usuario = m.id_usuario
-                WHERE
+                WHERE (
                     u.nombre LIKE :buscar
                     OR u.correo LIKE :buscar
                     OR m.numero_empleado LIKE :buscar
-                ORDER BY u.nombre";
+                )";
 
-        return self::obtenerRegistros(
-            $sql,
-            [
-                "buscar" => "%" . $buscar . "%"
-            ]
-        );
+        $params = ["buscar" => "%" . $buscar . "%"];
+        if ($estado === 'activo' || $estado === 'inactivo') {
+            $sql .= " AND u.estado = :estado";
+            $params["estado"] = $estado;
+        }
+
+        $sql .= " ORDER BY u.nombre";
+
+        return self::obtenerRegistros($sql, $params);
     }
 
     //====================================
     // BUSCAR COORDINADORES
     //====================================
 
-    public static function buscarCoordinadores($buscar)
+    public static function buscarCoordinadores($buscar, $estado = 'todos')
     {
         $sql = "SELECT
                     c.id_coordinador,
@@ -105,18 +124,21 @@ class MaestroDao extends Table
                     ON c.id_usuario = u.id_usuario
                 INNER JOIN facultades f
                     ON c.id_facultad = f.id_facultad
-                WHERE
+                WHERE (
                     u.nombre LIKE :buscar
                     OR u.correo LIKE :buscar
                     OR f.nombre_facultad LIKE :buscar
-                ORDER BY u.nombre";
+                )";
 
-        return self::obtenerRegistros(
-            $sql,
-            [
-                "buscar" => "%" . $buscar . "%"
-            ]
-        );
+        $params = ["buscar" => "%" . $buscar . "%"];
+        if ($estado === 'activo' || $estado === 'inactivo') {
+            $sql .= " AND u.estado = :estado";
+            $params["estado"] = $estado;
+        }
+
+        $sql .= " ORDER BY u.nombre";
+
+        return self::obtenerRegistros($sql, $params);
     }
 
     //====================================
@@ -237,82 +259,88 @@ class MaestroDao extends Table
 
     public static function eliminar($id)
     {
-        $maestro = self::obtenerUnRegistro(
-            "SELECT id_usuario
-             FROM maestros
-             WHERE id_maestro=:id",
-            [
-                "id" => $id
-            ]
-        );
-
-        if (!$maestro) {
-            return [
-                "exito" => false,
-                "mensaje" => "No existe."
-            ];
-        }
-
-        self::executeNonQuery(
-            "DELETE FROM maestros WHERE id_maestro=:id",
-            [
-                "id" => $id
-            ]
-        );
-
-        self::executeNonQuery(
-            "DELETE FROM usuarios WHERE id_usuario=:id",
-            [
-                "id" => $maestro["id_usuario"]
-            ]
-        );
-
-        return [
-            "exito" => true,
-            "mensaje" => "Registro eliminado correctamente."
-        ];
+        return self::inactivar($id);
     }
-
-    //====================================
-    // ELIMINAR COORDINADOR
-    //====================================
 
     public static function eliminarCoordinador($id)
     {
-        $coordinador = self::obtenerUnRegistro(
-            "SELECT id_usuario
-             FROM coordinadores
-             WHERE id_coordinador=:id",
-            [
-                "id" => $id
-            ]
+        return self::inactivarCoordinador($id);
+    }
+
+    public static function inactivar($id)
+    {
+        $maestro = self::obtenerUnRegistro(
+            "SELECT id_usuario FROM maestros WHERE id_maestro=:id",
+            ["id" => $id]
         );
 
-        if (!$coordinador) {
-            return [
-                "exito" => false,
-                "mensaje" => "No existe."
-            ];
+        if (!$maestro) {
+            return ["exito" => false, "mensaje" => "No existe."];
         }
 
         self::executeNonQuery(
-            "DELETE FROM coordinadores WHERE id_coordinador=:id",
-            [
-                "id" => $id
-            ]
+            "UPDATE usuarios SET estado='inactivo' WHERE id_usuario=:id",
+            ["id" => $maestro["id_usuario"]]
         );
+
+        return ["exito" => true, "mensaje" => "Maestro inactivado correctamente."];
+    }
+
+    public static function activar($id)
+    {
+        $maestro = self::obtenerUnRegistro(
+            "SELECT id_usuario FROM maestros WHERE id_maestro=:id",
+            ["id" => $id]
+        );
+
+        if (!$maestro) {
+            return ["exito" => false, "mensaje" => "No existe."];
+        }
 
         self::executeNonQuery(
-            "DELETE FROM usuarios WHERE id_usuario=:id",
-            [
-                "id" => $coordinador["id_usuario"]
-            ]
+            "UPDATE usuarios SET estado='activo' WHERE id_usuario=:id",
+            ["id" => $maestro["id_usuario"]]
         );
 
-        return [
-            "exito" => true,
-            "mensaje" => "Registro eliminado correctamente."
-        ];
+        return ["exito" => true, "mensaje" => "Maestro activado correctamente."];
+    }
+
+    public static function inactivarCoordinador($id)
+    {
+        $coordinador = self::obtenerUnRegistro(
+            "SELECT id_usuario FROM coordinadores WHERE id_coordinador=:id",
+            ["id" => $id]
+        );
+
+        if (!$coordinador) {
+            return ["exito" => false, "mensaje" => "No existe."];
+        }
+
+        self::executeNonQuery(
+            "UPDATE usuarios SET estado='inactivo' WHERE id_usuario=:id",
+            ["id" => $coordinador["id_usuario"]]
+        );
+
+        return ["exito" => true, "mensaje" => "Coordinador inactivado correctamente."];
+    }
+
+    public static function activarCoordinador($id)
+    {
+        $coordinador = self::obtenerUnRegistro(
+            "SELECT id_usuario FROM coordinadores WHERE id_coordinador=:id",
+            ["id" => $id]
+        );
+
+        if (!$coordinador) {
+            return ["exito" => false, "mensaje" => "No existe."];
+        }
+
+        self::executeNonQuery(
+            "UPDATE usuarios SET estado='activo' WHERE id_usuario=:id",
+            ["id" => $coordinador["id_usuario"]]
+        );
+
+        return ["exito" => true, "mensaje" => "Coordinador activado correctamente."];
     }
 
     //====================================

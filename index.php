@@ -15,7 +15,7 @@ require_once __DIR__ . "/src/utilities/RoleMiddleware.php";
 $page = $_GET["page"] ?? "login";
 
 // Check access control for all pages except login and register
-if (!in_array($page, ["login", "register", "perfil", "perfil_actualizar"], true)) {
+if (!in_array($page, ["login", "register"], true)) {
     \Utilities\RoleMiddleware::checkAccess($page);
 }
 
@@ -208,14 +208,26 @@ break;
 
         $accion = $_GET["accion"] ?? "";
 
-        if ($accion === "eliminar" && isset($_GET["id"])) {
-            \Controllers\MaestrosController::eliminar($_GET["id"]);
+        if ($accion === "inactivar" && isset($_GET["id"])) {
+            \Controllers\MaestrosController::inactivar($_GET["id"]);
             header("Location: index.php?page=maestros");
             exit();
         }
 
-        if ($accion === "eliminar_coordinador" && isset($_GET["id"])) {
-            \Controllers\MaestrosController::eliminarCoordinador($_GET["id"]);
+        if ($accion === "activar" && isset($_GET["id"])) {
+            \Controllers\MaestrosController::activar($_GET["id"]);
+            header("Location: index.php?page=maestros");
+            exit();
+        }
+
+        if ($accion === "inactivar_coordinador" && isset($_GET["id"])) {
+            \Controllers\MaestrosController::inactivarCoordinador($_GET["id"]);
+            header("Location: index.php?page=maestros");
+            exit();
+        }
+
+        if ($accion === "activar_coordinador" && isset($_GET["id"])) {
+            \Controllers\MaestrosController::activarCoordinador($_GET["id"]);
             header("Location: index.php?page=maestros");
             exit();
         }

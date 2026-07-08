@@ -65,3 +65,15 @@ Este documento sirve para registrar de manera clara y descriptiva todos los camb
   * **Plantilla Guía de Secciones (`secciones.view.tpl` y `secciones_form.view.tpl`):** Se re-maquetaron ambas vistas para integrarlas de forma limpia con la barra lateral lateral del sistema, dejando comentarios detallados de las validaciones de traslape y clonación de secciones que el integrante asignado debe programar.
 
 * **Estado final de los preparativos:** Completados con éxito. El entorno de registro de admisión, secciones y solicitudes está debidamente estructurado y documentado para la delegación segura al resto de los integrantes del equipo.
+
+### 08/07/2026 - Corrección de Errores de Integración y Mejoras de Usabilidad (Completado)
+* **Estado:** Corrección de consultas SQL, seguridad de rutas de secciones/perfil, inactivación lógica de personal y filtros dinámicos implementados con éxito.
+* **Cambios realizados:**
+  * **Módulo de Secciones (SQL Fix):** Se corrigió la consulta SQL de `obtenerMaestrosSeleccionables` en `SeccionDao.php` reemplazando la columna inexistente `ma.codigo` por `ma.numero_empleado AS codigo`, restaurando el correcto funcionamiento del formulario de secciones.
+  * **Seguridad y Acceso (Secciones):** Se inhabilitó el rol de Director para crear, editar, eliminar o clonar secciones. Estos permisos se restringieron exclusivamente a Coordinadores en `RoleMiddleware.php`. La vista `secciones.view.tpl` ahora oculta dinámicamente todos los botones de acción para el Director.
+  * **Filtros por Carrera y Tipo (Secciones):** Se implementaron dos selectores independientes de filtrado en `secciones.view.tpl` y backend (`SeccionDao.php` y `MateriasController.php`) que funcionan en combinación: uno para filtrar por naturaleza de la clase (General/Institucional, De Facultad, De Carrera, Cualquiera) y otro para filtrar por Carreras específicas (filtradas según la facultad del Coordinador o todas para el Director).
+  * **Módulo de Personal (Borrado Lógico):** Se eliminó la eliminación física de registros. Ahora, los maestros y coordinadores inhabilitados pasan a estado `'inactivo'` en la base de datos (mediante `MaestroDao.php` y `MaestrosController.php`).
+  * **Módulo de Personal (Filtros e Interfaz):** Se añadió un selector de estado en `maestros.view.tpl` para poder filtrar los listados entre Todos, Activos e Inactivos. Se rediseñó la tabla agregando la columna de Estado y alternando los botones de acción para mostrar "Activar" (verde) o "Inactivar" (rojo) según corresponda. Además, la sección en la barra lateral se renombró de "Maestros" a "Personal".
+  * **Interfaz de Usuario (Pestañas y Sidebar):** Se añadieron estilos CSS para corregir el resaltado de `nav-tabs` en `style.css`. La pestaña activa ahora se tiñe de azul y las inactivas de gris, mejorando el contraste visual.
+  * **Seguridad en Perfil:** Se enlazó la página de Mi Perfil en `sidebar.view.tpl` y se integró bajo la validación del middleware de control de accesos (`RoleMiddleware.php`) para prevenir accesos no autenticados de forma directa.
+  

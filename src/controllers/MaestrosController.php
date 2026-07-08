@@ -12,36 +12,36 @@ class MaestrosController
     // LISTAR MAESTROS
     //=================================
 
-    public static function listarMaestros()
+    public static function listarMaestros($estado = 'todos')
     {
-        return MaestroDao::obtenerTodos();
+        return MaestroDao::obtenerTodos($estado);
     }
 
     //=================================
     // LISTAR COORDINADORES
     //=================================
 
-    public static function listarCoordinadores()
+    public static function listarCoordinadores($estado = 'todos')
     {
-        return MaestroDao::obtenerCoordinadores();
+        return MaestroDao::obtenerCoordinadores($estado);
     }
 
     //=================================
     // BUSCAR MAESTROS
     //=================================
 
-    public static function buscarMaestros($buscar)
+    public static function buscarMaestros($buscar, $estado = 'todos')
     {
-        return MaestroDao::buscar($buscar);
+        return MaestroDao::buscar($buscar, $estado);
     }
 
     //=================================
     // BUSCAR COORDINADORES
     //=================================
 
-    public static function buscarCoordinadores($buscar)
+    public static function buscarCoordinadores($buscar, $estado = 'todos')
     {
-        return MaestroDao::buscarCoordinadores($buscar);
+        return MaestroDao::buscarCoordinadores($buscar, $estado);
     }
 
     //=================================
@@ -50,16 +50,32 @@ class MaestrosController
 
     public static function eliminar($id)
     {
-        return MaestroDao::eliminar($id);
+        return self::inactivar($id);
     }
-
-    //=================================
-    // ELIMINAR COORDINADOR
-    //=================================
 
     public static function eliminarCoordinador($id)
     {
-        return MaestroDao::eliminarCoordinador($id);
+        return self::inactivarCoordinador($id);
+    }
+
+    public static function inactivar($id)
+    {
+        return MaestroDao::inactivar($id);
+    }
+
+    public static function activar($id)
+    {
+        return MaestroDao::activar($id);
+    }
+
+    public static function inactivarCoordinador($id)
+    {
+        return MaestroDao::inactivarCoordinador($id);
+    }
+
+    public static function activarCoordinador($id)
+    {
+        return MaestroDao::activarCoordinador($id);
     }
 
     //=================================

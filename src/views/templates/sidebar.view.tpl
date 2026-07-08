@@ -25,7 +25,7 @@ $currentPage = $_GET['page'] ?? 'home';
             <?php if ($_SESSION["rol"] === "director"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'maestros' ? 'active' : ''; ?>" href="index.php?page=maestros">
-                        <i class="bi bi-person-badge"></i> Maestros
+                        <i class="bi bi-people-fill"></i> Personal
                     </a>
                 </li>
                 <li class="nav-item">
@@ -93,6 +93,11 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
+            <li class="nav-item">
+                <a class="nav-link <?php echo $currentPage === 'perfil' ? 'active' : ''; ?>" href="index.php?page=perfil">
+                    <i class="bi bi-person-circle"></i> Mi Perfil
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link text-danger" href="index.php?page=logout">
                     <i class="bi bi-box-arrow-right"></i> Cerrar sesión
