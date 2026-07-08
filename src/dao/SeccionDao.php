@@ -47,7 +47,7 @@ class SeccionDao extends Table
         ]);
     }
 
-    public static function obtenerSecciones($buscar = "", $idPeriodo = null, $idFacultad = null)
+    public static function obtenerSecciones($buscar = "", $idPeriodo = null, $idFacultad = null, $naturaleza = "todas", $filtroCarrera = "todas")
     {
         $sqlstr = "SELECT s.id_seccion, s.codigo_seccion, s.id_materia, s.id_maestro, s.id_periodo,
                           s.aula, s.dias, s.hora_inicio, s.hora_fin, s.cupo_maximo, s.estado,
@@ -89,6 +89,25 @@ class SeccionDao extends Table
                             OR c.id_facultad = :id_facultad
                         )";
             $params["id_facultad"] = intval($idFacultad);
+        }
+
+        if ($naturaleza !== "todas" && $naturaleza !== "") {
+            if ($naturaleza === "institucional") {
+                $sqlstr .= " AND m.tipo_materia = 'institucional'";
+            } elseif ($naturaleza === "facultad") {
+                $sqlstr .= " AND m.tipo_materia = 'facultad'";
+            } elseif ($naturaleza === "carrera") {
+                $sqlstr .= " AND m.tipo_materia = 'carrera'";
+                if ($filtroCarrera !== "todas" && $filtroCarrera !== "") {
+                    $sqlstr .= " AND m.id_carrera = :filtro_carrera";
+                    $params["filtro_carrera"] = intval($filtroCarrera);
+                }
+            }
+        } else {
+            if ($filtroCarrera !== "todas" && $filtroCarrera !== "") {
+                $sqlstr .= " AND m.tipo_materia = 'carrera' AND m.id_carrera = :filtro_carrera";
+                $params["filtro_carrera"] = intval($filtroCarrera);
+            }
         }
 
         $sqlstr .= " ORDER BY m.nombre ASC, s.dias ASC, s.hora_inicio ASC";
@@ -162,7 +181,7 @@ class SeccionDao extends Table
 
     public static function obtenerMaestrosSeleccionables($excluirCoordinadores = true)
     {
-        $sqlstr = "SELECT ma.id_maestro, ma.codigo, u.nombre, u.correo
+        $sqlstr = "SELECT ma.id_maestro, ma.numero_empleado AS codigo, u.nombre, u.correo
                    FROM maestros ma
                    INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
                    WHERE u.estado = 'activo'";

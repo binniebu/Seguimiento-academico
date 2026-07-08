@@ -45,11 +45,18 @@ if (isset($_GET["accion"])) {
     exit();
 }
 
+require_once __DIR__ . "/../../../dao/CarreraDao.php";
+
 $buscar = trim($_GET["buscar"] ?? "");
+$naturaleza = $_GET["naturaleza"] ?? "todas";
+$filtroCarrera = $_GET["carrera"] ?? "todas";
+
 $periodoActivo = \Controllers\MateriasController::obtenerPeriodoActivo();
 $periodoAnterior = $periodoActivo ? \Controllers\MateriasController::obtenerPeriodoAnterior($periodoActivo["id_periodo"]) : false;
-$secciones = \Controllers\MateriasController::listarSecciones($buscar);
+$secciones = \Controllers\MateriasController::listarSecciones($buscar, $naturaleza, $filtroCarrera);
 $esCoordinador = ($_SESSION["rol"] ?? "") === "coordinador";
+$idFacultadActual = $esCoordinador ? ($_SESSION["id_facultad"] ?? null) : null;
+$carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
 ?>
 
 <!DOCTYPE html>
@@ -85,6 +92,7 @@ $esCoordinador = ($_SESSION["rol"] ?? "") === "coordinador";
                         </div>
                     </div>
 
+                    <?php if ($esCoordinador): ?>
                     <div class="d-flex flex-wrap gap-2">
                         <a href="index.php?page=seccion_nueva" class="btn btn-primary <?php echo !$periodoActivo ? 'disabled' : ''; ?>">
                             <i class="bi bi-plus-circle"></i> Nueva Seccion
@@ -100,6 +108,7 @@ $esCoordinador = ($_SESSION["rol"] ?? "") === "coordinador";
                             <i class="bi bi-check2-circle"></i> Activar Borradores
                         </a>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <?php if (!$periodoActivo): ?>
@@ -107,23 +116,37 @@ $esCoordinador = ($_SESSION["rol"] ?? "") === "coordinador";
                         No hay un periodo academico activo. Active un periodo antes de programar secciones.
                     </div>
                 <?php else: ?>
-                    <div class="row g-3 mb-4">
-                        <div class="col-lg-5">
-                            <form method="GET" action="index.php">
-                                <input type="hidden" name="page" value="secciones">
+                    <div class="mb-4">
+                        <form method="GET" action="index.php" class="row g-3 align-items-center">
+                            <input type="hidden" name="page" value="secciones">
+                            <div class="col-md-4">
                                 <div class="input-group shadow-sm">
                                     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                                    <input type="text" name="buscar" class="form-control border-start-0" placeholder="Buscar por asignatura, docente, aula o codigo" value="<?php echo htmlspecialchars($buscar); ?>">
-                                    <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+                                    <input type="text" name="buscar" class="form-control border-start-0" placeholder="Buscar por asignatura, docente, aula..." value="<?php echo htmlspecialchars($buscar); ?>">
                                 </div>
-                            </form>
-                        </div>
-                        <div class="col-lg-7">
-                            <div class="alert alert-light border mb-0">
-                                <i class="bi bi-shield-check text-success"></i>
-                                El guardado valida choques de aula, choques de docente y exclusion de coordinadores.
                             </div>
-                        </div>
+                            <div class="col-md-3">
+                                <select name="naturaleza" class="form-select shadow-sm" onchange="this.form.submit()">
+                                    <option value="todas" <?php echo $naturaleza === 'todas' ? 'selected' : ''; ?>>Cualquier Naturaleza</option>
+                                    <option value="institucional" <?php echo $naturaleza === 'institucional' ? 'selected' : ''; ?>>Clases Generales (Institucionales)</option>
+                                    <option value="facultad" <?php echo $naturaleza === 'facultad' ? 'selected' : ''; ?>>Clases de Facultad</option>
+                                    <option value="carrera" <?php echo $naturaleza === 'carrera' ? 'selected' : ''; ?>>Clases de Carrera</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="carrera" class="form-select shadow-sm" onchange="this.form.submit()" <?php echo ($naturaleza !== 'todas' && $naturaleza !== 'carrera') ? 'disabled' : ''; ?>>
+                                    <option value="todas" <?php echo $filtroCarrera === 'todas' ? 'selected' : ''; ?>>Todas las carreras</option>
+                                    <?php foreach ($carrerasFiltro as $cf): ?>
+                                        <option value="<?php echo $cf['id_carrera']; ?>" <?php echo (string)$filtroCarrera === (string)$cf['id_carrera'] ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($cf['nombre_carrera']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-secondary w-100 shadow-sm" type="submit">Filtrar</button>
+                            </div>
+                        </form>
                     </div>
 
                     <?php if (!empty($secciones)): ?>
@@ -139,7 +162,9 @@ $esCoordinador = ($_SESSION["rol"] ?? "") === "coordinador";
                                         <th>Horario</th>
                                         <th class="text-center">Cupo</th>
                                         <th>Estado</th>
-                                        <th class="text-end">Acciones</th>
+                                         <?php if ($esCoordinador): ?>
+                                             <th class="text-end">Acciones</th>
+                                         <?php endif; ?>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -166,18 +191,20 @@ $esCoordinador = ($_SESSION["rol"] ?? "") === "coordinador";
                                                 <span class="badge bg-light text-dark border"><?php echo $cupoActual . "/" . $cupoMaximo; ?></span>
                                             </td>
                                             <td><span class="badge <?php echo $badge; ?>"><?php echo htmlspecialchars($estado); ?></span></td>
-                                            <td class="text-end">
-                                                <div class="d-flex gap-2 justify-content-end">
-                                                    <a href="index.php?page=seccion_nueva&id=<?php echo urlencode($seccion["id_seccion"]); ?>" class="btn btn-sm btn-warning">
-                                                        <i class="bi bi-pencil"></i> Editar
-                                                    </a>
-                                                    <a href="index.php?page=secciones&accion=eliminar&id=<?php echo urlencode($seccion["id_seccion"]); ?>"
-                                                       class="btn btn-sm btn-danger"
-                                                       onclick="return confirm('Desea eliminar esta seccion?');">
-                                                        <i class="bi bi-trash"></i> Eliminar
-                                                    </a>
-                                                </div>
-                                            </td>
+                                             <?php if ($esCoordinador): ?>
+                                             <td class="text-end">
+                                                 <div class="d-flex gap-2 justify-content-end">
+                                                     <a href="index.php?page=seccion_nueva&id=<?php echo urlencode($seccion["id_seccion"]); ?>" class="btn btn-sm btn-warning">
+                                                         <i class="bi bi-pencil"></i> Editar
+                                                     </a>
+                                                     <a href="index.php?page=secciones&accion=eliminar&id=<?php echo urlencode($seccion["id_seccion"]); ?>"
+                                                        class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('Desea eliminar esta seccion?');">
+                                                         <i class="bi bi-trash"></i> Eliminar
+                                                     </a>
+                                                 </div>
+                                             </td>
+                                             <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -186,7 +213,9 @@ $esCoordinador = ($_SESSION["rol"] ?? "") === "coordinador";
                     <?php else: ?>
                         <div class="alert alert-info">
                             No hay secciones programadas para el periodo activo.
-                            <a href="index.php?page=seccion_nueva" class="alert-link">Crear la primera seccion</a>
+                            <?php if ($esCoordinador): ?>
+                                <a href="index.php?page=seccion_nueva" class="alert-link">Crear la primera seccion</a>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>

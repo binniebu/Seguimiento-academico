@@ -25,7 +25,7 @@ $currentPage = $_GET['page'] ?? 'home';
             <?php if ($_SESSION["rol"] === "director"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'maestros' ? 'active' : ''; ?>" href="index.php?page=maestros">
-                        <i class="bi bi-person-badge"></i> Maestros
+                        <i class="bi bi-people-fill"></i> Personal
                     </a>
                 </li>
                 <li class="nav-item">
@@ -41,7 +41,7 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
+            <?php if ($_SESSION["rol"] === "coordinador"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'solicitudes_registro' ? 'active' : ''; ?>" href="index.php?page=solicitudes_registro">
                         <i class="bi bi-clipboard-check"></i> Solicitudes
@@ -86,13 +86,12 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if ($_SESSION["rol"] === "director"): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'usuarios' ? 'active' : ''; ?>" href="index.php?page=usuarios">
-                        <i class="bi bi-person-gear"></i> Usuarios
-                    </a>
-                </li>
-            <?php endif; ?>
+
+            <li class="nav-item">
+                <a class="nav-link <?php echo $currentPage === 'perfil' ? 'active' : ''; ?>" href="index.php?page=perfil">
+                    <i class="bi bi-person-circle"></i> Mi Perfil
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link text-danger" href="index.php?page=logout">
                     <i class="bi bi-box-arrow-right"></i> Cerrar sesión

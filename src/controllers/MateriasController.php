@@ -175,7 +175,7 @@ class MateriasController
         return MateriaDao::obtenerCarrerasActivas();
     }
 
-    public static function listarSecciones($buscar = "")
+    public static function listarSecciones($buscar = "", $naturaleza = "todas", $filtroCarrera = "todas")
     {
         $periodoActivo = SeccionDao::obtenerPeriodoActivo();
         $idPeriodo = $periodoActivo["id_periodo"] ?? null;
@@ -185,7 +185,7 @@ class MateriasController
             return [];
         }
 
-        return SeccionDao::obtenerSecciones($buscar, $idPeriodo, $idFacultad);
+        return SeccionDao::obtenerSecciones($buscar, $idPeriodo, $idFacultad, $naturaleza, $filtroCarrera);
     }
 
     public static function obtenerPeriodoActivo()

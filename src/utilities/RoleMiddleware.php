@@ -62,11 +62,7 @@ class RoleMiddleware
                 "matricula_guardar",
                 "matricula_editar",
                 "matricula_eliminar",
-                "usuarios",
-                "usuario_nuevo",
-                "usuario_guardar",
-                "usuario_editar",
-                "usuario_eliminar",
+
                 "mis_materias",
                 "logout",
                 "facultades",
@@ -77,12 +73,10 @@ class RoleMiddleware
                 "carrera_guardar",
                 "carrera_flujograma",
                 "secciones",
-                "seccion_nueva",
-                "seccion_guardar",
-                "solicitudes_registro",
-                "solicitud_detalle",
-                "solicitud_procesar",
-                "switch_role"
+
+                "switch_role",
+                "perfil",
+                "perfil_actualizar"
             ),
             "maestro" => array(
                 "home",
@@ -96,7 +90,9 @@ class RoleMiddleware
                 "calificacion_nueva",
                 "calificacion_editar",
                 "logout",
-                "switch_role"
+                "switch_role",
+                "perfil",
+                "perfil_actualizar"
             ),
             "estudiante" => array(
     "home",
@@ -113,7 +109,9 @@ class RoleMiddleware
 
     "logout",
     "historial_academico",
-    "switch_role"
+    "switch_role",
+    "perfil",
+    "perfil_actualizar"
 ),
             "coordinador" => array(
                 "home",
@@ -133,7 +131,9 @@ class RoleMiddleware
                 "matriculas",
                 "matricula_nueva",
                 "logout",
-                "switch_role"
+                "switch_role",
+                "perfil",
+                "perfil_actualizar"
             ),
         );
 

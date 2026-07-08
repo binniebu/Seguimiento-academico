@@ -30,22 +30,31 @@
 
 </div>
 
-<form method="GET" action="index.php" class="row mb-4">
+<form method="GET" action="index.php" class="row g-3 mb-4 align-items-center">
 
     <input type="hidden" name="page" value="maestros">
 
-    <div class="col-md-10">
+    <div class="col-md-7">
         <input
             type="text"
-            class="form-control"
+            class="form-control shadow-sm"
             name="buscar"
             placeholder="Buscar por nombre, correo o DNI"
             value="<?= htmlspecialchars($_GET["buscar"] ?? "") ?>">
     </div>
 
+    <div class="col-md-3">
+        <select name="estado" class="form-select shadow-sm" onchange="this.form.submit()">
+            <?php $estadoFiltro = $_GET["estado"] ?? "todos"; ?>
+            <option value="todos" <?= $estadoFiltro === "todos" ? "selected" : "" ?>>Todos los estados</option>
+            <option value="activo" <?= $estadoFiltro === "activo" ? "selected" : "" ?>>Activos</option>
+            <option value="inactivo" <?= $estadoFiltro === "inactivo" ? "selected" : "" ?>>Inactivos</option>
+        </select>
+    </div>
+
     <div class="col-md-2">
-        <button class="btn btn-success w-100">
-            <i class="bi bi-search"></i> Buscar
+        <button class="btn btn-success w-100 shadow-sm">
+            <i class="bi bi-search"></i> Buscar / Filtrar
         </button>
     </div>
 
@@ -56,13 +65,14 @@
 require_once __DIR__ . "/../../../controllers/MaestrosController.php";
 
 $buscar = $_GET["buscar"] ?? "";
+$estadoFiltro = $_GET["estado"] ?? "todos";
 
 if ($buscar != "") {
-    $maestros = \Controllers\MaestrosController::buscarMaestros($buscar);
-    $coordinadores = \Controllers\MaestrosController::buscarCoordinadores($buscar);
+    $maestros = \Controllers\MaestrosController::buscarMaestros($buscar, $estadoFiltro);
+    $coordinadores = \Controllers\MaestrosController::buscarCoordinadores($buscar, $estadoFiltro);
 } else {
-    $maestros = \Controllers\MaestrosController::listarMaestros();
-    $coordinadores = \Controllers\MaestrosController::listarCoordinadores();
+    $maestros = \Controllers\MaestrosController::listarMaestros($estadoFiltro);
+    $coordinadores = \Controllers\MaestrosController::listarCoordinadores($estadoFiltro);
 }
 
 ?>
@@ -106,6 +116,7 @@ if ($buscar != "") {
 <th>Correo</th>
 <th>Teléfono</th>
 <th>Título</th>
+<th>Estado</th>
 <th>Acciones</th>
 
 </tr>
@@ -130,6 +141,8 @@ if ($buscar != "") {
 
 <td><?= htmlspecialchars($m["titulo"] ?? 'N/D') ?></td>
 
+<td><?= htmlspecialchars($m["estado"] ?? 'N/D') ?></td>
+
 <td width="160">
 
 <a href="index.php?page=maestro_nuevo&id=<?= $m["id_maestro"] ?>"
@@ -139,13 +152,23 @@ class="btn btn-warning btn-sm">
 
 </a>
 
-<a href="index.php?page=maestros&accion=eliminar&id=<?= $m["id_maestro"] ?>"
-class="btn btn-danger btn-sm"
-onclick="return confirm('¿Desea eliminar este maestro?')">
+<?php if (($m["estado"] ?? '') === 'inactivo'): ?>
+<a href="index.php?page=maestros&accion=activar&id=<?= $m["id_maestro"] ?>"
+class="btn btn-success btn-sm"
+onclick="return confirm('¿Desea activar este maestro?')">
 
-<i class="bi bi-trash"></i>
+<i class="bi bi-person-check"></i>
 
 </a>
+<?php else: ?>
+<a href="index.php?page=maestros&accion=inactivar&id=<?= $m["id_maestro"] ?>"
+class="btn btn-danger btn-sm"
+onclick="return confirm('¿Desea inactivar este maestro?')">
+
+<i class="bi bi-person-slash"></i>
+
+</a>
+<?php endif; ?>
 
 </td>
 
@@ -205,9 +228,15 @@ No hay maestros registrados.
                     <a href="index.php?page=maestro_nuevo&id_coordinador=<?= $c["id_coordinador"] ?>" class="btn btn-warning btn-sm">
                         <i class="bi bi-pencil"></i>
                     </a>
-                    <a href="index.php?page=maestros&accion=eliminar_coordinador&id=<?= $c["id_coordinador"] ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Desea eliminar?')">
-                        <i class="bi bi-trash"></i>
-                    </a>
+                    <?php if (($c["estado"] ?? '') === 'inactivo'): ?>
+                        <a href="index.php?page=maestros&accion=activar_coordinador&id=<?= $c["id_coordinador"] ?>" class="btn btn-success btn-sm" onclick="return confirm('¿Desea activar?')">
+                            <i class="bi bi-person-check"></i>
+                        </a>
+                    <?php else: ?>
+                        <a href="index.php?page=maestros&accion=inactivar_coordinador&id=<?= $c["id_coordinador"] ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Desea inactivar?')">
+                            <i class="bi bi-person-slash"></i>
+                        </a>
+                    <?php endif; ?>
                 </td>
             </tr>
             <?php endforeach; ?>
