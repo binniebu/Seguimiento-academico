@@ -167,7 +167,10 @@
                                                <?php if ($ver === 'inactivos'): ?>
                                                    <a href="index.php?page=estudiantes&ver=inactivos&accion=activar&id=<?php echo $estudiante['id_estudiante']; ?>"
                                                       class="btn btn-sm btn-success"
-                                                      onclick="return confirm('¿Reactivar la cuenta de este estudiante?');">
+                                                      data-confirmar="¿Desea reactivar la cuenta de este estudiante para restaurar su acceso al sistema?"
+                                                      data-titulo="Reactivar Estudiante"
+                                                      data-confirm-text="Sí, reactivar"
+                                                      data-icono="question">
                                                        <i class="bi bi-person-check"></i> Activar Cuenta
                                                    </a>
                                                <?php elseif ($ver === 'graduados'): ?>
@@ -181,7 +184,10 @@
                                                    <?php endif; ?>
                                                    <a href="index.php?page=estudiantes&accion=eliminar&id=<?php echo $estudiante['id_estudiante']; ?>"
                                                       class="btn btn-sm btn-danger"
-                                                      onclick="return confirm('¿Dar de baja a este estudiante? Perderá acceso al sistema hasta que sea reactivado.');">
+                                                      data-confirmar="¿Está seguro de dar de baja a este estudiante? Perderá acceso al sistema hasta que sea reactivado de nuevo por la administración."
+                                                      data-titulo="Dar de baja Estudiante"
+                                                      data-confirm-text="Sí, dar de baja"
+                                                      data-icono="warning">
                                                        <i class="bi bi-person-x"></i> Dar de baja
                                                    </a>
                                                <?php endif; ?>

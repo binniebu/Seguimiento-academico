@@ -19,9 +19,13 @@
 
 <main class="col-md-10 ms-sm-auto px-md-4">
 
-<div class="d-flex justify-content-between align-items-center mt-4 mb-4">
-
-    <h2>Gestión de Personal</h2>
+<div class="d-flex justify-content-between align-items-center mt-4 mb-4 pb-3 border-bottom">
+    <div class="d-flex align-items-center gap-3">
+        <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn" type="button">
+            <i class="bi bi-list"></i>
+        </button>
+        <h2 class="mb-0">Gestión de Personal</h2>
+    </div>
 
     <a href="index.php?page=maestro_nuevo" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i>
@@ -160,7 +164,10 @@ class="btn btn-warning btn-sm">
 <?php if (($m["estado"] ?? '') === 'inactivo'): ?>
 <a href="index.php?page=maestros&accion=activar&id=<?= $m["id_maestro"] ?>"
 class="btn btn-success btn-sm"
-onclick="return confirm('¿Desea activar este maestro?')">
+data-confirmar="¿Desea activar a este miembro del personal docente?"
+data-titulo="Activar Personal"
+data-confirm-text="Sí, activar"
+data-icono="question">
 
 <i class="bi bi-person-check"></i>
 
@@ -168,7 +175,10 @@ onclick="return confirm('¿Desea activar este maestro?')">
 <?php else: ?>
 <a href="index.php?page=maestros&accion=inactivar&id=<?= $m["id_maestro"] ?>"
 class="btn btn-danger btn-sm"
-onclick="return confirm('¿Desea inactivar este maestro?')">
+data-confirmar="¿Desea inactivar a este miembro del personal docente? Perderá acceso a sus secciones activas."
+data-titulo="Inactivar Personal"
+data-confirm-text="Sí, inactivar"
+data-icono="warning">
 
 <i class="bi bi-person-slash"></i>
 
@@ -236,11 +246,19 @@ No hay maestros registrados.
                         <i class="bi bi-pencil"></i>
                     </a>
                     <?php if (($c["estado"] ?? '') === 'inactivo'): ?>
-                        <a href="index.php?page=maestros&accion=activar_coordinador&id=<?= $c["id_coordinador"] ?>" class="btn btn-success btn-sm" onclick="return confirm('¿Desea activar?')">
+                        <a href="index.php?page=maestros&accion=activar_coordinador&id=<?= $c["id_coordinador"] ?>" class="btn btn-success btn-sm" 
+                           data-confirmar="¿Desea activar la cuenta de este coordinador de facultad?" 
+                           data-titulo="Activar Coordinador" 
+                           data-confirm-text="Sí, activar" 
+                           data-icono="question">
                             <i class="bi bi-person-check"></i>
                         </a>
                     <?php else: ?>
-                        <a href="index.php?page=maestros&accion=inactivar_coordinador&id=<?= $c["id_coordinador"] ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Desea inactivar?')">
+                        <a href="index.php?page=maestros&accion=inactivar_coordinador&id=<?= $c["id_coordinador"] ?>" class="btn btn-danger btn-sm" 
+                           data-confirmar="¿Desea inactivar la cuenta de este coordinador de facultad?" 
+                           data-titulo="Inactivar Coordinador" 
+                           data-confirm-text="Sí, inactivar" 
+                           data-icono="warning">
                             <i class="bi bi-person-slash"></i>
                         </a>
                     <?php endif; ?>

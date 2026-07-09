@@ -123,12 +123,18 @@ if ($esMaestro) {
                         </a>
                         <a href="index.php?page=secciones&accion=clonar"
                            class="btn btn-outline-primary <?php echo (!$periodoActivo || !$periodoAnterior) ? 'disabled' : ''; ?>"
-                           onclick="return confirm('Desea clonar las secciones del periodo anterior como borradores?');">
+                           data-confirmar="¿Desea clonar todas las secciones del período anterior académico como borradores para el nuevo período?" 
+                           data-titulo="Clonar Secciones" 
+                           data-confirm-text="Sí, clonar" 
+                           data-icono="question">
                             <i class="bi bi-files"></i> Clonar Periodo Anterior
                         </a>
                         <a href="index.php?page=secciones&accion=activar_borradores"
                            class="btn btn-success <?php echo !$periodoActivo ? 'disabled' : ''; ?>"
-                           onclick="return confirm('Desea activar masivamente las secciones en borrador?');">
+                           data-confirmar="¿Desea activar masivamente todas las secciones en estado borrador? Pasarán a estar visibles para la matrícula de estudiantes." 
+                           data-titulo="Activar Borradores" 
+                           data-confirm-text="Sí, activar" 
+                           data-icono="warning">
                             <i class="bi bi-check2-circle"></i> Activar Borradores
                         </a>
                     </div>
@@ -230,7 +236,10 @@ if ($esMaestro) {
                                                             <a href="index.php?page=secciones&accion=extender_cupo&id=<?php echo urlencode($seccion["id_seccion"]); ?>"
                                                                class="btn btn-sm btn-outline-success"
                                                                title="Extender Cupo (+5)"
-                                                               onclick="return confirm('¿Desea extender el cupo de esta sección en +5 plazas adicionales?');">
+                                                               data-confirmar="¿Desea extender el cupo de esta sección sumando +5 plazas adicionales?" 
+                                                               data-titulo="Extender Cupo" 
+                                                               data-confirm-text="Sí, extender" 
+                                                               data-icono="question">
                                                                 <i class="bi bi-plus-circle"></i> +5 Cupos
                                                             </a>
                                                             <a href="index.php?page=seccion_nueva&id=<?php echo urlencode($seccion["id_seccion"]); ?>" class="btn btn-sm btn-warning">
@@ -238,7 +247,10 @@ if ($esMaestro) {
                                                             </a>
                                                             <a href="index.php?page=secciones&accion=eliminar&id=<?php echo urlencode($seccion["id_seccion"]); ?>"
                                                                class="btn btn-sm btn-danger"
-                                                               onclick="return confirm('Desea eliminar esta seccion?');">
+                                                               data-confirmar="¿Desea eliminar esta sección de forma permanente? Esta acción borrará la sección y las matrículas asociadas." 
+                                                               data-titulo="Eliminar Sección" 
+                                                               data-confirm-text="Sí, eliminar" 
+                                                               data-icono="warning">
                                                                 <i class="bi bi-trash"></i> Eliminar
                                                             </a>
                                                         <?php else: ?>

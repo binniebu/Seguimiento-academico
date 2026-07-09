@@ -338,4 +338,124 @@ body {
     color: #0057d8 !important;
     border-bottom: 3px solid #0057d8 !important;
     background: transparent !important;
-}
+}
+
+/* ==========================================================================
+   DISEÑO RESPONSIVE Y MEJORAS DE USABILIDAD (MÓVIL / TABLET)
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    /* Convertir el sidebar en un drawer flotante móvil */
+    .sidebar {
+        position: fixed !important;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 280px !important;
+        max-width: 280px !important;
+        z-index: 1050;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: block !important;
+        height: 100vh !important;
+        overflow-y: auto;
+    }
+
+    /* Mostrar sidebar al añadir la clase .show */
+    .sidebar.show {
+        transform: translateX(0) !important;
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    /* Ocultar sidebar por defecto en móvil */
+    .sidebar:not(.show) {
+        transform: translateX(-100%);
+    }
+
+    /* Forzar el contenido principal a ocupar todo el ancho */
+    main, .col-md-10, [role="main"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    /* Reducir padding de la tarjeta principal en móvil para dar más espacio a las tablas */
+    .main-content-card {
+        padding: 16px !important;
+        margin-top: 10px !important;
+    }
+
+    /* Mostrar siempre el botón de hamburguesa en móviles */
+    #toggleSidebarHeader {
+        display: inline-block !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Ajustar las cabeceras flex del panel en móvil para evitar superposiciones */
+    main .d-flex.justify-content-between.align-items-center.pb-3.mb-4.border-bottom,
+    main .d-flex.justify-content-between.align-items-center.pb-3.mb-4,
+    .d-flex.justify-content-between.align-items-center.mt-4.mb-4 {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    /* Ajustar el bloque de botones dentro de la cabecera en móvil */
+    main .d-flex.justify-content-between.align-items-center.pb-3.mb-4.border-bottom > .d-flex.gap-2.align-items-center,
+    main .d-flex.justify-content-between.align-items-center.pb-3.mb-4.border-bottom > .d-flex.gap-2,
+    main .d-flex.justify-content-between.align-items-center.pb-3.mb-4 > .d-flex.gap-2,
+    main .d-flex.justify-content-between.align-items-center.pb-3.mb-4.border-bottom > div,
+    .d-flex.justify-content-between.align-items-center.mt-4.mb-4 > .d-flex {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        justify-content: flex-start !important;
+    }
+
+    /* Evitar desbordamiento de títulos largos */
+    .page-title, h2 {
+        font-size: 1.5rem !important;
+        word-break: break-word !important;
+    }
+}
+
+/* Ocultar panel decorativo azul del login en pantallas móviles para centrar el formulario */
+@media (max-width: 767.98px) {
+    .info-panel {
+        display: none !important;
+    }
+    .form-panel {
+        width: 100% !important;
+        min-height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 20px !important;
+    }
+    .card-login {
+        width: 100% !important;
+        max-width: 400px !important;
+        padding: 30px 20px !important;
+    }
+}
+
+/* Overlay semitransparente detrás del sidebar móvil */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.5); /* Color gris pizarra oscuro semitransparente */
+    backdrop-filter: blur(4px); /* Efecto difuminado premium */
+    z-index: 1040;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

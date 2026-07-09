@@ -8,6 +8,35 @@ use Dao\EstudianteDao;
 
 class EstudiantesController
 {
+    private static function mostrarSweetAlert($mensaje, $tipo, $url, $titulo = "Aviso")
+    {
+        echo "<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; }
+            </style>
+        </head>
+        <body>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: '{$tipo}',
+                        title: '{$titulo}',
+                        text: '{$mensaje}',
+                        confirmButtonColor: '#0057d8'
+                    }).then(function() {
+                        window.location = '{$url}';
+                    });
+                });
+            </script>
+        </body>
+        </html>";
+        exit();
+    }
+
     public static function listar()
     {
         $buscar = $_GET["buscar"] ?? "";
@@ -37,40 +66,24 @@ class EstudiantesController
         if (!empty($id_estudiante)) {
             // editar: password no es obligatorio
             if ($nombre == "" || $correo == "" || $cuenta == "" || $carrera == "") {
-                echo "<script>
-                        alert('Debe completar todos los campos');
-                        window.location='index.php?page=estudiante_nuevo&id=" . intval($id_estudiante) . "';
-                      </script>";
-                exit();
+                self::mostrarSweetAlert("Debe completar todos los campos obligatorios.", "warning", "index.php?page=estudiante_nuevo&id=" . intval($id_estudiante), "Campos Incompletos");
             }
 
             $est = EstudianteDao::obtenerEstudiantePorId($id_estudiante);
             if (!$est) {
-                echo "<script>
-                        alert('Estudiante no encontrado');
-                        window.location='index.php?page=estudiantes';
-                      </script>";
-                exit();
+                self::mostrarSweetAlert("Estudiante no encontrado en el sistema.", "error", "index.php?page=estudiantes", "Error");
             }
 
             $id_usuario = $est['id_usuario'];
 
             $correoExistente = EstudianteDao::existeCorreo($correo);
             if ($correoExistente && $correoExistente['id_usuario'] != $id_usuario) {
-                echo "<script>
-                        alert('El correo ya está registrado por otro usuario');
-                        window.location='index.php?page=estudiante_nuevo&id=" . intval($id_estudiante) . "';
-                      </script>";
-                exit();
+                self::mostrarSweetAlert("El correo electrónico ya está registrado por otro usuario.", "warning", "index.php?page=estudiante_nuevo&id=" . intval($id_estudiante), "Correo Duplicado");
             }
 
             $cuentaExistente = EstudianteDao::existeCuenta($cuenta);
             if ($cuentaExistente && $cuentaExistente['id_estudiante'] != $id_estudiante) {
-                echo "<script>
-                        alert('El DNI/Número de cuenta ya está registrado por otro estudiante');
-                        window.location='index.php?page=estudiante_nuevo&id=" . intval($id_estudiante) . "';
-                      </script>";
-                exit();
+                self::mostrarSweetAlert("El DNI o Número de cuenta ya está registrado por otro estudiante.", "warning", "index.php?page=estudiante_nuevo&id=" . intval($id_estudiante), "Identificación Duplicada");
             }
 
             $resultado = EstudianteDao::actualizarEstudiante(
@@ -84,43 +97,23 @@ class EstudiantesController
             );
 
             if ($resultado) {
-                echo "<script>
-                        alert('Estudiante actualizado correctamente');
-                        window.location='index.php?page=estudiantes';
-                      </script>";
-                exit();
+                self::mostrarSweetAlert("Estudiante actualizado correctamente en el sistema.", "success", "index.php?page=estudiantes", "Actualización Exitosa");
             }
 
-            echo "<script>
-                    alert('No se pudo actualizar el estudiante');
-                    window.location='index.php?page=estudiante_nuevo&id=" . intval($id_estudiante) . "';
-                  </script>";
-            exit();
+            self::mostrarSweetAlert("No se pudo actualizar la información del estudiante.", "error", "index.php?page=estudiante_nuevo&id=" . intval($id_estudiante), "Error de Base de Datos");
         }
 
         // Inserción nueva
         if ($nombre == "" || $correo == "" || $password == "" || $cuenta == "" || $carrera == "") {
-            echo "<script>
-                    alert('Debe completar todos los campos');
-                    window.location='index.php?page=estudiante_nuevo';
-                  </script>";
-            exit();
+            self::mostrarSweetAlert("Debe completar todos los campos obligatorios para registrar al estudiante.", "warning", "index.php?page=estudiante_nuevo", "Campos Incompletos");
         }
 
         if (EstudianteDao::existeCorreo($correo)) {
-            echo "<script>
-                    alert('El correo ya está registrado');
-                    window.location='index.php?page=estudiante_nuevo';
-                  </script>";
-            exit();
+            self::mostrarSweetAlert("El correo electrónico ya está registrado en el sistema.", "warning", "index.php?page=estudiante_nuevo", "Correo Duplicado");
         }
 
         if (EstudianteDao::existeCuenta($cuenta)) {
-            echo "<script>
-                    alert('El DNI/Número de cuenta ya está registrado');
-                    window.location='index.php?page=estudiante_nuevo';
-                  </script>";
-            exit();
+            self::mostrarSweetAlert("El DNI o Número de cuenta ya está registrado en el sistema.", "warning", "index.php?page=estudiante_nuevo", "Identificación Duplicada");
         }
 
         $resultado = EstudianteDao::insertarEstudiante(
@@ -133,18 +126,10 @@ class EstudiantesController
         );
 
         if ($resultado) {
-            echo "<script>
-                    alert('Estudiante registrado correctamente');
-                    window.location='index.php?page=estudiantes';
-                  </script>";
-            exit();
+            self::mostrarSweetAlert("Estudiante registrado y admitido correctamente.", "success", "index.php?page=estudiantes", "Registro Exitoso");
         }
 
-        echo "<script>
-                alert('No se pudo registrar el estudiante');
-                window.location='index.php?page=estudiante_nuevo';
-              </script>";
-        exit();
+        self::mostrarSweetAlert("No se pudo registrar al estudiante en la base de datos.", "error", "index.php?page=estudiante_nuevo", "Error de Base de Datos");
     }
 
     public static function obtener($id = null)

@@ -78,7 +78,12 @@ if ($rolUsuario === "estudiante") {
                     <?php if ($rolUsuario === "estudiante"): ?>
                         <!-- VISTA PREMIUM PARA ESTUDIANTES -->
                         <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
-                            <h1 class="h2 page-title mb-0">Mis Calificaciones en Curso</h1>
+                            <div class="d-flex align-items-center gap-3">
+                                <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn" type="button">
+                                    <i class="bi bi-list"></i>
+                                </button>
+                                <h1 class="h2 page-title mb-0">Mis Calificaciones en Curso</h1>
+                            </div>
                             <?php if ($periodoActivo): ?>
                                 <span class="badge bg-primary px-3 py-2 fw-semibold"><?php echo htmlspecialchars($periodoActivo["nombre_periodo"]); ?></span>
                             <?php endif; ?>
@@ -153,7 +158,12 @@ if ($rolUsuario === "estudiante") {
                     <?php else: ?>
                         <!-- VISTA ADMINISTRATIVA PARA MAESTROS Y DIRECTORES -->
                         <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
-                            <h1 class="h2 page-title mb-0">Consultar Calificaciones</h1>
+                            <div class="d-flex align-items-center gap-3">
+                                <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn" type="button">
+                                    <i class="bi bi-list"></i>
+                                </button>
+                                <h1 class="h2 page-title mb-0">Consultar Calificaciones</h1>
+                            </div>
                             <a href="index.php?page=Calificacion&mode=INS" class="btn btn-primary">
                                 <i class="bi bi-plus-circle"></i> Registrar Nota
                             </a>

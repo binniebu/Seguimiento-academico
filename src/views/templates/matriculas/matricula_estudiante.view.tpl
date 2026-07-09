@@ -86,7 +86,11 @@ if (!function_exists('diasLabel')) {
         <!-- Main content -->
         <main role="main" class="col-md-10 ml-sm-auto px-md-4 py-4">
             <div class="main-content-card">
-                
+                <div class="d-flex align-items-center gap-3 mb-3 d-md-none">
+                    <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn" type="button">
+                        <i class="bi bi-list"></i> Menú
+                    </button>
+                </div>
                 <!-- Cabecera del Estudiante -->
                 <div class="card border-0 shadow-sm mb-4 rounded-3 bg-light">
                     <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -181,7 +185,11 @@ if (!function_exists('diasLabel')) {
                                                         </div>
 
                                                         <div class="mt-auto">
-                                                            <form method="POST" action="index.php?page=matricula_estudiante" onsubmit="return confirm('¿Desea matricular esta asignatura?');">
+                                                             <form method="POST" action="index.php?page=matricula_estudiante" 
+                                                                   data-confirmar="¿Desea inscribir esta asignatura en su carga académica para el periodo actual?" 
+                                                                   data-titulo="Confirmar Matrícula" 
+                                                                   data-confirm-text="Sí, matricular" 
+                                                                   data-icono="question">
                                                                 <input type="hidden" name="accion" value="matricular">
                                                                 <input type="hidden" name="id_seccion" value="<?php echo $sec["id_seccion"]; ?>">
 
@@ -231,7 +239,11 @@ if (!function_exists('diasLabel')) {
                                                     </div>
                                                 </div>
                                                 <?php if ($cancelacionesActivas): ?>
-                                                    <form method="POST" action="index.php?page=matricula_estudiante" onsubmit="return confirm('¿Está seguro de cancelar esta asignatura?');">
+                                                     <form method="POST" action="index.php?page=matricula_estudiante" 
+                                                           data-confirmar="¿Está seguro de dar de baja esta asignatura de su carga académica? Esta acción liberará el cupo." 
+                                                           data-titulo="Cancelar Asignatura" 
+                                                           data-confirm-text="Sí, cancelar" 
+                                                           data-icono="warning">
                                                         <input type="hidden" name="accion" value="cancelar">
                                                         <input type="hidden" name="id_matricula" value="<?php echo $m["id_matricula"]; ?>">
                                                         <button class="btn btn-sm btn-outline-danger border-0 p-2" type="submit" title="Cancelar Asignatura">

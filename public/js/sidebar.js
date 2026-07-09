@@ -1,7 +1,7 @@
 /**
- * sidebar.js — Control dinámico y robusto del sidebar
- * Crea dinámicamente el botón de hamburguesa si no existe,
- * y maneja la visibilidad e interactividad en todas las vistas de forma centralizada.
+ * sidebar.js — Control responsivo e interactivo del sidebar
+ * Maneja la visibilidad de la barra lateral en móviles mediante drawer y overlay,
+ * y el colapso de columna en escritorios.
  */
 (function () {
     function initSidebar() {
@@ -10,55 +10,78 @@
 
         if (!sidebar) return;
 
-        // 1. Asegurar que existe el botón de hamburguesa en el contenido principal
-        var hamburguesa = document.getElementById('toggleSidebarHeader');
-        if (!hamburguesa && main) {
-            hamburguesa = document.createElement('button');
-            hamburguesa.id = 'toggleSidebarHeader';
-            hamburguesa.className = 'btn btn-sm btn-outline-secondary toggleSidebarBtn me-3 mb-3';
-            hamburguesa.type = 'button';
-            hamburguesa.innerHTML = '<i class="bi bi-list"></i>';
-            hamburguesa.style.marginTop = '4px';
-
-            // Insertar al inicio del contenedor principal
-            main.insertBefore(hamburguesa, main.firstChild);
+        // 1. Crear overlay de fondo para móviles si no existe
+        var overlay = document.querySelector('.sidebar-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
         }
 
-        // 2. Función para actualizar el estado visual
+        // 2. Función para actualizar visualización según tamaño de pantalla
         function actualizarEstado() {
+            var esMovil = window.innerWidth < 768;
             var isCollapsed = sidebar.classList.contains('collapsed');
 
-            if (isCollapsed) {
-                // Colapsado: ocultar barra y expandir contenido
-                sidebar.style.setProperty('display', 'none', 'important');
+            if (esMovil) {
+                // Modo Móvil: quitar clases y estilos de escritorio
+                sidebar.style.removeProperty('display');
                 if (main) {
                     main.classList.remove('col-md-10', 'col-lg-10');
                     main.classList.add('col-md-12', 'col-lg-12');
                 }
-                if (hamburguesa) {
-                    hamburguesa.style.setProperty('display', 'inline-block', 'important');
+                
+                // Controlar por clase show (drawer flotante)
+                if (sidebar.classList.contains('show')) {
+                    overlay.style.display = 'block';
+                    document.body.style.overflow = 'hidden'; // Evitar scroll
+                } else {
+                    overlay.style.display = 'none';
+                    document.body.style.overflow = '';
                 }
             } else {
-                // Expandido: mostrar barra y reducir contenido
-                sidebar.style.setProperty('display', 'block', 'important');
-                if (main) {
-                    main.classList.remove('col-md-12', 'col-lg-12');
-                    main.classList.add('col-md-10', 'col-lg-10');
-                }
-                if (hamburguesa) {
-                    hamburguesa.style.setProperty('display', 'none', 'important');
+                // Modo Escritorio: restaurar scroll y ocultar overlay
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+
+                if (isCollapsed) {
+                    sidebar.style.setProperty('display', 'none', 'important');
+                    if (main) {
+                        main.classList.remove('col-md-10', 'col-lg-10');
+                        main.classList.add('col-md-12', 'col-lg-12');
+                    }
+                } else {
+                    sidebar.style.setProperty('display', 'block', 'important');
+                    if (main) {
+                        main.classList.remove('col-md-12', 'col-lg-12');
+                        main.classList.add('col-md-10', 'col-lg-10');
+                    }
                 }
             }
         }
 
-        // 3. Registrar el evento de clic mediante delegación para mayor robustez
+        // 3. Registrar eventos de clic para alternar el menú
         document.addEventListener('click', function (e) {
             var btn = e.target.closest('.toggleSidebarBtn');
+            var clickedOverlay = e.target.closest('.sidebar-overlay');
+            
             if (btn) {
-                sidebar.classList.toggle('collapsed');
+                var esMovil = window.innerWidth < 768;
+                if (esMovil) {
+                    sidebar.classList.toggle('show');
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                }
+                actualizarEstado();
+            } else if (clickedOverlay) {
+                // Si hace clic en el fondo oscuro en móviles, cerrar el menú
+                sidebar.classList.remove('show');
                 actualizarEstado();
             }
         });
+
+        // 4. Escuchar redimensionamiento de pantalla
+        window.addEventListener('resize', actualizarEstado);
 
         // Inicializar
         actualizarEstado();

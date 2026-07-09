@@ -120,9 +120,12 @@ $matriculas = MatriculasController::listar($buscar);
                                                     <?php echo htmlspecialchars(date('d/m/Y h:i A', strtotime($m['fecha_matricula']))); ?>
                                                 </td>
                                                 <td class="text-end pe-3">
-                                                    <a href="index.php?page=matriculas&accion=cancelar_admin&id=<?php echo urlencode($m['id_matricula']); ?>"
-                                                       class="btn btn-sm btn-outline-danger"
-                                                       onclick="return confirm('¿Está seguro de realizar la cancelación administrativa de esta matrícula? Esta acción es irreversible.');">
+                                                     <a href="index.php?page=matriculas&accion=cancelar_admin&id=<?php echo urlencode($m['id_matricula']); ?>"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        data-confirmar="¿Está seguro de realizar la cancelación administrativa de esta matrícula? Esta acción es irreversible y el alumno perderá su plaza." 
+                                                        data-titulo="Cancelar Matrícula Administrativamente" 
+                                                        data-confirm-text="Sí, dar de baja" 
+                                                        data-icono="warning">
                                                         <i class="bi bi-trash-fill me-1"></i> Dar de Baja
                                                     </a>
                                                 </td>

@@ -47,8 +47,12 @@ function solicitudDocumentoLink(?string $ruta, string $texto, string $icono): st
         <main class="col-md-10 ml-sm-auto px-md-4 py-4">
             <div class="main-content-card bg-white rounded shadow-sm p-4">
                 <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
-                    <div>
-                        <h1 class="h2 page-title mb-1">Bandeja de Solicitudes de Admision</h1>
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn" type="button">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <div>
+                            <h1 class="h2 page-title mb-1">Bandeja de Solicitudes de Admision</h1>
                         <p class="text-muted mb-0">
                             <?php if ($rolActivo === "coordinador"): ?>
                                 Mostrando aspirantes pendientes de las carreras de tu facultad.
@@ -95,14 +99,20 @@ function solicitudDocumentoLink(?string $ruta, string $texto, string $icono): st
                                         <td><?php echo htmlspecialchars($solicitud["fecha_creacion"] ?? ""); ?></td>
                                         <td class="text-end">
                                             <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
-                                                <a href="index.php?page=solicitud_procesar&accion=aprobar&id=<?php echo urlencode($solicitud["id_usuario"] ?? ""); ?>"
-                                                   class="btn btn-sm btn-success"
-                                                   onclick="return confirm('Desea aprobar esta solicitud y admitir al estudiante?');">
+                                                 <a href="index.php?page=solicitud_procesar&accion=aprobar&id=<?php echo urlencode($solicitud["id_usuario"] ?? ""); ?>"
+                                                    class="btn btn-sm btn-success"
+                                                    data-confirmar="¿Desea aprobar esta solicitud de admisión? Se generará la cuenta oficial del estudiante y se le notificará." 
+                                                    data-titulo="Aprobar Admisión" 
+                                                    data-confirm-text="Sí, admitir estudiante" 
+                                                    data-icono="question">
                                                     <i class="bi bi-check-circle"></i> Aprobar
                                                 </a>
-                                                <a href="index.php?page=solicitud_procesar&accion=rechazar&id=<?php echo urlencode($solicitud["id_usuario"] ?? ""); ?>"
-                                                   class="btn btn-sm btn-danger"
-                                                   onclick="return confirm('Desea rechazar esta solicitud? Se eliminaran el usuario, el estudiante y sus documentos cargados.');">
+                                                 <a href="index.php?page=solicitud_procesar&accion=rechazar&id=<?php echo urlencode($solicitud["id_usuario"] ?? ""); ?>"
+                                                    class="btn btn-sm btn-danger"
+                                                    data-confirmar="¿Está seguro de rechazar esta solicitud? Se eliminará la cuenta temporal del aspirante y los archivos adjuntos cargados en el sistema de forma permanente." 
+                                                    data-titulo="Rechazar Admisión" 
+                                                    data-confirm-text="Sí, rechazar" 
+                                                    data-icono="warning">
                                                     <i class="bi bi-x-circle"></i> Rechazar
                                                 </a>
                                             </div>

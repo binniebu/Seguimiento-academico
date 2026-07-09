@@ -61,9 +61,14 @@
             <!-- Main content -->
             <main role="main" class="col-md-10 ml-sm-auto px-md-4 py-4">
                 <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
-                    <div>
-                        <h1 class="h2 page-title mb-0">Flujograma Académico</h1>
-                        <p class="text-muted mb-0 fs-5"><?php echo htmlspecialchars($carrera['nombre_carrera']); ?></p>
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn" type="button">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <div>
+                            <h1 class="h2 page-title mb-0">Flujograma Académico</h1>
+                            <p class="text-muted mb-0 fs-5"><?php echo htmlspecialchars($carrera['nombre_carrera']); ?></p>
+                        </div>
                     </div>
                     <div class="d-flex gap-2">
                         <?php if ($_SESSION["rol"] === "estudiante"): ?>

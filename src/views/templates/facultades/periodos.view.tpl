@@ -123,7 +123,11 @@ $matriculaActiva = \Controllers\MatriculasController::esPeriodoMatriculaActivo()
                                     <input type="hidden" name="accion" value="toggle_matricula">
                                     <?php if ($matriculaActiva): ?>
                                         <input type="hidden" name="estado" value="0">
-                                        <button type="submit" class="btn btn-danger w-100" onclick="return confirm('¿Está seguro de cerrar el período de matrícula para los estudiantes?');">
+                                        <button type="submit" class="btn btn-danger w-100" 
+                                                data-confirmar="¿Está seguro de cerrar el período de matrícula para los estudiantes? Los procesos de adición e inscripción quedarán suspendidos." 
+                                                data-titulo="Cerrar Matrícula" 
+                                                data-confirm-text="Sí, cerrar" 
+                                                data-icono="warning">
                                             <i class="bi bi-x-circle me-1"></i> Cerrar Matrícula
                                         </button>
                                     <?php else: ?>
@@ -134,17 +138,6 @@ $matriculaActiva = \Controllers\MatriculasController::esPeriodoMatriculaActivo()
                                     <?php endif; ?>
                                 </form>
 
-                                <hr>
-                                <div class="text-muted small mb-2 text-center fw-semibold text-warning-emphasis"><i class="bi bi-flask"></i> Simulación de Periodo</div>
-                                <form method="POST" action="index.php?page=periodos" id="formDemoMatricula">
-                                    <input type="hidden" name="accion" value="demo_matricula">
-                                    <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="confirmarDemo()">
-                                        <i class="bi bi-lightning-charge-fill me-1"></i> Forzar Inicio de Periodo a Hoy
-                                    </button>
-                                </form>
-                                <div class="text-muted text-center mt-1" style="font-size: 10px;">
-                                    (Alinea la fecha del periodo para simulaciones de adiciones/cancelaciones).
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -187,9 +180,12 @@ $matriculaActiva = \Controllers\MatriculasController::esPeriodoMatriculaActivo()
                                                             <?php elseif ($p['fecha_fin'] < date('Y-m-d')): ?>
                                                                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2">Finalizado</span>
                                                             <?php else: ?>
-                                                                <a href="index.php?page=periodos&accion=activar&id=<?php echo $p['id_periodo']; ?>" 
-                                                                   class="btn btn-sm btn-outline-primary"
-                                                                   onclick="return confirm('¿Desea activar este periodo académico? Se desactivará el periodo actual.');">
+                                                                 <a href="index.php?page=periodos&accion=activar&id=<?php echo $p['id_periodo']; ?>" 
+                                                                    class="btn btn-sm btn-outline-primary"
+                                                                    data-confirmar="¿Desea activar este periodo académico? El período actual será desactivado automáticamente en el sistema." 
+                                                                    data-titulo="Activar Periodo Académico" 
+                                                                    data-confirm-text="Sí, activar" 
+                                                                    data-icono="question">
                                                                     <i class="bi bi-check-circle me-1"></i> Activar
                                                                 </a>
                                                             <?php endif; ?>
@@ -216,25 +212,7 @@ $matriculaActiva = \Controllers\MatriculasController::esPeriodoMatriculaActivo()
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-function confirmarDemo() {
-    Swal.fire({
-        icon: 'warning',
-        title: '⚡ Activar Modo Demo',
-        html: `<p>Esta acción <strong>moverá la fecha de inicio</strong> del período activo a <strong>hoy</strong>.</p>
-               <p class="text-muted small mb-0">La ventana de matrícula quedará abierta por 28 días desde hoy.</p>`,
-        showCancelButton: true,
-        confirmButtonColor: '#e9a825',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, activar demo',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('formDemoMatricula').submit();
-        }
-    });
-}
-</script>
+
 
 <?php if ($mensajeError !== ""): ?>
     <script>

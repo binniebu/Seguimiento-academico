@@ -5,7 +5,7 @@ $currentPage = $_GET['page'] ?? 'home';
     <div class="sidebar-sticky pt-3">
         <div class="d-flex justify-content-between align-items-center px-3 mt-4 mb-2">
             <h6 class="sidebar-heading p-0 m-0 text-muted">Menu</h6>
-            <button class="btn btn-sm text-white p-0 toggleSidebarBtn" style="font-size: 16px; border: none; background: transparent;">
+            <button class="btn btn-sm text-white p-0 toggleSidebarBtn d-md-none" style="font-size: 16px; border: none; background: transparent;">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
@@ -85,3 +85,7 @@ $currentPage = $_GET['page'] ?? 'home';
 </nav>
 <!-- Script centralizado del sidebar — se carga una sola vez para todos los templates -->
 <script src="public/js/sidebar.js"></script>
+<!-- Librería global de SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Script centralizado de confirmaciones SweetAlert2 -->
+<script src="public/js/confirmaciones.js"></script>

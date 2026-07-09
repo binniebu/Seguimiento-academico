@@ -177,7 +177,11 @@ if ($rolActual === "director") {
                                         Al cambiar la contraseña se cerrara la sesion automaticamente.
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary" onclick="return confirm('Desea cambiar su contraseña y cerrar la sesion?');">
+                                    <button type="submit" class="btn btn-primary" 
+                                             data-confirmar="¿Desea cambiar su contraseña? Su sesión se cerrará de forma automática y deberá iniciar sesión de nuevo." 
+                                             data-titulo="Actualizar Contraseña" 
+                                             data-confirm-text="Sí, cambiar contraseña" 
+                                             data-icono="question">
                                         <i class="bi bi-key"></i> Actualizar Contraseña
                                     </button>
                                 </form>
