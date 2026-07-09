@@ -122,11 +122,7 @@ switch ($rolActual) {
                             <i class="bi bi-list"></i>
                         </button>
                         <div>
-                            <h1 class="h2 page-title mb-1">Bienvenido, <?php echo htmlspecialchars($nombreActual); ?></h1>
-                            <p class="text-muted mb-0" style="font-size: 14px;">
-                                Rol de sesion actual:
-                                <strong><?php echo ucfirst(htmlspecialchars($rolActual)); ?></strong>
-                            </p>
+                            <h1 class="h2 page-title mb-0">Bienvenido, <?php echo htmlspecialchars($nombreActual); ?></h1>
                         </div>
                     </div>
 
@@ -146,7 +142,7 @@ switch ($rolActual) {
 
                 <?php if ($rolActual === "director"): ?>
                     <div class="row g-3 mb-4">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="dashboard-kpi shadow-sm">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -157,7 +153,7 @@ switch ($rolActual) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="dashboard-kpi shadow-sm">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -168,22 +164,6 @@ switch ($rolActual) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="dashboard-kpi shadow-sm">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <div class="text-muted small mb-2">Solicitudes pendientes</div>
-                                        <div class="dashboard-kpi-value"><?php echo dashboardNumero($dashboard["solicitudes_pendientes"] ?? 0); ?></div>
-                                    </div>
-                                    <span class="icon-box bg-warning-subtle text-warning"><i class="bi bi-inbox"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-section mb-4">
-                        <h2 class="h5 mb-3"><i class="bi bi-speedometer2"></i> Vista global institucional</h2>
-                        <p class="text-muted mb-0">Estos indicadores resumen la actividad general del sistema y ayudan a detectar carga administrativa pendiente.</p>
                     </div>
 
                     <div class="row g-3 mb-4">

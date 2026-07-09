@@ -89,8 +89,7 @@ if ($rolActual === "director") {
                                         <i class="bi bi-person"></i>
                                     </div>
                                     <div>
-                                        <h2 class="h4 mb-1"><?php echo htmlspecialchars(valorPerfil($perfil["nombre"] ?? "")); ?></h2>
-                                        <span class="badge bg-primary"><?php echo htmlspecialchars(ucfirst($rolActual)); ?></span>
+                                        <h2 class="h4 mb-0"><?php echo htmlspecialchars(valorPerfil($perfil["nombre"] ?? "")); ?></h2>
                                     </div>
                                 </div>
 
@@ -103,9 +102,6 @@ if ($rolActual === "director") {
 
                                     <dt class="col-sm-4 text-muted">DNI</dt>
                                     <dd class="col-sm-8"><?php echo htmlspecialchars(valorPerfil($dni)); ?></dd>
-
-                                    <dt class="col-sm-4 text-muted">Rol actual</dt>
-                                    <dd class="col-sm-8"><?php echo htmlspecialchars(ucfirst($rolActual)); ?></dd>
 
                                     <?php foreach ($datosAdicionales as $etiqueta => $valor): ?>
                                         <dt class="col-sm-4 text-muted"><?php echo htmlspecialchars($etiqueta); ?></dt>
