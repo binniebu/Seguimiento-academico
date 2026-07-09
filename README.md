@@ -2,7 +2,7 @@
 
 El Sistema de Seguimiento Académico y Gestión de Matrícula es una plataforma web moderna, centralizada e interactiva diseñada para administrar de manera eficiente la estructura académica, el expediente del estudiante, la programación docente y el proceso de calificaciones de una institución de educación superior.
 
-El sistema se basa en un diseño premium enfocado en la usabilidad, responsividad móvil total y arquitectura MVC limpia bajo PHP Vanilla y base de datos relacional MySQL.
+El sistema se basa en un diseño enfocado en la usabilidad, responsividad móvil total y arquitectura MVC limpia bajo PHP Vanilla y base de datos relacional MySQL.
 
 ---
 
