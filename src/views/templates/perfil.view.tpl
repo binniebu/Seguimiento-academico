@@ -192,19 +192,6 @@ if ($rolActual === "director") {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.querySelectorAll('.toggleSidebarBtn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const sidebar = document.querySelector('.sidebar');
-        const main = document.querySelector('main');
-        if (sidebar.classList.contains('collapsed')) {
-            sidebar.classList.remove('collapsed');
-            main.classList.replace('col-md-12', 'col-md-10');
-        } else {
-            sidebar.classList.add('collapsed');
-            main.classList.replace('col-md-10', 'col-md-12');
-        }
-    });
-});
 
 document.querySelectorAll('.toggle-password').forEach(button => {
     button.addEventListener('click', function() {

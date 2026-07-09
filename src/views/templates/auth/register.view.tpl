@@ -6,6 +6,7 @@
     <title>Solicitud de Admisión Académica</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
     <link rel="stylesheet" href="public/css/style.css">
     <style>
         body {
@@ -117,13 +118,16 @@
                     <label class="form-label-custom">Carrera a la que aplica <span class="text-danger">*</span></label>
                     <select name="carrera" id="carreraSelect" class="form-select" required>
                         <option value="">Selecciona la carrera de tu elección</option>
-                        <?php if (!empty($carrerasActivas)): ?>
-                            <?php foreach ($carrerasActivas as $c): ?>
-                                <option value="<?php echo htmlspecialchars($c['nombre_carrera']); ?>" <?php echo (isset($_POST['carrera']) && $_POST['carrera'] === $c['nombre_carrera']) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($c['nombre_carrera']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                        <?php
+                        require_once __DIR__ . '/../../../dao/CarreraDao.php';
+                        $carrerasActivas = \Dao\CarreraDao::obtenerCarrerasParaRegistro();
+                        foreach ($carrerasActivas as $c):
+                        ?>
+                            <option value="<?php echo htmlspecialchars($c['nombre_carrera']); ?>"
+                                    <?php echo (isset($_POST['carrera']) && $_POST['carrera'] === $c['nombre_carrera']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($c['nombre_carrera']); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -223,8 +227,16 @@
     setupPasswordToggle('password', 'togglePassword');
     setupPasswordToggle('confirm_password', 'toggleConfirmPassword');
 </script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Inicializar TomSelect en el select de carrera para b\u00fasqueda din\u00e1mica
+    new TomSelect('#carreraSelect', {
+        placeholder: 'Escribe para buscar tu carrera...',
+        allowEmptyOption: true,
+        maxOptions: 20,
+    });
+
     <?php if (!empty($errorMsg)): ?>
     Swal.fire({
         icon: 'error',
@@ -236,4 +248,4 @@
 </script>
 
 </body>
-</html>
+</html>

@@ -12,9 +12,10 @@ $currentPage = $_GET['page'] ?? 'home';
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link <?php echo $currentPage === 'home' ? 'active' : ''; ?>" href="index.php?page=home">
-                    <i class="bi bi-house-fill"></i> Home
+                    <i class="bi bi-house-fill"></i> Inicio
                 </a>
             </li>
+
             <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'estudiantes' ? 'active' : ''; ?>" href="index.php?page=estudiantes">
@@ -22,6 +23,7 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
+
             <?php if ($_SESSION["rol"] === "director"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'maestros' ? 'active' : ''; ?>" href="index.php?page=maestros">
@@ -29,46 +31,17 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if ($_SESSION["rol"] === "coordinador"): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'carreras' ? 'active' : ''; ?>" href="index.php?page=carreras">
-                        <i class="bi bi-tags"></i> Carreras
-                    </a>
-                </li>
-            <?php endif; ?>
-            <?php if ($_SESSION["rol"] === "coordinador"): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'solicitudes_registro' ? 'active' : ''; ?>" href="index.php?page=solicitudes_registro">
-                        <i class="bi bi-clipboard-check"></i> Solicitudes
-                    </a>
-                </li>
-            <?php endif; ?>
+
+
+
             <?php if ($_SESSION["rol"] === "maestro"): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'materias' ? 'active' : ''; ?>" href="index.php?page=materias">
-                        <i class="bi bi-book"></i> Materias
+                    <a class="nav-link <?php echo in_array($currentPage, ['secciones','notas_maestro']) ? 'active' : ''; ?>" href="index.php?page=secciones">
+                        <i class="bi bi-calendar-event"></i> Mis Secciones
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if (in_array($_SESSION["rol"], ["maestro", "coordinador"])): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'secciones' ? 'active' : ''; ?>" href="index.php?page=secciones">
-                        <i class="bi bi-calendar-event"></i> Secciones
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'matriculas' ? 'active' : ''; ?>" href="index.php?page=matriculas">
-                        <i class="bi bi-card-checklist"></i> Matrículas
-                    </a>
-                </li>
-            <?php endif; ?>
-            <?php if ($_SESSION["rol"] === "maestro"): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'calificaciones' ? 'active' : ''; ?>" href="index.php?page=calificaciones">
-                        <i class="bi bi-graph-up"></i> Calificaciones
-                    </a>
-                </li>
-            <?php endif; ?>
+
             <?php if ($_SESSION["rol"] === "estudiante"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'mis_materias' ? 'active' : ''; ?>" href="index.php?page=mis_materias">
@@ -85,9 +58,9 @@ $currentPage = $_GET['page'] ?? 'home';
                         <i class="bi bi-file-earmark-text"></i> Historial
                     </a>
                 </li>
-                <?php 
+                <?php
                 require_once __DIR__ . "/../../controllers/MatriculasController.php";
-                if (\Controllers\MatriculasController::esPeriodoMatriculaActivo()): 
+                if (\Controllers\MatriculasController::esPeriodoMatriculaActivo()):
                 ?>
                     <li class="nav-item">
                         <a class="nav-link <?php echo $currentPage === 'matricula_estudiante' ? 'active' : ''; ?>" href="index.php?page=matricula_estudiante">
@@ -110,3 +83,5 @@ $currentPage = $_GET['page'] ?? 'home';
         </ul>
     </div>
 </nav>
+<!-- Script centralizado del sidebar — se carga una sola vez para todos los templates -->
+<script src="public/js/sidebar.js"></script>

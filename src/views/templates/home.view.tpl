@@ -210,16 +210,6 @@ switch ($rolActual) {
                                 </div>
                             </a>
                         </div>
-                        <div class="col-6 col-md-4 col-lg-2">
-                            <a href="index.php?page=matriculas" class="text-decoration-none text-dark">
-                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
-                                    <div class="icon-box bg-danger-subtle text-danger mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <i class="bi bi-card-checklist fs-4"></i>
-                                    </div>
-                                    <div class="small fw-semibold">Matrículas</div>
-                                </div>
-                            </a>
-                        </div>
                     </div>
 
                 <?php elseif ($rolActual === "coordinador"): ?>
@@ -245,6 +235,43 @@ switch ($rolActual) {
                                     <span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-calendar-event"></i></span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Atajos de Gestión Rápida para el Coordinador -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3 text-dark fw-semibold"><i class="bi bi-grid-fill text-primary"></i> Atajos de Gestión</h5>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="index.php?page=carreras" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-success-subtle text-success mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-tags fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Carreras</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="index.php?page=secciones" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-primary-subtle text-primary mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-calendar-event fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Secciones</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="index.php?page=solicitudes_registro" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-warning-subtle text-warning mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-clipboard-check fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Solicitudes</div>
+                                </div>
+                            </a>
                         </div>
                     </div>
 
@@ -291,55 +318,79 @@ switch ($rolActual) {
                     </div>
 
                 <?php elseif ($rolActual === "maestro"): ?>
-                    <div class="dashboard-section">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h2 class="h5 mb-0"><i class="bi bi-calendar-check"></i> Mis secciones del periodo actual</h2>
-                            <a href="index.php?page=calificaciones" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil-square"></i> Calificaciones
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="dashboard-kpi shadow-sm">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="text-muted small mb-2">Clases Asignadas</div>
+                                        <div class="dashboard-kpi-value"><?php echo dashboardNumero($dashboard["total_secciones"] ?? 0); ?></div>
+                                    </div>
+                                    <span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-journal-text"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="dashboard-kpi shadow-sm">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="text-muted small mb-2">Estudiantes a Cargo</div>
+                                        <div class="dashboard-kpi-value"><?php echo dashboardNumero($dashboard["total_alumnos"] ?? 0); ?></div>
+                                    </div>
+                                    <span class="icon-box bg-success-subtle text-success"><i class="bi bi-people"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="dashboard-kpi shadow-sm">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="text-muted small mb-2">Calificaciones Registradas</div>
+                                        <div class="dashboard-kpi-value"><?php echo ($dashboard["porcentaje_avance"] ?? 0) . "%"; ?></div>
+                                    </div>
+                                    <span class="icon-box bg-warning-subtle text-warning"><i class="bi bi-check2-all"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3 text-dark fw-semibold"><i class="bi bi-grid-fill text-primary"></i> Acciones del Docente</h5>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="index.php?page=secciones" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-primary-subtle text-primary mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-calendar-event fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Mis Secciones</div>
+                                    <div class="text-muted small">Ver horarios y aulas de tus clases</div>
+                                </div>
                             </a>
                         </div>
-
-                        <?php if (!empty($dashboard["secciones"])): ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Asignatura</th>
-                                            <th>Seccion</th>
-                                            <th>Aula</th>
-                                            <th>Horario</th>
-                                            <th class="text-center">Inscritos</th>
-                                            <th class="text-end">Notas</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($dashboard["secciones"] as $seccion): ?>
-                                            <tr>
-                                                <td>
-                                                    <div class="fw-semibold"><?php echo htmlspecialchars(($seccion["codigo_materia"] ?? "") . " - " . ($seccion["materia"] ?? "")); ?></div>
-                                                    <span class="badge <?php echo ($seccion["estado"] ?? "") === "Activa" ? "bg-success" : "bg-warning text-dark"; ?>">
-                                                        <?php echo htmlspecialchars($seccion["estado"] ?? ""); ?>
-                                                    </span>
-                                                </td>
-                                                <td><?php echo htmlspecialchars($seccion["codigo_seccion"] ?? ""); ?></td>
-                                                <td><?php echo htmlspecialchars($seccion["aula"] ?? ""); ?></td>
-                                                <td><?php echo htmlspecialchars(dashboardDias($seccion["dias"] ?? "") . " " . dashboardHora($seccion["hora_inicio"] ?? "") . " - " . dashboardHora($seccion["hora_fin"] ?? "")); ?></td>
-                                                <td class="text-center"><?php echo dashboardNumero($seccion["inscritos"] ?? 0); ?></td>
-                                                <td class="text-end">
-                                                    <a href="index.php?page=calificaciones&id_seccion=<?php echo urlencode($seccion["id_seccion"] ?? ""); ?>" class="btn btn-sm btn-primary">
-                                                        <i class="bi bi-journal-check"></i> Registrar notas
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php else: ?>
-                            <div class="alert alert-info mb-0">
-                                No tiene secciones asignadas en el periodo activo.
-                            </div>
-                        <?php endif; ?>
+                        <div class="col-6 col-md-4">
+                            <a href="index.php?page=notas_maestro" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-success-subtle text-success mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-pencil-square fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Registrar Calificaciones</div>
+                                    <div class="text-muted small">Ingresar notas por parcial a los alumnos</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <a href="index.php?page=perfil" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-info-subtle text-info mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-person-circle fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Mi Perfil</div>
+                                    <div class="text-muted small">Actualizar contraseña e información</div>
+                                </div>
+                            </a>
+                        </div>
                     </div>
 
                 <?php elseif ($rolActual === "estudiante"): ?>
@@ -348,8 +399,13 @@ switch ($rolActual) {
                             <div class="dashboard-kpi shadow-sm">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
-                                        <div class="text-muted small mb-2">Indice academico global</div>
-                                        <div class="dashboard-kpi-value"><?php echo dashboardNumero($dashboard["promedio_global"] ?? 0, 2); ?></div>
+                                        <div class="text-muted small mb-2">Índice Académico Global</div>
+                                        <div class="dashboard-kpi-value">
+                                            <?php 
+                                                $promGlobal = $dashboard["promedio_global"] ?? 0;
+                                                echo floatval($promGlobal) > 0 ? dashboardNumero($promGlobal, 2) . "%" : "N/D";
+                                            ?>
+                                        </div>
                                     </div>
                                     <span class="icon-box bg-success-subtle text-success"><i class="bi bi-graph-up-arrow"></i></span>
                                 </div>
@@ -359,8 +415,8 @@ switch ($rolActual) {
                             <div class="dashboard-kpi shadow-sm">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
-                                        <div class="text-muted small mb-2">UV matriculadas</div>
-                                        <div class="dashboard-kpi-value"><?php echo dashboardNumero($dashboard["uv_matriculadas"] ?? 0); ?></div>
+                                        <div class="text-muted small mb-2">Asignaturas Matriculadas</div>
+                                        <div class="dashboard-kpi-value"><?php echo dashboardNumero($dashboard["materias_matriculadas"] ?? 0); ?></div>
                                     </div>
                                     <span class="icon-box bg-primary-subtle text-primary"><i class="bi bi-journal-bookmark"></i></span>
                                 </div>
@@ -428,20 +484,6 @@ switch ($rolActual) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.querySelectorAll('.toggleSidebarBtn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const sidebar = document.querySelector('.sidebar');
-        const main = document.querySelector('main');
-        if (sidebar.classList.contains('collapsed')) {
-            sidebar.classList.remove('collapsed');
-            main.classList.replace('col-md-12', 'col-md-10');
-        } else {
-            sidebar.classList.add('collapsed');
-            main.classList.replace('col-md-10', 'col-md-12');
-        }
-    });
-});
-</script>
+<!-- sidebar.js ya fue cargado desde sidebar.view.tpl -->
 </body>
 </html>

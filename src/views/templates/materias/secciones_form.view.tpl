@@ -18,9 +18,36 @@ if (isset($_GET["id"])) {
 }
 
 $isEdit = !empty($seccion);
+
+// Si viene de un error de guardado, repoblar el formulario con los datos que el usuario ingresó
+// para que no pierda lo que escribió. El controller guarda estos datos en $_SESSION['seccion_form_old'].
+$formError  = $_SESSION['seccion_form_error'] ?? null;
+$formOld    = $_SESSION['seccion_form_old']   ?? null;
+unset($_SESSION['seccion_form_error'], $_SESSION['seccion_form_old']);
+
+// Si hay datos previos (error de validación), fusionarlos sobre $seccion para repoblar el form
+if ($formOld) {
+    // Preservar el nombre del maestro si la sección ya existía (para el fallback de TomSelect)
+    $nombreMaestroFallback = $seccion['nombre_maestro'] ?? null;
+    $seccion = array_merge($seccion ?? [], [
+        'id_seccion'    => $formOld['id_seccion']    ?? ($seccion['id_seccion'] ?? null),
+        'id_materia'    => $formOld['id_materia']    ?? '',
+        'id_maestro'    => $formOld['id_maestro']    ?? '',
+        'codigo_seccion'=> $formOld['codigo_seccion'] ?? '',
+        'aula'          => $formOld['aula']           ?? '',
+        'dias'          => implode(',', (array)($formOld['dias'] ?? [])),
+        'hora_inicio'   => $formOld['hora_inicio']   ?? '',
+        'hora_fin'      => $formOld['hora_fin']       ?? '',
+        'cupo_maximo'   => $formOld['cupo_maximo']   ?? 30,
+        'estado'        => $formOld['estado']         ?? 'Borrador',
+        'nombre_maestro'=> $nombreMaestroFallback,
+    ]);
+}
+
 $materias = \Controllers\MateriasController::obtenerMateriasProgramables();
 $maestros = \Controllers\MateriasController::obtenerMaestrosSeleccionables();
 $diasSeleccionados = array_filter(explode(",", \Dao\SeccionDao::normalizarDias($seccion["dias"] ?? "")));
+
 $diasSemana = [
     "Lu" => "Lunes",
     "Ma" => "Martes",
@@ -57,7 +84,9 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
     <title><?php echo $isEdit ? "Editar Seccion" : "Nueva Seccion"; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
     <link rel="stylesheet" href="public/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 <div class="container-fluid">
@@ -209,6 +238,7 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
                         <div class="col-md-3">
                             <label class="form-label">Hora Inicio <span class="text-danger">*</span></label>
                             <input type="time"
+                                   id="hora_inicio"
                                    name="hora_inicio"
                                    class="form-control"
                                    value="<?php echo htmlspecialchars(substr($seccion["hora_inicio"] ?? "", 0, 5)); ?>"
@@ -218,6 +248,7 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
                         <div class="col-md-3">
                             <label class="form-label">Hora Fin <span class="text-danger">*</span></label>
                             <input type="time"
+                                   id="hora_fin"
                                    name="hora_fin"
                                    class="form-control"
                                    value="<?php echo htmlspecialchars(substr($seccion["hora_fin"] ?? "", 0, 5)); ?>"
@@ -258,79 +289,115 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script>
-document.querySelectorAll('.toggleSidebarBtn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const sidebar = document.querySelector('.sidebar');
-        const main = document.querySelector('main');
-        if (sidebar.classList.contains('collapsed')) {
-            sidebar.classList.remove('collapsed');
-            main.classList.replace('col-md-12', 'col-md-10');
-        } else {
-            sidebar.classList.add('collapsed');
-            main.classList.replace('col-md-10', 'col-md-12');
+// ---------------------------------------------------------
+// 1. TomSelect: búsqueda en selects de asignatura y maestro
+// ---------------------------------------------------------
+if (document.getElementById('select_materia')) {
+    new TomSelect('#select_materia', {
+        placeholder: 'Escriba para buscar asignatura...',
+        allowEmptyOption: true,
+        maxOptions: 100,
+        onChange: function(value) {
+            // Re-ejecutar el filtro de maestros al cambiar asignatura
+            filterMaestros();
         }
     });
+}
+if (document.getElementById('select_maestro')) {
+    new TomSelect('#select_maestro', {
+        placeholder: 'Escriba para buscar docente...',
+        allowEmptyOption: true,
+        maxOptions: 100,
+    });
+}
+
+// ---------------------------------------------------------
+// 2. Validación de hora: hora fin NO puede ser <= hora inicio
+// ---------------------------------------------------------
+document.querySelector('form').addEventListener('submit', function(e) {
+    var inicio = document.getElementById('hora_inicio').value;
+    var fin    = document.getElementById('hora_fin').value;
+    if (inicio && fin && fin <= inicio) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'error',
+            title: 'Horario inválido',
+            text: 'La hora de fin (' + fin + ') debe ser mayor que la hora de inicio (' + inicio + ').',
+            confirmButtonColor: '#0057d8',
+            confirmButtonText: 'Corregir'
+        });
+    }
 });
 
+// ---------------------------------------------------------
+// 3. Script de filtro de maestros por facultad/carrera
+// ---------------------------------------------------------
 function filterMaestros() {
     const matSelect = document.getElementById('select_materia');
     if (!matSelect) return;
     const selectedOpt = matSelect.options[matSelect.selectedIndex];
     if (!selectedOpt) return;
-    
+
     const matFacId = selectedOpt.getAttribute('data-facultad');
     const matCarId = selectedOpt.getAttribute('data-carrera');
-    
+
     const maestroSelect = document.getElementById('select_maestro');
     const options = maestroSelect.options;
-    
+
     let hasSelectedVisible = false;
-    
+
     for (let i = 0; i < options.length; i++) {
         const opt = options[i];
         if (opt.value === "") continue;
-        
+
         const maeFacId = opt.getAttribute('data-facultad');
         const maeCarId = opt.getAttribute('data-carrera');
-        
-        const esInstitucional = (!matFacId && !matCarId);
+
+        const esInstitucional  = (!matFacId && !matCarId);
         const coincideFacultad = (matFacId && maeFacId == matFacId);
-        const coincideCarrera = (matCarId && maeCarId == matCarId);
-        
+        const coincideCarrera  = (matCarId && maeCarId == matCarId);
+
         if (esInstitucional || coincideCarrera || coincideFacultad) {
             opt.style.display = 'block';
             if (coincideCarrera) {
-                opt.text = opt.getAttribute('data-original-text') + ' ⭐ (Especialista)';
+                opt.text = (opt.getAttribute('data-original-text') || opt.text) + ' ⭐ (Especialista)';
             } else {
-                opt.text = opt.getAttribute('data-original-text');
+                opt.text = opt.getAttribute('data-original-text') || opt.text;
             }
-            if (opt.selected) {
-                hasSelectedVisible = true;
-            }
+            if (opt.selected) hasSelectedVisible = true;
         } else {
             opt.style.display = 'none';
-            if (opt.selected) {
-                opt.selected = false;
-            }
+            if (opt.selected) opt.selected = false;
         }
     }
-    
-    if (!hasSelectedVisible) {
-        maestroSelect.value = "";
-    }
+
+    if (!hasSelectedVisible) maestroSelect.value = "";
 }
 
 window.addEventListener('load', function() {
     const maestroSelect = document.getElementById('select_maestro');
     if (maestroSelect) {
         for (let i = 0; i < maestroSelect.options.length; i++) {
-            const opt = maestroSelect.options[i];
-            opt.setAttribute('data-original-text', opt.text);
+            maestroSelect.options[i].setAttribute('data-original-text', maestroSelect.options[i].text);
         }
         filterMaestros();
     }
 });
+
+<?php if ($formError): ?>
+window.addEventListener('load', function() {
+    Swal.fire({
+        icon: 'error',
+        title: 'Error al guardar la sección',
+        text: <?php echo json_encode($formError); ?>,
+        confirmButtonColor: '#0057d8',
+        confirmButtonText: 'Corregir'
+    });
+});
+<?php endif; ?>
 </script>
 </body>
 </html>
+

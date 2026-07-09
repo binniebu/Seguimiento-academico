@@ -7,6 +7,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
     <link rel="stylesheet" href="public/css/style.css">
 </head>
 
@@ -99,19 +100,18 @@
                             <input type="text" class="form-control" value="<?php echo htmlspecialchars($carreraFixed); ?>" disabled>
                             <input type="hidden" name="carrera" value="<?php echo htmlspecialchars($estudiante['carrera'] ?? ''); ?>">
                         <?php else: ?>
-                            <input type="text" name="carrera" id="carreraInput" class="form-control" list="carrerasList" placeholder="Escriba para buscar carrera..." required autocomplete="off">
-                            <datalist id="carrerasList">
-                                <?php
-                                require_once __DIR__ . "/../../../dao/CarreraDao.php";
-                                $carrerasList = \Dao\CarreraDao::obtenerCarrerasParaRegistro();
-                                foreach ($carrerasList as $c):
-                                    $nombreFixed = fixDoubleEncoding($c['nombre_carrera']);
-                                ?>
+                            <?php
+                            require_once __DIR__ . "/../../../dao/CarreraDao.php";
+                            $carrerasList = \Dao\CarreraDao::obtenerCarrerasParaRegistro();
+                            ?>
+                            <select name="carrera" id="carreraSelect" class="form-select" required>
+                                <option value="">Buscar carrera...</option>
+                                <?php foreach ($carrerasList as $c): ?>
                                     <option value="<?php echo htmlspecialchars($c['nombre_carrera']); ?>">
-                                        <?php echo htmlspecialchars($nombreFixed); ?>
+                                        <?php echo htmlspecialchars($c['nombre_carrera']); ?>
                                     </option>
                                 <?php endforeach; ?>
-                            </datalist>
+                            </select>
                         <?php endif; ?>
                     </div>
 
@@ -149,22 +149,17 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.querySelector('form').addEventListener('submit', function(e) {
-    const input = document.getElementById('carreraInput');
-    if (!input) return; // si está editando no existe este input
-    const options = document.querySelectorAll('#carrerasList option');
-    let valid = false;
-    options.forEach(opt => {
-        if (opt.value === input.value) {
-            valid = true;
-        }
+// Inicializar TomSelect solo en modo creación (no en edición donde la carrera está deshabilitada)
+if (document.getElementById('carreraSelect')) {
+    new TomSelect('#carreraSelect', {
+        placeholder: 'Escribe para buscar la carrera...',
+        allowEmptyOption: true,
+        maxOptions: 30,
     });
-    if (!valid) {
-        alert('Por favor seleccione una carrera válida de la lista.');
-        e.preventDefault();
-    }
-});
+}
 </script>
 </body>
 </html>

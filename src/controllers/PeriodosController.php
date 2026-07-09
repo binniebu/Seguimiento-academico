@@ -79,4 +79,72 @@ class PeriodosController
 
         return ["exito" => false, "mensaje" => "Ocurrió un error en la base de datos al guardar el período."];
     }
+
+    /**
+     * Alterna el proceso de matrícula de forma manual (abrir / cerrar)
+     */
+    public static function alternarProcesoMatricula(int $estado)
+    {
+        $periodo = PeriodoDao::obtenerPeriodoActivo();
+        if (!$periodo) {
+            return ["exito" => false, "mensaje" => "No hay ningún período académico activo."];
+        }
+
+        if (PeriodoDao::alternarMatricula(intval($periodo["id_periodo"]), $estado)) {
+            $label = $estado === 1 ? "abierto" : "cerrado";
+            return [
+                "exito" => true,
+                "mensaje" => "El proceso de matrícula para el período '" . $periodo["nombre_periodo"] . "' ha sido " . $label . " correctamente."
+            ];
+        }
+
+        return ["exito" => false, "mensaje" => "No se pudo cambiar el estado de la matrícula."];
+    }
+
+    /**
+     * [SOLO DESARROLLO] Activa el modo demo de matrícula moviendo la fecha_inicio
+     * del período activo al día de hoy. Permite probar el flujo completo sin
+     * manipular fechas en la BD manualmente.
+     */
+    public static function activarModoDemo()
+    {
+        $periodo = PeriodoDao::obtenerPeriodoActivo();
+        if (!$periodo) {
+            return ["exito" => false, "mensaje" => "No hay ningún período académico activo."];
+        }
+
+        if (PeriodoDao::activarModoDemo(intval($periodo["id_periodo"]))) {
+            // Sincronizar el flag manual de matrícula activa
+            PeriodoDao::alternarMatricula(intval($periodo["id_periodo"]), 1);
+            return [
+                "exito" => true,
+                "mensaje" => "Modo demo activado. La fecha de inicio del período '" . $periodo["nombre_periodo"] . "' se movió a hoy y se abrieron las matrículas."
+            ];
+        }
+
+        return ["exito" => false, "mensaje" => "No se pudo activar el modo demo."];
+    }
+
+    /**
+     * [SOLO DESARROLLO] Desactiva el modo demo de matrícula moviendo la fecha_inicio
+     * del período activo a hace 35 días. Esto cierra la matrícula de manera forzada.
+     */
+    public static function desactivarModoDemo()
+    {
+        $periodo = PeriodoDao::obtenerPeriodoActivo();
+        if (!$periodo) {
+            return ["exito" => false, "mensaje" => "No hay ningún período académico activo."];
+        }
+
+        if (PeriodoDao::desactivarModoDemo(intval($periodo["id_periodo"]))) {
+            // Sincronizar el flag manual de matrícula inactiva
+            PeriodoDao::alternarMatricula(intval($periodo["id_periodo"]), 0);
+            return [
+                "exito" => true,
+                "mensaje" => "Modo demo desactivado. La fecha de inicio del período '" . $periodo["nombre_periodo"] . "' se movió a hace 35 días y se cerraron las matrículas."
+            ];
+        }
+
+        return ["exito" => false, "mensaje" => "No se pudo desactivar el modo demo."];
+    }
 }

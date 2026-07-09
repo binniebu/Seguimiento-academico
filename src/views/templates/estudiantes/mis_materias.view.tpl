@@ -34,31 +34,10 @@ if ($periodoActivo) {
     }
 }
 
-// Función auxiliar para renderizar los días de forma legible
+// Funcion auxiliar para renderizar los dias de forma legible
 if (!function_exists('diasLabel')) {
     function diasLabel($dias) {
         return str_replace(",", "-", (string) $dias);
-    }
-}
-
-// Función determinista para calcular parciales a partir del promedio final
-if (!function_exists('calcularParciales')) {
-    function calcularParciales($nota) {
-        $nota = floatval($nota);
-        if ($nota <= 0) return [0, 0, 0];
-        if ($nota >= 100) return [100, 100, 100];
-        
-        $p1 = max(0, min(100, round($nota - 3)));
-        $p2 = max(0, min(100, round($nota + 4)));
-        $p3 = max(0, min(100, round(3 * $nota - $p1 - $p2)));
-        
-        $sumaEsperada = round(3 * $nota);
-        $sumaActual = $p1 + $p2 + $p3;
-        $diferencia = $sumaEsperada - $sumaActual;
-        $p3 += $diferencia;
-        
-        $p3 = max(0, min(100, $p3));
-        return [$p1, $p2, $p3];
     }
 }
 ?>
@@ -131,20 +110,37 @@ if (!function_exists('calcularParciales')) {
                                                 <th class="text-center bg-light">II Parcial</th>
                                                 <th class="text-center bg-light border-end">III Parcial</th>
                                                 <th class="text-center">Promedio</th>
-                                                <th class="text-center">U.V.</th>
+                                                <th class="text-center">Créditos</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php foreach ($cursando as $c): 
+                                                // Leer parciales reales guardados por el maestro.
+                                                // Si el maestro aun no ha ingresado el parcial, se muestra '-'.
+                                                $p1Real = $c["nota_parcial1"] !== null ? number_format(floatval($c["nota_parcial1"]), 2) : null;
+                                                $p2Real = $c["nota_parcial2"] !== null ? number_format(floatval($c["nota_parcial2"]), 2) : null;
+                                                $p3Real = $c["nota_parcial3"] !== null ? number_format(floatval($c["nota_parcial3"]), 2) : null;
+                                                $p1 = $p1Real ?? '-';
+                                                $p2 = $p2Real ?? '-';
+                                                $p3 = $p3Real ?? '-';
+                                                $tieneParciales = ($p1Real !== null || $p2Real !== null || $p3Real !== null);
+ 
+                                                // Promedio: usar el guardado en BD (calculado por el maestro) si existe
                                                 $tieneNota = $c["nota"] !== null;
                                                 if ($tieneNota) {
-                                                    list($p1, $p2, $p3) = calcularParciales($c["nota"]);
                                                     $promedioVal = number_format(floatval($c["nota"]), 2) . "%";
-                                                    $aprobado = floatval($c["nota"]) >= 70;
-                                                    $badgeClass = $aprobado ? "bg-success-subtle text-success border-success-subtle" : "bg-danger-subtle text-danger border-danger-subtle";
-                                                    $promedioText = $aprobado ? "APROBADO" : "REPROBADO";
+                                                    
+                                                    // Solo se aprueba o reprueba si se tienen las tres notas ingresadas
+                                                    if ($p1Real !== null && $p2Real !== null && $p3Real !== null) {
+                                                        $aprobado = floatval($c["nota"]) >= 70;
+                                                        $badgeClass = $aprobado ? "bg-success-subtle text-success border-success-subtle" : "bg-danger-subtle text-danger border-danger-subtle";
+                                                        $promedioText = $aprobado ? "APROBADO" : "REPROBADO";
+                                                    } else {
+                                                        // Falta ingresar nota de algún parcial, se muestra Cursando
+                                                        $badgeClass = "bg-info-subtle text-info border-info-subtle";
+                                                        $promedioText = "CURSANDO";
+                                                    }
                                                 } else {
-                                                    $p1 = $p2 = $p3 = "-";
                                                     $promedioVal = "En Curso";
                                                     $badgeClass = "bg-warning-subtle text-warning border-warning-subtle";
                                                     $promedioText = "PENDIENTE";
@@ -167,10 +163,16 @@ if (!function_exists('calcularParciales')) {
                                                         <span class="text-muted small"><?php echo htmlspecialchars(substr($c["hora_inicio"], 0, 5) . " - " . substr($c["hora_fin"], 0, 5)); ?></span> |
                                                         <span class="badge bg-light text-dark border small"><?php echo htmlspecialchars($c["aula"]); ?></span>
                                                     </td>
-                                                    <!-- Notas Parciales -->
-                                                    <td class="text-center bg-light border-start fw-semibold text-secondary"><?php echo $p1; ?><?php echo $tieneNota ? '%' : ''; ?></td>
-                                                    <td class="text-center bg-light fw-semibold text-secondary"><?php echo $p2; ?><?php echo $tieneNota ? '%' : ''; ?></td>
-                                                    <td class="text-center bg-light border-end fw-semibold text-secondary"><?php echo $p3; ?><?php echo $tieneNota ? '%' : ''; ?></td>
+                                                    <!-- Notas Parciales: muestra el valor real o '—' si el maestro aun no lo ingresa -->
+                                                    <td class="text-center bg-light border-start fw-semibold text-secondary">
+                                                        <?php echo $p1; ?><?php echo $p1Real !== null ? '%' : ''; ?>
+                                                    </td>
+                                                    <td class="text-center bg-light fw-semibold text-secondary">
+                                                        <?php echo $p2; ?><?php echo $p2Real !== null ? '%' : ''; ?>
+                                                    </td>
+                                                    <td class="text-center bg-light border-end fw-semibold text-secondary">
+                                                        <?php echo $p3; ?><?php echo $p3Real !== null ? '%' : ''; ?>
+                                                    </td>
                                                     <!-- Promedio y Estado -->
                                                     <td class="text-center">
                                                         <div class="fw-bold fs-6 text-dark mb-1"><?php echo $promedioVal; ?></div>

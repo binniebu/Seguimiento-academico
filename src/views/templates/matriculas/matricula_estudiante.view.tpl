@@ -122,74 +122,82 @@ if (!function_exists('diasLabel')) {
                                         <p class="text-muted small mb-0">La adición de nuevas clases solo está disponible durante los primeros 7 días desde el inicio del período académico.</p>
                                     </div>
                                 <?php elseif (!empty($disponibles)): ?>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover align-middle">
-                                            <thead>
-                                                <tr>
-                                                    <th>Código/Sección</th>
-                                                    <th>Materia</th>
-                                                    <th>Docente</th>
-                                                    <th>Horario / Aula</th>
-                                                    <th class="text-center">Cupos</th>
-                                                    <th class="text-end">Acción</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($disponibles as $sec): 
-                                                    $cupoAct = intval($sec["cupo_actual"]);
-                                                    $cupoMax = intval($sec["cupo_maximo"]);
-                                                    $porcentaje = $cupoMax > 0 ? round(($cupoAct / $cupoMax) * 100) : 0;
-                                                    $colorBarra = "bg-success";
-                                                    if ($porcentaje >= 80) $colorBarra = "bg-warning";
-                                                    if ($porcentaje >= 100) $colorBarra = "bg-danger";
-                                                ?>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="fw-bold text-dark"><?php echo htmlspecialchars($sec["codigo_seccion"]); ?></div>
-                                                            <span class="badge bg-light text-secondary border small mt-1"><?php echo htmlspecialchars($sec["codigo_materia"]); ?></span>
-                                                        </td>
-                                                        <td>
-                                                            <div class="fw-semibold text-dark"><?php echo htmlspecialchars($sec["nombre_materia"]); ?></div>
-                                                            <?php if (!empty($sec["id_requisito"])): ?>
-                                                                <div class="text-muted small">
-                                                                    <i class="bi bi-shield-lock me-1"></i> Requisito: <span class="text-primary"><?php echo htmlspecialchars($sec["nombre_requisito"] ?? ""); ?></span>
+                                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                                        <?php foreach ($disponibles as $sec): 
+                                            $cupoAct = intval($sec["cupo_actual"] ?? 0);
+                                            $cupoMax = intval($sec["cupo_maximo"] ?? 0);
+                                            $porcentaje = $cupoMax > 0 ? round(($cupoAct / $cupoMax) * 100) : 0;
+                                            $colorBarra = "bg-success";
+                                            if ($porcentaje >= 80) $colorBarra = "bg-warning";
+                                            if ($porcentaje >= 100) $colorBarra = "bg-danger";
+                                        ?>
+                                            <div class="col">
+                                                <div class="card border-0 shadow-sm rounded-3 h-100">
+                                                    <div class="card-body p-4 d-flex flex-column gap-3">
+                                                        <div class="d-flex justify-content-between align-items-start gap-3">
+                                                            <div>
+                                                                <div class="fw-bold text-dark" style="font-size: 16px;">
+                                                                    <?php echo htmlspecialchars($sec["nombre_materia"]); ?>
                                                                 </div>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td class="text-muted small"><?php echo htmlspecialchars($sec["nombre_maestro"]); ?></td>
-                                                        <td>
-                                                            <div class="fw-semibold text-dark"><?php echo htmlspecialchars(diasLabel($sec["dias"])); ?></div>
-                                                            <div class="text-muted small">
-                                                                <?php echo htmlspecialchars(substr($sec["hora_inicio"], 0, 5) . " - " . substr($sec["hora_fin"], 0, 5)); ?> | Aula: <?php echo htmlspecialchars($sec["aula"]); ?>
+                                                                <div class="text-muted small">
+                                                                    <i class="bi bi-tag me-1"></i>
+                                                                    <?php echo htmlspecialchars($sec["codigo_materia"]); ?> · Sección
+                                                                    <span class="fw-semibold text-dark"><?php echo htmlspecialchars($sec["codigo_seccion"]); ?></span>
+                                                                </div>
                                                             </div>
-                                                        </td>
-                                                        <td style="width: 110px;">
+                                                            <span class="badge bg-light text-secondary border">
+                                                                <?php echo htmlspecialchars($sec["nombre_maestro"]); ?>
+                                                            </span>
+                                                        </div>
+
+                                                        <?php if (!empty($sec["id_requisito"])): ?>
+                                                            <div class="alert alert-info p-2 mb-0 border-0 rounded-3">
+                                                                <i class="bi bi-shield-lock me-2"></i>
+                                                                Requisito:
+                                                                <span class="fw-semibold"><?php echo htmlspecialchars($sec["nombre_requisito"] ?? ""); ?></span>
+                                                            </div>
+                                                        <?php endif; ?>
+
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <div class="flex-grow-1">
+                                                                <div class="fw-semibold text-dark">
+                                                                    <?php echo htmlspecialchars(diasLabel($sec["dias"])); ?>
+                                                                </div>
+                                                                <div class="text-muted small">
+                                                                    <?php echo htmlspecialchars(substr($sec["hora_inicio"], 0, 5) . " - " . substr($sec["hora_fin"], 0, 5)); ?> | Aula:
+                                                                    <span class="fw-semibold text-dark"><?php echo htmlspecialchars($sec["aula"]); ?></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
                                                             <div class="d-flex justify-content-between mb-1 small text-muted">
-                                                                <span><?php echo $cupoAct; ?>/<?php echo $cupoMax; ?></span>
+                                                                <span><?php echo $cupoAct; ?>/<?php echo $cupoMax; ?> cupos</span>
                                                                 <span><?php echo $porcentaje; ?>%</span>
                                                             </div>
                                                             <div class="progress" style="height: 6px;">
-                                                              <div class="progress-bar <?php echo $colorBarra; ?>" role="progressbar" style="width: <?php echo min($porcentaje, 100); ?>%"></div>
+                                                                <div class="progress-bar <?php echo $colorBarra; ?>" role="progressbar" style="width: <?php echo min($porcentaje, 100); ?>%"></div>
                                                             </div>
-                                                        </td>
-                                                        <td class="text-end">
+                                                        </div>
+
+                                                        <div class="mt-auto">
                                                             <form method="POST" action="index.php?page=matricula_estudiante" onsubmit="return confirm('¿Desea matricular esta asignatura?');">
                                                                 <input type="hidden" name="accion" value="matricular">
                                                                 <input type="hidden" name="id_seccion" value="<?php echo $sec["id_seccion"]; ?>">
-                                                                
+
                                                                 <?php if ($cupoAct >= $cupoMax): ?>
-                                                                    <button class="btn btn-sm btn-secondary disabled" type="button" disabled>Lleno</button>
+                                                                    <button class="btn btn-sm btn-secondary w-100 disabled" type="button" disabled>Lleno</button>
                                                                 <?php else: ?>
-                                                                    <button class="btn btn-sm btn-primary" type="submit">
+                                                                    <button class="btn btn-sm btn-primary w-100" type="submit">
                                                                         <i class="bi bi-bookmark-plus me-1"></i> Matricular
                                                                     </button>
                                                                 <?php endif; ?>
                                                             </form>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
                                     <div class="text-center py-5">
@@ -216,7 +224,7 @@ if (!function_exists('diasLabel')) {
                                                 <div>
                                                     <div class="fw-bold text-dark mb-1"><?php echo htmlspecialchars($m["nombre_materia"]); ?></div>
                                                     <div class="text-muted small mb-1">
-                                                        <i class="bi bi-tag me-1"></i> <?php echo htmlspecialchars($m["codigo_seccion"]); ?> (<?php echo htmlspecialchars($m["creditos"]); ?> UV)
+                                                        <i class="bi bi-tag me-1"></i> <?php echo htmlspecialchars($m["codigo_seccion"]); ?> (<?php echo htmlspecialchars($m["creditos"]); ?> <?php echo $m["creditos"] == 1 ? 'Crédito' : 'Créditos'; ?>)
                                                     </div>
                                                     <div class="text-muted small">
                                                         <i class="bi bi-calendar-week me-1"></i> <?php echo htmlspecialchars(diasLabel($m["dias"])); ?> | <?php echo htmlspecialchars(substr($m["hora_inicio"], 0, 5)); ?>
@@ -240,7 +248,7 @@ if (!function_exists('diasLabel')) {
                                     </div>
                                     <div class="border-top pt-3 d-flex justify-content-between align-items-center">
                                         <span class="fw-semibold text-secondary">Carga Académica:</span>
-                                        <span class="fs-5 fw-bold text-primary"><?php echo $totalCreditos; ?> UV Totales</span>
+                                        <span class="fs-5 fw-bold text-primary"><?php echo $totalCreditos; ?> <?php echo $totalCreditos == 1 ? 'Crédito Total' : 'Créditos Totales'; ?></span>
                                     </div>
                                 <?php else: ?>
                                     <div class="text-center py-5">

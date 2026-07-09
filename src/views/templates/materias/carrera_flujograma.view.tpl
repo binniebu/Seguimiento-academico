@@ -181,7 +181,7 @@
                                                 <div class="card-body">
                                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                                         <span class="badge <?php echo $badgeColor; ?>"><?php echo htmlspecialchars($m['codigo']); ?></span>
-                                                        <span class="badge bg-light text-dark border"><?php echo $m['creditos']; ?> UV</span>
+                                                        <span class="badge bg-light text-dark border"><?php echo $m['creditos'] . ' ' . ($m['creditos'] == 1 ? 'Crédito' : 'Créditos'); ?></span>
                                                     </div>
                                                     <h5 class="card-title text-dark fw-bold mb-1"><?php echo htmlspecialchars($m['nombre']); ?></h5>
                                                     <?php if (!empty($m['nombre_requisito'])): ?>

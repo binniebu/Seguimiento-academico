@@ -18,7 +18,9 @@
         $verInactivos = ($ver === 'inactivos');
         $verGraduados = ($ver === 'graduados');
         $rolUsuario = $_SESSION["rol"] ?? "";
-        $esDirector = ($rolUsuario === "director");
+        $esDirector    = ($rolUsuario === "director");
+        $esCoordinador = ($rolUsuario === "coordinador");
+        $puedeAcciones = ($esDirector || $esCoordinador); // ambos pueden dar de baja/reactivar
         ?>
         <main role="main" class="col-md-10 ml-sm-auto px-md-4 py-4">
             <div class="main-content-card">
@@ -45,7 +47,7 @@
                         <a href="index.php?page=estudiantes&ver=inactivos" class="btn btn-sm <?php echo ($ver === 'inactivos') ? 'btn-primary' : 'btn-outline-secondary'; ?>">
                             <i class="bi bi-person-slash"></i> Bajas / Reingresos
                         </a>
-                        <?php if ($ver === 'activos' && !$esDirector): ?>
+                        <?php if ($ver === 'activos' && $esDirector): ?>
                             <a href="index.php?page=estudiante_nuevo" class="btn btn-sm btn-success ms-2">
                                 <i class="bi bi-plus-circle"></i> Nuevo Estudiante
                             </a>
@@ -130,7 +132,7 @@
                                 <th>Carrera</th>
                                 <th>Teléfono</th>
                                 <th>Estado</th>
-                                <?php if (!$esDirector): ?>
+                                <?php if ($puedeAcciones): ?>
                                     <th>Acciones</th>
                                 <?php endif; ?>
                             </tr>
@@ -159,28 +161,29 @@
                                              <?php echo ucfirst(htmlspecialchars($estudiante['estado'] ?? '')); ?>
                                          </span>
                                      </td>
-                                     <?php if (!$esDirector): ?>
+                                     <?php if ($puedeAcciones): ?>
                                          <td class="actions-cell">
                                             <div class="d-flex flex-column gap-1">
                                                <?php if ($ver === 'inactivos'): ?>
                                                    <a href="index.php?page=estudiantes&ver=inactivos&accion=activar&id=<?php echo $estudiante['id_estudiante']; ?>"
                                                       class="btn btn-sm btn-success"
-                                                      onclick="return confirm('¿Estás seguro de que deseas reactivar este estudiante?');">
+                                                      onclick="return confirm('¿Reactivar la cuenta de este estudiante?');">
                                                        <i class="bi bi-person-check"></i> Activar Cuenta
                                                    </a>
                                                <?php elseif ($ver === 'graduados'): ?>
-                                                   <span class="text-muted small text-center">Sin acciones</span>
+                                                   <span class="text-muted small">Sin acciones</span>
                                                <?php else: ?>
-                                                    <a href="index.php?page=estudiante_nuevo&id=<?php echo $estudiante['id_estudiante']; ?>"
-                                                       class="btn btn-sm btn-warning">
-                                                        <i class="bi bi-pencil"></i> Editar
-                                                    </a>
-
-                                                    <a href="index.php?page=estudiantes&accion=eliminar&id=<?php echo $estudiante['id_estudiante']; ?>"
-                                                       class="btn btn-sm btn-danger"
-                                                       onclick="return confirm('¿Estás seguro de que deseas dar de baja a este estudiante?');">
-                                                        <i class="bi bi-person-x"></i> Dar de baja
-                                                    </a>
+                                                   <?php if ($esDirector): ?>
+                                                       <a href="index.php?page=estudiante_nuevo&id=<?php echo $estudiante['id_estudiante']; ?>"
+                                                          class="btn btn-sm btn-warning">
+                                                           <i class="bi bi-pencil"></i> Editar
+                                                       </a>
+                                                   <?php endif; ?>
+                                                   <a href="index.php?page=estudiantes&accion=eliminar&id=<?php echo $estudiante['id_estudiante']; ?>"
+                                                      class="btn btn-sm btn-danger"
+                                                      onclick="return confirm('¿Dar de baja a este estudiante? Perderá acceso al sistema hasta que sea reactivado.');">
+                                                       <i class="bi bi-person-x"></i> Dar de baja
+                                                   </a>
                                                <?php endif; ?>
                                             </div>
                                          </td>

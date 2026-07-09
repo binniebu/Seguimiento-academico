@@ -540,4 +540,44 @@ class SeccionDao extends Table
             "id_seccion" => intval($idSeccion)
         ]);
     }
+
+    /**
+     * Devuelve todas las secciones asignadas a un maestro en un periodo específico.
+     * Utilizado por la vista "Mis Secciones" del rol maestro.
+     */
+    public static function obtenerSeccionesPorMaestro($idMaestro, $idPeriodo)
+    {
+        $sqlstr = "SELECT
+                       sec.id_seccion,
+                       sec.codigo_seccion,
+                       sec.aula,
+                       sec.dias,
+                       sec.hora_inicio,
+                       sec.hora_fin,
+                       sec.cupo_maximo,
+                       (SELECT COUNT(*) FROM matriculas mt
+                        WHERE mt.id_seccion = sec.id_seccion
+                          AND mt.id_periodo = :id_periodo2) AS cupo_actual,
+                       sec.estado,
+                       m.codigo        AS codigo_materia,
+                       m.nombre        AS nombre_materia,
+                       m.creditos,
+                       f.nombre_facultad AS nombre_facultad,
+                       c.nombre_carrera,
+                       u.nombre        AS nombre_maestro
+                   FROM secciones sec
+                   INNER JOIN materias m   ON sec.id_materia = m.id_materia
+                   INNER JOIN maestros mae ON sec.id_maestro = mae.id_maestro
+                   INNER JOIN usuarios u   ON mae.id_usuario = u.id_usuario
+                   LEFT  JOIN facultades f ON m.id_facultad  = f.id_facultad
+                   LEFT  JOIN carreras c   ON m.id_carrera   = c.id_carrera
+                   WHERE sec.id_maestro = :id_maestro
+                     AND sec.id_periodo = :id_periodo
+                   ORDER BY m.nombre ASC";
+        return self::obtenerRegistros($sqlstr, [
+            "id_maestro"  => $idMaestro,
+            "id_periodo"  => $idPeriodo,
+            "id_periodo2" => $idPeriodo,   // PDO no permite reusar el mismo parámetro nombrado
+        ]);
+    }
 }

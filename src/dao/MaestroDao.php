@@ -497,4 +497,18 @@ class MaestroDao extends Table
             die($e->getMessage());
         }
     }
+
+    /**
+     * Busca el registro de maestro por id_usuario de sesión.
+     * Necesario para filtrar las secciones del docente logueado.
+     */
+    public static function obtenerMaestroPorIdUsuario($idUsuario)
+    {
+        $sql = "SELECT m.id_maestro, m.id_facultad, m.id_carrera, u.id_usuario, u.nombre, u.correo
+                FROM maestros m
+                INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
+                WHERE u.id_usuario = :id_usuario
+                LIMIT 1";
+        return self::obtenerUnRegistro($sql, ["id_usuario" => intval($idUsuario)]);
+    }
 }

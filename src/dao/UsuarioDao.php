@@ -298,23 +298,50 @@ public static function getDashboardCoordinador($idFacultad)
 
 public static function getDashboardMaestro($correo)
 {
+    $secciones = self::safeRows(
+        "SELECT s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin,
+                s.cupo_maximo, s.estado, m.codigo AS codigo_materia, m.nombre AS materia,
+                COUNT(mt.id_matricula) AS inscritos
+         FROM maestros ma
+         INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
+         INNER JOIN secciones s ON ma.id_maestro = s.id_maestro
+         INNER JOIN materias m ON s.id_materia = m.id_materia
+         INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo AND p.estado = 'activo'
+         LEFT JOIN matriculas mt ON s.id_seccion = mt.id_seccion
+         WHERE u.correo = :correo
+           AND s.estado IN ('Activa', 'Borrador')
+         GROUP BY s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin, s.cupo_maximo, s.estado, m.codigo, m.nombre
+         ORDER BY s.dias ASC, s.hora_inicio ASC",
+        array("correo" => $correo)
+    );
+
+    $totalSecciones = count($secciones);
+    $totalAlumnos = 0;
+    foreach ($secciones as $sec) {
+        $totalAlumnos += intval($sec["inscritos"]);
+    }
+
+    $totalConNota = intval(self::safeScalar(
+        "SELECT COUNT(c.id_calificacion) AS total
+         FROM maestros ma
+         INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
+         INNER JOIN secciones s ON ma.id_maestro = s.id_maestro
+         INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo AND p.estado = 'activo'
+         INNER JOIN matriculas mt ON s.id_seccion = mt.id_seccion
+         INNER JOIN calificaciones c ON mt.id_matricula = c.id_matricula
+         WHERE u.correo = :correo
+           AND s.estado IN ('Activa', 'Borrador')",
+        array("correo" => $correo)
+    ));
+
+    $porcentajeAvance = $totalAlumnos > 0 ? round(($totalConNota / $totalAlumnos) * 100, 1) : 0;
+
     return array(
-        "secciones" => self::safeRows(
-            "SELECT s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin,
-                    s.cupo_maximo, s.estado, m.codigo AS codigo_materia, m.nombre AS materia,
-                    COUNT(mt.id_matricula) AS inscritos
-             FROM maestros ma
-             INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
-             INNER JOIN secciones s ON ma.id_maestro = s.id_maestro
-             INNER JOIN materias m ON s.id_materia = m.id_materia
-             INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo AND p.estado = 'activo'
-             LEFT JOIN matriculas mt ON s.id_seccion = mt.id_seccion
-             WHERE u.correo = :correo
-               AND s.estado IN ('Activa', 'Borrador')
-             GROUP BY s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin, s.cupo_maximo, s.estado, m.codigo, m.nombre
-             ORDER BY s.dias ASC, s.hora_inicio ASC",
-            array("correo" => $correo)
-        )
+        "secciones" => $secciones,
+        "total_secciones" => $totalSecciones,
+        "total_alumnos" => $totalAlumnos,
+        "total_con_nota" => $totalConNota,
+        "porcentaje_avance" => $porcentajeAvance
     );
 }
 
@@ -342,19 +369,21 @@ public static function getDashboardEstudiante($correo)
 
     $idEstudiante = intval($estudiante["id_estudiante"]);
 
+    // El promedio global solo toma en cuenta clases de periodos inactivos o finalizados
     $promedio = self::safeScalar(
         "SELECT ROUND(AVG(c.nota), 2) AS total
          FROM calificaciones c
          INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
-         WHERE mt.id_estudiante = :id_estudiante",
+         INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
+         WHERE mt.id_estudiante = :id_estudiante
+           AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))",
         array("id_estudiante" => $idEstudiante)
     );
 
-    $uvMatriculadas = self::safeScalar(
-        "SELECT COALESCE(SUM(m.creditos), 0) AS total
+    // Contar el número de materias matriculadas en el periodo actual
+    $materiasMatriculadas = self::safeScalar(
+        "SELECT COUNT(mt.id_matricula) AS total
          FROM matriculas mt
-         INNER JOIN secciones s ON mt.id_seccion = s.id_seccion
-         INNER JOIN materias m ON s.id_materia = m.id_materia
          INNER JOIN periodos_academicos p ON mt.id_periodo = p.id_periodo AND p.estado = 'activo'
          WHERE mt.id_estudiante = :id_estudiante",
         array("id_estudiante" => $idEstudiante)
@@ -398,7 +427,7 @@ public static function getDashboardEstudiante($correo)
 
     return array(
         "promedio_global" => $promedio,
-        "uv_matriculadas" => $uvMatriculadas,
+        "materias_matriculadas" => $materiasMatriculadas,
         "horario" => $horario,
         "avance_plan" => min(100, intval($avance)),
         "materias_aprobadas" => $materiasAprobadas,

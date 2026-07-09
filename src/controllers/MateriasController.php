@@ -237,9 +237,27 @@ class MateriasController
         $cupoMaximo = intval($_POST["cupo_maximo"] ?? 0);
         $estado = $_POST["estado"] ?? "Borrador";
 
+        // Guarda datos del formulario para re-renderizar si hay validación/choques.
+        // Así el formulario no se borra cuando hay un error.
+        // NOTA: el mensaje del error lo dejamos en $_SESSION para que la vista lo muestre con SweetAlert.
+        $_SESSION['seccion_form_old'] = [
+
+            'id_seccion' => $idSeccion,
+            'id_materia' => $idMateria,
+            'id_maestro' => $idMaestro,
+            'codigo_seccion' => $codigoSeccion,
+            'aula' => $aula,
+            'dias' => $_POST['dias'] ?? [],
+            'hora_inicio' => $horaInicio,
+            'hora_fin' => $horaFin,
+            'cupo_maximo' => $cupoMaximo,
+            'estado' => $estado,
+        ];
+
         $redir = $idSeccion
             ? "index.php?page=seccion_nueva&id=" . urlencode($idSeccion)
             : "index.php?page=seccion_nueva";
+
 
         $periodoActivo = SeccionDao::obtenerPeriodoActivo();
         if (!$periodoActivo) {
@@ -440,8 +458,11 @@ class MateriasController
 
     private static function alertarYRedirigir($mensaje, $url)
     {
-        echo "<script>alert('" . htmlspecialchars($mensaje, ENT_QUOTES) . "'); window.location='" . $url . "';</script>";
+        // Guardar mensaje para que la vista lo muestre con SweetAlert y no aparezca alert('localhost...')
+        $_SESSION['seccion_form_error'] = $mensaje;
+        echo "<script>window.location='" . $url . "';</script>";
         exit();
+
     }
 }
 

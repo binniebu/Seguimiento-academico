@@ -32,12 +32,7 @@ class MatriculasController
         if (!$periodo) {
             return false;
         }
-
-        $hoy = date('Y-m-d');
-        // Adiciones permitidas desde 1 semana antes de clases (-7 días) hasta 1 semana después del inicio (+7 días)
-        $fechaInicioAdiciones = date('Y-m-d', strtotime($periodo["fecha_inicio"] . ' -7 days'));
-        $fechaLimiteAdiciones = date('Y-m-d', strtotime($periodo["fecha_inicio"] . ' +7 days'));
-        return ($hoy >= $fechaInicioAdiciones && $hoy <= $fechaLimiteAdiciones);
+        return intval($periodo["matricula_activa"] ?? 0) === 1;
     }
 
     public static function esPeriodoCancelacionesActivo()
@@ -46,17 +41,11 @@ class MatriculasController
         if (!$periodo) {
             return false;
         }
-
-        $hoy = date('Y-m-d');
-        // Cancelaciones permitidas desde 1 semana antes de clases (-7 días) hasta el fin del I parcial (+28 días)
-        $fechaInicioCancelaciones = date('Y-m-d', strtotime($periodo["fecha_inicio"] . ' -7 days'));
-        $fechaLimiteCancelaciones = date('Y-m-d', strtotime($periodo["fecha_inicio"] . ' +28 days'));
-        return ($hoy >= $fechaInicioCancelaciones && $hoy <= $fechaLimiteCancelaciones);
+        return intval($periodo["matricula_activa"] ?? 0) === 1;
     }
 
     public static function esPeriodoMatriculaActivo()
     {
-        // La ventana total de acceso al módulo de matrícula coincide con el plazo máximo de cancelaciones
         return self::esPeriodoCancelacionesActivo();
     }
 
@@ -97,27 +86,23 @@ class MatriculasController
         }
 
         // 4. Incompatibilidad de Coordinador: No puede matricular carreras de su propia facultad
-        $coord = MatriculaDao::obtenerUnRegistro("SELECT id_facultad FROM coordinadores WHERE id_usuario = :id", ["id" => $idUsuario]);
+        $coord = MatriculaDao::obtenerFacultadCoordinadorPorUsuario($idUsuario);
         if ($coord) {
             $idFacultadCoordinador = intval($coord["id_facultad"]);
+
             // Verificar facultad de la materia o de la carrera
-            $materia = MatriculaDao::obtenerUnRegistro("
-                SELECT m.id_facultad, m.id_carrera, c.id_facultad AS carrera_facultad 
-                FROM materias m 
-                LEFT JOIN carreras c ON m.id_carrera = c.id_carrera 
-                WHERE m.id_materia = :id_materia", 
-                ["id_materia" => $seccion["id_materia"]]
-            );
-            
+            $materia = MatriculaDao::obtenerMateriaPorIdMateria($seccion["id_materia"]);
+
             if ($materia) {
                 $facultadMateria = intval($materia["id_facultad"] ?? 0);
                 $facultadCarrera = intval($materia["carrera_facultad"] ?? 0);
-                
+
                 if ($facultadMateria === $idFacultadCoordinador || $facultadCarrera === $idFacultadCoordinador) {
                     return ["exito" => false, "mensaje" => "Incompatibilidad Académica: Como coordinador de esta facultad, no tiene permitido matricular asignaturas adscritas a ella."];
                 }
             }
         }
+
 
         // 5. Validar cupo
         $cupoActual = intval($seccion["cupo_actual"] ?? 0);
@@ -127,14 +112,14 @@ class MatriculasController
         }
 
         // 6. Validar Prerrequisito (Aprobado con 70%)
-        if (!empty($seccion["id_requisito"])) {
-            $aprobado = MatriculaDao::verificarPrerrequisitoAprobado($idEstudiante, $seccion["id_requisito"]);
-            if (!$aprobado) {
-                $req = MatriculaDao::obtenerUnRegistro("SELECT nombre FROM materias WHERE id_materia = :id", ["id" => $seccion["id_requisito"]]);
-                $nombreReq = $req["nombre"] ?? "Prerrequisito";
-                return ["exito" => false, "mensaje" => "No cumple con el prerrequisito aprobado: '$nombreReq' (Nota mínima de 70)."];
-            }
+        // NOTA: `obtenerSeccionPorId()` NO trae id_requisito; el prerrequisito vive en `materias`.
+        // Por eso validamos el requisito directamente contra la sección objetivo.
+        $aprobado = MatriculaDao::verificarPrerrequisitoAprobadoPorSeccion($idEstudiante, $idSeccion);
+        if (!$aprobado) {
+            $nombreReq = MatriculaDao::obtenerNombreMateriaPorIdDePrerrequisitoDeSeccion($idSeccion);
+            return ["exito" => false, "mensaje" => "No cumple con el prerrequisito aprobado: '$nombreReq' (Nota mínima de 70)."];
         }
+
 
         // 7. Validar choque de horarios
         $conflicto = MatriculaDao::verificarConflictoHorario($idEstudiante, $idPeriodo, $idSeccion);

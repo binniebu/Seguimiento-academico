@@ -55,7 +55,8 @@ class HistorialDao extends Table
         // El alumno ve sus clases en "Mis Materias" durante las 13 semanas del período y la semana 14 (de subida de notas)
         $sqlstr = "SELECT mt.id_matricula, m.codigo as codigo_materia, m.nombre as nombre_materia, 
                           m.creditos, pa.nombre_periodo AS periodo, sec.codigo_seccion, sec.aula, sec.dias, sec.hora_inicio, sec.hora_fin,
-                          u.nombre AS nombre_maestro, c.nota, c.observacion
+                          u.nombre AS nombre_maestro,
+                          c.nota, c.nota_parcial1, c.nota_parcial2, c.nota_parcial3, c.observacion
                    FROM matriculas mt
                    INNER JOIN secciones sec ON mt.id_seccion = sec.id_seccion
                    INNER JOIN materias m ON sec.id_materia = m.id_materia

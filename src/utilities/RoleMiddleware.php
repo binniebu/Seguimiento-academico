@@ -23,26 +23,32 @@ class RoleMiddleware
 
         $rol = $_SESSION["rol"] ?? "";
 
-        // Validar si el estudiante está bloqueado o inactivo
+        // -----------------------------------------------------------------
+        // Bloquear estudiante Inactivo / Bloqueado en cada request
+        // -----------------------------------------------------------------
         if ($rol === "estudiante" && isset($_SESSION["correo"])) {
             require_once __DIR__ . "/../dao/MisMateriasDao.php";
             $estud = \Dao\MisMateriasDao::obtenerEstudiantePorCorreo($_SESSION["correo"]);
-            if ($estud && in_array($estud["estado"] ?? "Admitido", ["Bloqueado", "Inactivo"])) {
+            if ($estud && in_array($estud["estado"] ?? "Admitido", ["Bloqueado", "Inactivo", "Suspendido"])) {
                 session_destroy();
                 echo "<script>
-                        alert('Su cuenta se encuentra bloqueada o inactiva. Comuníquese con la administración.');
-                        window.location='index.php?page=login';
-                      </script>";
+                        Swal ? Swal.fire({icon:'warning',title:'Cuenta inactiva',text:'Su cuenta se encuentra inactiva. Comuníquese con la administración académica.',confirmButtonColor:'#0057d8'}).then(()=>window.location='index.php?page=login') : (alert('Su cuenta se encuentra inactiva. Comuníquese con la administración.'), window.location='index.php?page=login');
+                      </script>
+                      <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
                 exit();
             }
         }
 
         $permisos = array(
+
+            // ---------------------------------------------------------------
+            // DIRECTOR — supervisión global + CRUD institucional + estudiantes
+            // ---------------------------------------------------------------
             "director" => array(
                 "home",
                 "dashboard",
 
-                // Gestión de personal
+                // Personal docente
                 "maestros",
                 "maestro_nuevo",
                 "maestro_guardar",
@@ -50,24 +56,17 @@ class RoleMiddleware
                 "maestro_editar",
                 "maestro_eliminar",
 
-                // Gestión académica (director supervisa y puede intervenir)
+                // Gestión académica
                 "materias",
                 "materia_nueva",
                 "materia_guardar",
                 "materia_editar",
                 "materia_inactivar",
 
-                // Secciones: director puede programar si es necesario
+                // Secciones
                 "secciones",
                 "seccion_nueva",
                 "seccion_guardar",
-
-                // Matrículas: control administrativo completo
-                "matriculas",
-                "matricula_nueva",
-                "matricula_guardar",
-                "matricula_editar",
-                "matricula_eliminar",
 
                 // Estructura institucional
                 "facultades",
@@ -79,12 +78,13 @@ class RoleMiddleware
                 "carrera_guardar",
                 "carrera_flujograma",
 
-                // Estudiantes: director puede ver Y editar (jerarquía superior al coordinador)
+                // Estudiantes: CRUD completo
                 "estudiantes",
+                "estudiante_nuevo",
                 "estudiante_editar",
                 "estudiante_guardar",
 
-                // Admisiones: el director también puede revisar solicitudes
+                // Admisiones
                 "solicitudes_registro",
                 "solicitud_detalle",
                 "solicitud_procesar",
@@ -94,53 +94,60 @@ class RoleMiddleware
                 "perfil",
                 "perfil_actualizar"
             ),
+
+            // ---------------------------------------------------------------
+            // MAESTRO — solo sus secciones y notas (sin Materias, Matrículas, Calificaciones antiguas)
+            // ---------------------------------------------------------------
             "maestro" => array(
                 "home",
                 "dashboard",
-                "materias",
-                "materia_ver",
-                "matriculas",
-                "calificaciones",
-                "Calificaciones",
-                "Calificacion",
-                "calificacion_nueva",
-                "calificacion_editar",
+
+                // Sus secciones del periodo activo
+                "secciones",
+
+                // Módulo de notas por parciales
+                "notas_maestro",
+                "notas_alumnos_ajax",
+                "guardar_nota_parciales",
+
                 "logout",
                 "switch_role",
                 "perfil",
                 "perfil_actualizar"
             ),
+
+            // ---------------------------------------------------------------
+            // ESTUDIANTE
+            // ---------------------------------------------------------------
             "estudiante" => array(
-    "home",
-    "dashboard",
+                "home",
+                "dashboard",
+                "materias",
+                "mis_materias",
+                "mi_flujograma",
+                "calificaciones",
+                "matriculas_nueva",
+                "matricula_estudiante",
+                "actualizar_carrera",
+                "logout",
+                "historial_academico",
+                "switch_role",
+                "perfil",
+                "perfil_actualizar"
+            ),
 
-    "materias",
-    "mis_materias",
-    "mi_flujograma",
-
-    "calificaciones",
-
-    "matriculas_nueva",
-    "matricula_estudiante",
-    "actualizar_carrera",
-    
-
-    "logout",
-    "historial_academico",
-    "switch_role",
-    "perfil",
-    "perfil_actualizar"
-),
+            // ---------------------------------------------------------------
+            // COORDINADOR — gestión operativa de su facultad
+            //   Estudiantes: lectura + dar de baja / reactivar (NO editar datos)
+            // ---------------------------------------------------------------
             "coordinador" => array(
                 "home",
                 "dashboard",
 
-                // Estudiantes de su facultad: puede ver y editar
+                // Estudiantes de su facultad (solo lectura + baja/reactivar)
                 "estudiantes",
-                "estudiante_editar",
-                "estudiante_guardar",
 
-                // Gestión académica de su facultad (crear y editar, NO eliminar)
+                // Carreras y materias de su facultad
                 "carreras",
                 "materias",
                 "materia_nueva",
@@ -148,17 +155,17 @@ class RoleMiddleware
                 "materia_editar",
                 "carrera_flujograma",
 
-                // Secciones: responsabilidad operativa del coordinador
+                // Secciones: responsabilidad operativa
                 "secciones",
                 "seccion_nueva",
                 "seccion_guardar",
 
-                // Admisiones de su facultad
+                // Admisiones
                 "solicitudes_registro",
                 "solicitud_detalle",
                 "solicitud_procesar",
 
-                // Matrículas: puede ver y crear, no eliminar
+                // Matrículas: puede ver
                 "matriculas",
                 "matricula_nueva",
 

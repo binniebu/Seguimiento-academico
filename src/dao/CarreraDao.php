@@ -34,10 +34,12 @@ class CarreraDao extends Table
 
     public static function obtenerCarrerasParaRegistro()
     {
-        $sqlstr = "SELECT c.id_carrera, c.nombre_carrera 
+        // Devuelve todas las carreras activas para el formulario de registro.
+        // No filtra por materias: una carrera puede estar disponible aunque todavía
+        // no tenga materias programadas (el coordinador las crea después).
+        $sqlstr = "SELECT c.id_carrera, c.nombre_carrera
                    FROM carreras c
                    WHERE c.estado = 'activa'
-                     AND (SELECT COUNT(*) FROM materias m WHERE m.id_carrera = c.id_carrera AND m.tipo_materia = 'carrera' AND m.estado = 'activa') > 0
                    ORDER BY c.nombre_carrera ASC";
         return self::obtenerRegistros($sqlstr);
     }

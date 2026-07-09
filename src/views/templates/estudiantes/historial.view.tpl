@@ -121,7 +121,7 @@ foreach ($historial as $h) {
                                                 <tr>
                                                     <th class="ps-4">Código</th>
                                                     <th>Asignatura</th>
-                                                    <th class="text-center">U.V. (Créditos)</th>
+                                                    <th class="text-center">Créditos</th>
                                                     <th class="text-center">Calificación</th>
                                                     <th class="text-center">Resultado</th>
                                                     <th class="pe-4 text-end">Fecha Registro</th>

@@ -111,6 +111,7 @@ class MatriculaDao extends Table
 
     public static function verificarPrerrequisitoAprobado($idEstudiante, $idRequisito)
     {
+        // idRequisito representa el id_materia del prerrequisito (materia exigida)
         if (empty($idRequisito)) {
             return true;
         }
@@ -119,8 +120,9 @@ class MatriculaDao extends Table
                    FROM calificaciones cal
                    INNER JOIN matriculas m ON cal.id_matricula = m.id_matricula
                    INNER JOIN secciones sec ON m.id_seccion = sec.id_seccion
+                   INNER JOIN materias mat ON sec.id_materia = mat.id_materia
                    WHERE m.id_estudiante = :id_estudiante
-                     AND sec.id_materia = :id_requisito
+                     AND mat.id_materia = :id_requisito
                      AND cal.nota >= 70.00";
 
         $res = self::obtenerUnRegistro($sqlstr, [
@@ -131,8 +133,55 @@ class MatriculaDao extends Table
         return intval($res["total"] ?? 0) > 0;
     }
 
+
+    public static function obtenerIdRequisitoDeSeccion($idSeccion): int|string|null
+    {
+        $sqlstr = "SELECT m.id_requisito
+                   FROM secciones s
+                   INNER JOIN materias m ON s.id_materia = m.id_materia
+                   WHERE s.id_seccion = :id_seccion
+                   LIMIT 1";
+        $res = self::obtenerUnRegistro($sqlstr, ["id_seccion" => intval($idSeccion)]);
+        return $res["id_requisito"] ?? null;
+    }
+
+    public static function obtenerNombreMateriaPorIdDePrerrequisitoDeSeccion($idSeccion): string
+    {
+        $idReq = self::obtenerIdRequisitoDeSeccion($idSeccion);
+        if (empty($idReq)) {
+            return "Prerrequisito";
+        }
+        $nombre = self::obtenerNombreMateriaPorId(intval($idReq));
+        return $nombre["nombre"] ?? "Prerrequisito";
+    }
+
+    public static function verificarPrerrequisitoAprobadoPorSeccion($idEstudiante, $idSeccion): bool
+    {
+        $idReq = self::obtenerIdRequisitoDeSeccion($idSeccion);
+        if (empty($idReq)) {
+            return true;
+        }
+
+        $sqlstr = "SELECT COUNT(*) AS total
+                   FROM calificaciones cal
+                   INNER JOIN matriculas m ON cal.id_matricula = m.id_matricula
+                   INNER JOIN secciones sec ON m.id_seccion = sec.id_seccion
+                   INNER JOIN materias mat ON sec.id_materia = mat.id_materia
+                   WHERE m.id_estudiante = :id_estudiante
+                     AND mat.id_materia = :id_requisito
+                     AND cal.nota >= 70.00";
+
+        $res = self::obtenerUnRegistro($sqlstr, [
+            "id_estudiante" => intval($idEstudiante),
+            "id_requisito" => intval($idReq)
+        ]);
+
+        return intval($res["total"] ?? 0) > 0;
+    }
+
     public static function verificarConflictoHorario($idEstudiante, $idPeriodo, $idSeccion)
     {
+
         $sqlSec = "SELECT dias, hora_inicio, hora_fin FROM secciones WHERE id_seccion = :id_seccion";
         $target = self::obtenerUnRegistro($sqlSec, ["id_seccion" => $idSeccion]);
         if (!$target) {
@@ -168,4 +217,30 @@ class MatriculaDao extends Table
                    WHERE e.id_usuario = :id_usuario LIMIT 1";
         return self::obtenerUnRegistro($sqlstr, ["id_usuario" => $idUsuario]);
     }
+
+    public static function obtenerFacultadCoordinadorPorUsuario($idUsuario)
+    {
+        $sqlstr = "SELECT id_facultad FROM coordinadores WHERE id_usuario = :id";
+        return self::obtenerUnRegistro($sqlstr, ["id" => intval($idUsuario)]);
+    }
+
+    public static function obtenerMateriaPorIdMateria($idMateria)
+    {
+        $sqlstr = "
+            SELECT m.id_facultad, m.id_carrera, c.id_facultad AS carrera_facultad
+            FROM materias m
+            LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
+            WHERE m.id_materia = :id_materia
+            LIMIT 1
+        ";
+        return self::obtenerUnRegistro($sqlstr, ["id_materia" => intval($idMateria)]);
+    }
+
+    public static function obtenerNombreMateriaPorId($idMateria)
+    {
+        $sqlstr = "SELECT nombre FROM materias WHERE id_materia = :id";
+        return self::obtenerUnRegistro($sqlstr, ["id" => intval($idMateria)]);
+    }
 }
+
+

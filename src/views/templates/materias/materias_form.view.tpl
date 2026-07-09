@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
 
                                     <div class="mb-3">
-                                        <label for="creditos" class="form-label">Créditos Universitarios (UV) <span class="text-danger">*</span></label>
+                                         <label for="creditos" class="form-label">Créditos <span class="text-danger">*</span></label>
                                         <input type="number" class="form-control" id="creditos" name="creditos" 
                                                value="<?php echo htmlspecialchars($materia['creditos'] ?? '3'); ?>" required min="1" max="10">
                                     </div>

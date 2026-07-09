@@ -14,6 +14,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else {
             $mensajeError = $resultado["mensaje"];
         }
+    } elseif (isset($_POST["accion"]) && $_POST["accion"] === "toggle_matricula") {
+        $estado = intval($_POST["estado"] ?? 0);
+        $resultado = PeriodosController::alternarProcesoMatricula($estado);
+        if ($resultado["exito"]) {
+            $mensajeExito = $resultado["mensaje"];
+        } else {
+            $mensajeError = $resultado["mensaje"];
+        }
     }
 }
 
@@ -27,6 +35,10 @@ if (isset($_GET["accion"]) && $_GET["accion"] === "activar" && isset($_GET["id"]
 }
 
 $periodos = PeriodosController::listarPeriodos();
+
+// Estado del modo demo para mostrar en UI
+require_once __DIR__ . "/../../../controllers/MatriculasController.php";
+$matriculaActiva = \Controllers\MatriculasController::esPeriodoMatriculaActivo();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -83,6 +95,56 @@ $periodos = PeriodosController::listarPeriodos();
                                         <i class="bi bi-play-circle me-1"></i> Calcular y Activar
                                     </button>
                                 </form>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta: Control del Proceso de Matrícula -->
+                        <div class="card border-0 shadow-sm rounded-3 mt-4 border <?php echo $matriculaActiva ? 'border-success-subtle' : 'border-danger-subtle'; ?>">
+                            <div class="card-header py-3 rounded-top-3 text-white <?php echo $matriculaActiva ? 'bg-success' : 'bg-danger'; ?>">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-card-checklist me-2"></i>Control de Matrícula
+                                </h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <!-- Estado actual de matrícula -->
+                                <div class="d-flex align-items-center gap-2 mb-4 p-3 rounded border <?php echo $matriculaActiva ? 'bg-success-subtle border-success-subtle' : 'bg-danger-subtle border-danger-subtle'; ?>">
+                                    <i class="bi <?php echo $matriculaActiva ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'; ?> fs-4"></i>
+                                    <div>
+                                        <div class="fw-bold <?php echo $matriculaActiva ? 'text-success' : 'text-danger'; ?>">
+                                            Matrícula: <?php echo $matriculaActiva ? 'ABIERTA' : 'CERRADA'; ?>
+                                        </div>
+                                        <div class="text-muted small" style="font-size: 11px;">
+                                            <?php echo $matriculaActiva ? 'Los estudiantes pueden matricular y cancelar asignaturas.' : 'El portal de matrícula de estudiantes está bloqueado.'; ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form method="POST" action="index.php?page=periodos" class="mb-3">
+                                    <input type="hidden" name="accion" value="toggle_matricula">
+                                    <?php if ($matriculaActiva): ?>
+                                        <input type="hidden" name="estado" value="0">
+                                        <button type="submit" class="btn btn-danger w-100" onclick="return confirm('¿Está seguro de cerrar el período de matrícula para los estudiantes?');">
+                                            <i class="bi bi-x-circle me-1"></i> Cerrar Matrícula
+                                        </button>
+                                    <?php else: ?>
+                                        <input type="hidden" name="estado" value="1">
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="bi bi-check-circle me-1"></i> Abrir Matrícula
+                                        </button>
+                                    <?php endif; ?>
+                                </form>
+
+                                <hr>
+                                <div class="text-muted small mb-2 text-center fw-semibold text-warning-emphasis"><i class="bi bi-flask"></i> Simulación de Periodo</div>
+                                <form method="POST" action="index.php?page=periodos" id="formDemoMatricula">
+                                    <input type="hidden" name="accion" value="demo_matricula">
+                                    <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="confirmarDemo()">
+                                        <i class="bi bi-lightning-charge-fill me-1"></i> Forzar Inicio de Periodo a Hoy
+                                    </button>
+                                </form>
+                                <div class="text-muted text-center mt-1" style="font-size: 10px;">
+                                    (Alinea la fecha del periodo para simulaciones de adiciones/cancelaciones).
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -153,6 +215,26 @@ $periodos = PeriodosController::listarPeriodos();
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function confirmarDemo() {
+    Swal.fire({
+        icon: 'warning',
+        title: '⚡ Activar Modo Demo',
+        html: `<p>Esta acción <strong>moverá la fecha de inicio</strong> del período activo a <strong>hoy</strong>.</p>
+               <p class="text-muted small mb-0">La ventana de matrícula quedará abierta por 28 días desde hoy.</p>`,
+        showCancelButton: true,
+        confirmButtonColor: '#e9a825',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, activar demo',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('formDemoMatricula').submit();
+        }
+    });
+}
+</script>
 
 <?php if ($mensajeError !== ""): ?>
     <script>

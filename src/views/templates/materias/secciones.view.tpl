@@ -53,12 +53,29 @@ $buscar = trim($_GET["buscar"] ?? "");
 $naturaleza = $_GET["naturaleza"] ?? "todas";
 $filtroCarrera = $_GET["carrera"] ?? "todas";
 
-$periodoActivo = \Controllers\MateriasController::obtenerPeriodoActivo();
-$periodoAnterior = $periodoActivo ? \Controllers\MateriasController::obtenerPeriodoAnterior($periodoActivo["id_periodo"]) : false;
-$secciones = \Controllers\MateriasController::listarSecciones($buscar, $naturaleza, $filtroCarrera);
-$esCoordinador = ($_SESSION["rol"] ?? "") === "coordinador";
+$periodoActivo    = \Controllers\MateriasController::obtenerPeriodoActivo();
+$periodoAnterior  = $periodoActivo ? \Controllers\MateriasController::obtenerPeriodoAnterior($periodoActivo["id_periodo"]) : false;
+$rolActual        = $_SESSION["rol"] ?? "";
+$esCoordinador    = ($rolActual === "coordinador");
+$esMaestro        = ($rolActual === "maestro");
 $idFacultadActual = $esCoordinador ? ($_SESSION["id_facultad"] ?? null) : null;
-$carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
+$carrerasFiltro   = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
+
+// Si es maestro, filtrar SOLO sus secciones del periodo activo
+if ($esMaestro) {
+    require_once __DIR__ . "/../../../dao/MaestroDao.php";
+    $maestroRow = \Dao\MaestroDao::obtenerMaestroPorIdUsuario($_SESSION["id_usuario"] ?? 0);
+    if ($maestroRow && $periodoActivo) {
+        $secciones = \Dao\SeccionDao::obtenerSeccionesPorMaestro(
+            intval($maestroRow["id_maestro"]),
+            intval($periodoActivo["id_periodo"])
+        );
+    } else {
+        $secciones = [];
+    }
+} else {
+    $secciones = \Controllers\MateriasController::listarSecciones($buscar, $naturaleza, $filtroCarrera);
+}
 ?>
 
 <!DOCTYPE html>
@@ -84,11 +101,16 @@ $carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
                             <i class="bi bi-list"></i>
                         </button>
                         <div>
-                            <h1 class="h2 page-title mb-1">Programacion de Secciones</h1>
+                            <h1 class="h2 page-title mb-1">
+                                <?php if ($esMaestro): ?>Mis Secciones<?php elseif ($esCoordinador): ?>Programación de Secciones<?php else: ?>Gestión de Secciones<?php endif; ?>
+                            </h1>
                             <div class="text-muted small">
                                 <?php echo htmlspecialchars(periodoSeccionesLabel($periodoActivo)); ?>
                                 <?php if ($esCoordinador): ?>
                                     <span class="badge text-bg-info ms-2">Vista filtrada por facultad</span>
+                                <?php endif; ?>
+                                <?php if ($esMaestro): ?>
+                                    <span class="badge text-bg-primary ms-2">Solo tus secciones asignadas</span>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -118,6 +140,7 @@ $carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
                         No hay un periodo academico activo. Active un periodo antes de programar secciones.
                     </div>
                 <?php else: ?>
+                    <?php if (!$esMaestro): ?>
                     <div class="mb-4">
                         <form method="GET" action="index.php" class="row g-3 align-items-center">
                             <input type="hidden" name="page" value="secciones">
@@ -150,6 +173,7 @@ $carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
                             </div>
                         </form>
                     </div>
+                    <?php endif; ?>
 
                     <?php if (!empty($secciones)): ?>
                         <div class="table-responsive">
@@ -158,15 +182,13 @@ $carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
                                     <tr>
                                         <th>Codigo</th>
                                         <th>Asignatura</th>
-                                        <th>Docente</th>
+                                        <?php if (!$esMaestro): ?><th>Docente</th><?php endif; ?>
                                         <th>Aula</th>
                                         <th>Dias</th>
                                         <th>Horario</th>
                                         <th class="text-center">Cupo</th>
                                         <th>Estado</th>
-                                         <?php if ($esCoordinador): ?>
-                                             <th class="text-end">Acciones</th>
-                                         <?php endif; ?>
+                                        <th class="text-end">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -177,43 +199,55 @@ $carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
                                             $cupoActual = intval($seccion["cupo_actual"] ?? 0);
                                             $cupoMaximo = intval($seccion["cupo_maximo"] ?? 0);
                                         ?>
-                                        <tr>
-                                            <td class="fw-semibold"><?php echo htmlspecialchars($seccion["codigo_seccion"]); ?></td>
-                                            <td>
-                                                <div class="fw-semibold"><?php echo htmlspecialchars($seccion["codigo_materia"] . " - " . $seccion["nombre_materia"]); ?></div>
-                                                <div class="text-muted small">
-                                                    <?php echo htmlspecialchars($seccion["nombre_facultad"] ?? $seccion["nombre_carrera"] ?? "Institucional"); ?>
-                                                </div>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($seccion["nombre_maestro"]); ?></td>
-                                            <td><?php echo htmlspecialchars($seccion["aula"]); ?></td>
-                                            <td><?php echo htmlspecialchars(diasSeccionLabel($seccion["dias"])); ?></td>
-                                            <td><?php echo htmlspecialchars(substr($seccion["hora_inicio"], 0, 5) . " - " . substr($seccion["hora_fin"], 0, 5)); ?></td>
-                                            <td class="text-center">
-                                                <span class="badge bg-light text-dark border"><?php echo $cupoActual . "/" . $cupoMaximo; ?></span>
-                                            </td>
-                                            <td><span class="badge <?php echo $badge; ?>"><?php echo htmlspecialchars($estado); ?></span></td>
-                                             <?php if ($esCoordinador): ?>
-                                             <td class="text-end">
-                                                 <div class="d-flex gap-2 justify-content-end">
-                                                     <a href="index.php?page=secciones&accion=extender_cupo&id=<?php echo urlencode($seccion["id_seccion"]); ?>" 
-                                                        class="btn btn-sm btn-outline-success"
-                                                        title="Extender Cupo (+5)"
-                                                        onclick="return confirm('¿Desea extender el cupo de esta sección en +5 plazas adicionales?');">
-                                                         <i class="bi bi-plus-circle"></i> +5 Cupos
-                                                     </a>
-                                                     <a href="index.php?page=seccion_nueva&id=<?php echo urlencode($seccion["id_seccion"]); ?>" class="btn btn-sm btn-warning">
-                                                         <i class="bi bi-pencil"></i> Editar
-                                                     </a>
-                                                     <a href="index.php?page=secciones&accion=eliminar&id=<?php echo urlencode($seccion["id_seccion"]); ?>"
-                                                        class="btn btn-sm btn-danger"
-                                                        onclick="return confirm('Desea eliminar esta seccion?');">
-                                                         <i class="bi bi-trash"></i> Eliminar
-                                                     </a>
-                                                 </div>
-                                             </td>
-                                             <?php endif; ?>
-                                        </tr>
+                                            <tr>
+                                                <td class="fw-semibold"><?php echo htmlspecialchars($seccion["codigo_seccion"]); ?></td>
+                                                <td>
+                                                    <div class="fw-semibold"><?php echo htmlspecialchars($seccion["codigo_materia"] . " - " . $seccion["nombre_materia"]); ?></div>
+                                                    <div class="text-muted small">
+                                                        <?php echo htmlspecialchars($seccion["nombre_facultad"] ?? $seccion["nombre_carrera"] ?? "Institucional"); ?>
+                                                    </div>
+                                                </td>
+                                                <?php if (!$esMaestro): ?>
+                                                    <td><?php echo htmlspecialchars($seccion["nombre_maestro"]); ?></td>
+                                                <?php endif; ?>
+                                                <td><?php echo htmlspecialchars($seccion["aula"]); ?></td>
+                                                <td><?php echo htmlspecialchars(diasSeccionLabel($seccion["dias"])); ?></td>
+                                                <td><?php echo htmlspecialchars(substr($seccion["hora_inicio"], 0, 5) . " - " . substr($seccion["hora_fin"], 0, 5)); ?></td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-light text-dark border"><?php echo $cupoActual . "/" . $cupoMaximo; ?></span>
+                                                </td>
+                                                <td><span class="badge <?php echo $badge; ?>"><?php echo htmlspecialchars($estado); ?></span></td>
+                                                <td class="text-end">
+                                                    <div class="d-flex gap-2 justify-content-end">
+                                                        <?php if ($esMaestro): ?>
+                                                            <!-- Maestro: solo puede registrar notas -->
+                                                            <a href="index.php?page=notas_maestro&id_seccion=<?php echo urlencode($seccion["id_seccion"]); ?>"
+                                                               class="btn btn-sm btn-primary">
+                                                                <i class="bi bi-pencil-square"></i> Registrar Notas
+                                                            </a>
+                                                        <?php elseif ($esCoordinador): ?>
+                                                            <!-- Coordinador: extender cupo, editar, eliminar -->
+                                                            <a href="index.php?page=secciones&accion=extender_cupo&id=<?php echo urlencode($seccion["id_seccion"]); ?>"
+                                                               class="btn btn-sm btn-outline-success"
+                                                               title="Extender Cupo (+5)"
+                                                               onclick="return confirm('¿Desea extender el cupo de esta sección en +5 plazas adicionales?');">
+                                                                <i class="bi bi-plus-circle"></i> +5 Cupos
+                                                            </a>
+                                                            <a href="index.php?page=seccion_nueva&id=<?php echo urlencode($seccion["id_seccion"]); ?>" class="btn btn-sm btn-warning">
+                                                                <i class="bi bi-pencil"></i> Editar
+                                                            </a>
+                                                            <a href="index.php?page=secciones&accion=eliminar&id=<?php echo urlencode($seccion["id_seccion"]); ?>"
+                                                               class="btn btn-sm btn-danger"
+                                                               onclick="return confirm('Desea eliminar esta seccion?');">
+                                                                <i class="bi bi-trash"></i> Eliminar
+                                                            </a>
+                                                        <?php else: ?>
+                                                            <!-- Director: solo visualiza -->
+                                                            <span class="text-muted small">Lectura</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
@@ -233,20 +267,6 @@ $carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.querySelectorAll('.toggleSidebarBtn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const sidebar = document.querySelector('.sidebar');
-        const main = document.querySelector('main');
-        if (sidebar.classList.contains('collapsed')) {
-            sidebar.classList.remove('collapsed');
-            main.classList.replace('col-md-12', 'col-md-10');
-        } else {
-            sidebar.classList.add('collapsed');
-            main.classList.replace('col-md-10', 'col-md-12');
-        }
-    });
-});
-</script>
+<!-- sidebar.js ya fue cargado desde sidebar.view.tpl -->
 </body>
 </html>

@@ -88,4 +88,29 @@ class PeriodoDao extends Table
             return false;
         }
     }
+
+    public static function activarModoDemo(int $idPeriodo): bool
+    {
+        $sql = "UPDATE periodos_academicos SET fecha_inicio = CURDATE() WHERE id_periodo = :id";
+        return self::executeNonQuery($sql, ["id" => $idPeriodo]) > 0;
+    }
+
+    /**
+     * [SOLO DESARROLLO] Mueve la fecha_inicio del periodo activo a hace 35 días,
+     * desactivando inmediatamente la ventana de matrícula.
+     */
+    public static function desactivarModoDemo(int $idPeriodo): bool
+    {
+        $sql = "UPDATE periodos_academicos SET fecha_inicio = DATE_SUB(CURDATE(), INTERVAL 35 DAY) WHERE id_periodo = :id";
+        return self::executeNonQuery($sql, ["id" => $idPeriodo]) > 0;
+    }
+
+    /**
+     * Alterna el estado de matrícula de forma manual (abierta/cerrada)
+     */
+    public static function alternarMatricula(int $idPeriodo, int $estado): bool
+    {
+        $sql = "UPDATE periodos_academicos SET matricula_activa = :estado WHERE id_periodo = :id";
+        return self::executeNonQuery($sql, ["id" => $idPeriodo, "estado" => $estado]) > 0;
+    }
 }

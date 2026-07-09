@@ -277,14 +277,61 @@ break;
     // Calificaciones
     case "calificaciones":
     case "Calificaciones":
-        require_once __DIR__. "/src/views/templates/calificaciones/list.view.tpl";
+        // El maestro va a la vista de notas por parciales; los demas al listado clasico
+        if (($_SESSION["rol"] ?? "") === "maestro") {
+            require_once __DIR__ . "/src/views/templates/calificaciones/notas_maestro.view.tpl";
+        } else {
+            require_once __DIR__ . "/src/views/templates/calificaciones/list.view.tpl";
+        }
         break;
+
+    case "notas_maestro":
+        require_once __DIR__ . "/src/views/templates/calificaciones/notas_maestro.view.tpl";
+        break;
+
+    // Endpoint AJAX: devuelve JSON con los alumnos inscritos en una seccion y sus notas actuales
+    case "notas_alumnos_ajax":
+        header("Content-Type: application/json; charset=UTF-8");
+        require_once __DIR__ . "/src/dao/CalificacionDao.php";
+        require_once __DIR__ . "/src/dao/PeriodoDao.php";
+        $idSeccion = intval($_GET["id_seccion"] ?? 0);
+        $periodo   = \Dao\PeriodoDao::obtenerPeriodoActivo();
+        if (!$idSeccion || !$periodo) {
+            echo json_encode(["alumnos" => []]);
+            exit();
+        }
+        $alumnos = \Dao\CalificacionDao::obtenerAlumnosPorSeccion($idSeccion, intval($periodo["id_periodo"]));
+        echo json_encode(["alumnos" => $alumnos]);
+        exit();
+
+    // Endpoint AJAX POST: guarda las notas parciales de un alumno y devuelve el promedio calculado
+    case "guardar_nota_parciales":
+        header("Content-Type: application/json; charset=UTF-8");
+        require_once __DIR__ . "/src/dao/CalificacionDao.php";
+        $idMatricula = intval($_POST["id_matricula"] ?? 0);
+        if (!$idMatricula) {
+            echo json_encode(["exito" => false, "mensaje" => "ID de matricula invalido."]);
+            exit();
+        }
+        // Leer cada parcial solo si viene en el POST; null = no ingresado todavia
+        $p1 = isset($_POST["parcial1"]) && $_POST["parcial1"] !== "" ? floatval($_POST["parcial1"]) : null;
+        $p2 = isset($_POST["parcial2"]) && $_POST["parcial2"] !== "" ? floatval($_POST["parcial2"]) : null;
+        $p3 = isset($_POST["parcial3"]) && $_POST["parcial3"] !== "" ? floatval($_POST["parcial3"]) : null;
+        // Validar rango 0-100 para cada parcial que venga
+        foreach ([$p1, $p2, $p3] as $pVal) {
+            if ($pVal !== null && ($pVal < 0 || $pVal > 100)) {
+                echo json_encode(["exito" => false, "mensaje" => "Las notas deben estar entre 0 y 100."]);
+                exit();
+            }
+        }
+        $resultado = \Dao\CalificacionDao::guardarNotasParciales($idMatricula, $p1, $p2, $p3);
+        echo json_encode($resultado);
+        exit();
 
     case "calificacion_nueva":
     case "Calificacion":
         require_once __DIR__ . "/src/views/templates/calificaciones/form.view.tpl";
         break;
-
 
     // --- Nuevas Rutas de Reingeniería ---
     
