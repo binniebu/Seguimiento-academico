@@ -108,14 +108,14 @@ class MateriasController
     }
 
     /**
-     * Eliminar materia
+     * Inactivar materia (soft delete, no borra el registro)
      */
-    public static function eliminar($id)
+    public static function inactivar($id)
     {
-        if (MateriaDao::eliminarMateria($id)) {
-            return ['exito' => true, 'mensaje' => 'Materia eliminada correctamente'];
+        if (MateriaDao::inactivarMateria($id)) {
+            return ['exito' => true, 'mensaje' => 'Materia dada de baja correctamente'];
         } else {
-            return ['exito' => false, 'mensaje' => 'Error al eliminar la materia'];
+            return ['exito' => false, 'mensaje' => 'Error al dar de baja la materia'];
         }
     }
 

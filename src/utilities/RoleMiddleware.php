@@ -41,36 +41,55 @@ class RoleMiddleware
             "director" => array(
                 "home",
                 "dashboard",
-                "estudiantes",
+
+                // Gestión de personal
                 "maestros",
                 "maestro_nuevo",
                 "maestro_guardar",
                 "maestro_actualizar",
                 "maestro_editar",
                 "maestro_eliminar",
+
+                // Gestión académica (director supervisa y puede intervenir)
                 "materias",
                 "materia_nueva",
                 "materia_guardar",
                 "materia_editar",
-                "materia_eliminar",
+                "materia_inactivar",
+
+                // Secciones: director puede programar si es necesario
+                "secciones",
+                "seccion_nueva",
+                "seccion_guardar",
+
+                // Matrículas: control administrativo completo
                 "matriculas",
                 "matricula_nueva",
                 "matricula_guardar",
                 "matricula_editar",
                 "matricula_eliminar",
 
-                "mis_materias",
-                "logout",
+                // Estructura institucional
                 "facultades",
-                "periodos",
                 "facultad_nueva",
                 "facultad_guardar",
+                "periodos",
                 "carreras",
                 "carrera_nueva",
                 "carrera_guardar",
                 "carrera_flujograma",
-                "secciones",
 
+                // Estudiantes: director puede ver Y editar (jerarquía superior al coordinador)
+                "estudiantes",
+                "estudiante_editar",
+                "estudiante_guardar",
+
+                // Admisiones: el director también puede revisar solicitudes
+                "solicitudes_registro",
+                "solicitud_detalle",
+                "solicitud_procesar",
+
+                "logout",
                 "switch_role",
                 "perfil",
                 "perfil_actualizar"
@@ -115,20 +134,34 @@ class RoleMiddleware
             "coordinador" => array(
                 "home",
                 "dashboard",
+
+                // Estudiantes de su facultad: puede ver y editar
                 "estudiantes",
                 "estudiante_editar",
                 "estudiante_guardar",
+
+                // Gestión académica de su facultad (crear y editar, NO eliminar)
                 "carreras",
                 "materias",
                 "materia_nueva",
+                "materia_guardar",
+                "materia_editar",
                 "carrera_flujograma",
+
+                // Secciones: responsabilidad operativa del coordinador
                 "secciones",
                 "seccion_nueva",
                 "seccion_guardar",
+
+                // Admisiones de su facultad
                 "solicitudes_registro",
+                "solicitud_detalle",
                 "solicitud_procesar",
+
+                // Matrículas: puede ver y crear, no eliminar
                 "matriculas",
                 "matricula_nueva",
+
                 "logout",
                 "switch_role",
                 "perfil",

@@ -108,9 +108,9 @@ class MateriaDao extends Table
     }
 
     /**
-     * Eliminar materia
+     * Dar de baja una materia (soft delete: cambia estado a 'inactiva', no borra el registro)
      */
-    public static function eliminarMateria($id)
+    public static function inactivarMateria($id)
     {
         $sqlstr = "UPDATE materias SET estado = 'inactiva' WHERE id_materia = :id";
         $params = array("id" => $id);
