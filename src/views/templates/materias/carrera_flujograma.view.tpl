@@ -66,13 +66,19 @@
                         <p class="text-muted mb-0 fs-5"><?php echo htmlspecialchars($carrera['nombre_carrera']); ?></p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="index.php?page=carreras" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Volver a Carreras
-                        </a>
-                        <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
-                            <a href="index.php?page=materia_nueva&id_carrera_pre=<?php echo $carrera['id_carrera']; ?>" class="btn btn-primary">
-                                <i class="bi bi-plus-circle"></i> Agregar Materia
+                        <?php if ($_SESSION["rol"] === "estudiante"): ?>
+                            <a href="index.php?page=home" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver al Inicio
                             </a>
+                        <?php else: ?>
+                            <a href="index.php?page=carreras" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver a Carreras
+                            </a>
+                            <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
+                                <a href="index.php?page=materia_nueva&id_carrera_pre=<?php echo $carrera['id_carrera']; ?>" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Agregar Materia
+                                </a>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -144,10 +150,12 @@
                         <div class="alert alert-warning text-center p-5 shadow-sm rounded-4">
                             <i class="bi bi-diagram-3 text-warning mb-3" style="font-size: 3rem;"></i>
                             <h4>Flujograma Vacío</h4>
-                            <p class="text-muted">Esta carrera aún no tiene materias asignadas. El estado de la carrera permanecerá como "Pendiente de carga académica".</p>
-                            <a href="index.php?page=materia_nueva&id_carrera_pre=<?php echo $carrera['id_carrera']; ?>" class="btn btn-primary mt-2">
-                                Comenzar a agregar clases
-                            </a>
+                            <p class="text-muted">Esta carrera aún no tiene materias asignadas.</p>
+                            <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
+                                <a href="index.php?page=materia_nueva&id_carrera_pre=<?php echo $carrera['id_carrera']; ?>" class="btn btn-primary mt-2">
+                                    Comenzar a agregar clases
+                                </a>
+                            <?php endif; ?>
                         </div>
                     <?php else: ?>
 

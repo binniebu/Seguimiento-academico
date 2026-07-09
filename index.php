@@ -39,8 +39,15 @@ switch ($page) {
 
             if ($usuario["nombre_rol"] === "coordinador") {
                 $_SESSION["id_facultad"] = \Dao\UsuarioDao::obtenerFacultadCoordinador($usuario["id_usuario"]);
+                unset($_SESSION["id_carrera"]);
+            } elseif ($usuario["nombre_rol"] === "estudiante") {
+                require_once __DIR__ . "/src/dao/EstudianteDao.php";
+                $carreraData = \Dao\EstudianteDao::obtenerCarreraIdPorUsuario($usuario["id_usuario"]);
+                $_SESSION["id_carrera"] = $carreraData["id_carrera"] ?? null;
+                $_SESSION["id_facultad"] = $carreraData["id_facultad"] ?? null;
             } else {
                 unset($_SESSION["id_facultad"]);
+                unset($_SESSION["id_carrera"]);
             }
 
             header("Location: index.php?page=home");
@@ -137,7 +144,7 @@ switch ($page) {
 
     // Cargar carreras activas para el select del formulario
     require_once __DIR__ . "/src/dao/CarreraDao.php";
-    $carrerasActivas = \Dao\CarreraDao::obtenerCarreras(false);
+    $carrerasActivas = \Dao\CarreraDao::obtenerCarrerasParaRegistro();
     require_once __DIR__ . "/src/views/templates/auth/register.view.tpl";
     break;
 
@@ -311,6 +318,17 @@ break;
         break;
         
     case "carrera_flujograma":
+        require_once __DIR__ . "/src/controllers/MateriasController.php";
+        \Controllers\MateriasController::verFlujograma();
+        break;
+
+    case "mi_flujograma":
+        // Ruta exclusiva del estudiante: usa el id_carrera de su sesión
+        if (!isset($_SESSION["id_carrera"]) || !$_SESSION["id_carrera"]) {
+            echo "<script>alert('No tienes una carrera asignada.'); window.location='index.php?page=home';</script>";
+            exit();
+        }
+        $_GET["id"] = $_SESSION["id_carrera"];
         require_once __DIR__ . "/src/controllers/MateriasController.php";
         \Controllers\MateriasController::verFlujograma();
         break;

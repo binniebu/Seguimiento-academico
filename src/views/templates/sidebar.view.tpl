@@ -76,6 +76,11 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?php echo $currentPage === 'mi_flujograma' ? 'active' : ''; ?>" href="index.php?page=mi_flujograma">
+                        <i class="bi bi-diagram-3"></i> Mi Flujograma
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'historial_academico' ? 'active' : ''; ?>" href="index.php?page=historial_academico">
                         <i class="bi bi-file-earmark-text"></i> Historial
                     </a>

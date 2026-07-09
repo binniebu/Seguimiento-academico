@@ -104,9 +104,8 @@ if (!function_exists('fixDoubleEncoding')) {
                         <table class="table table-hover align-middle">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
                                     <th>Nombre de la Carrera</th>
-                                    <th class="text-center">Materias Activas</th>
+                                    <th class="text-center">Total Materias</th>
                                     <th>Estado</th>
                                     <th class="text-end">Acciones</th>
                                 </tr>
@@ -135,7 +134,6 @@ if (!function_exists('fixDoubleEncoding')) {
                                     }
                                 ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($c['id_carrera']); ?></td>
                                         <td class="fw-bold">
                                             <a href="index.php?page=carrera_flujograma&id=<?php echo $c['id_carrera']; ?>" class="text-decoration-none text-primary">
                                                 <?php echo htmlspecialchars($nombreFixed); ?> <i class="bi bi-box-arrow-up-right ms-1 small"></i>

@@ -285,5 +285,17 @@ class EstudianteDao extends Table
 
     return self::executeNonQuery($sqlstr, $params);
 }
+
+    public static function obtenerCarreraIdPorUsuario($id_usuario)
+    {
+        // Intenta resolver el id_carrera tanto si 'carrera' guarda el nombre como si guarda el id
+        $sqlstr = "SELECT c.id_carrera, c.id_facultad
+                   FROM estudiantes e
+                   INNER JOIN carreras c
+                          ON (c.nombre_carrera = e.carrera OR CAST(c.id_carrera AS CHAR) = CAST(e.carrera AS CHAR))
+                   WHERE e.id_usuario = :id_usuario
+                   LIMIT 1";
+        return self::obtenerUnRegistro($sqlstr, ["id_usuario" => $id_usuario]);
+    }
 }
 ?>

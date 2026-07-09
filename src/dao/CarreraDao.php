@@ -10,7 +10,11 @@ class CarreraDao extends Table
     public static function obtenerCarreras($incluirInactivas = false, $id_facultad = null)
     {
         $sqlstr = "SELECT c.id_carrera, c.nombre_carrera, c.estado, c.id_facultad,
-                          (SELECT COUNT(*) FROM materias m WHERE m.id_carrera = c.id_carrera AND m.tipo_materia = 'carrera' AND m.estado = 'activa') as total_materias
+                          (SELECT COUNT(*) FROM materias m
+                           WHERE m.tipo_materia = 'institucional'
+                              OR (m.tipo_materia = 'facultad'    AND m.id_facultad = c.id_facultad)
+                              OR (m.tipo_materia = 'carrera'     AND m.id_carrera  = c.id_carrera)
+                          ) as total_materias
                    FROM carreras c";
         if ($incluirInactivas) {
             $sqlstr .= " WHERE c.estado = 'inactiva'";

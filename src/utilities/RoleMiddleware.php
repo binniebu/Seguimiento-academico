@@ -97,6 +97,9 @@ class RoleMiddleware
 
     "materias",
     "mis_materias",
+    "mi_flujograma",
+
+    "calificaciones",
 
     "matriculas_nueva",
     "matricula_estudiante",
