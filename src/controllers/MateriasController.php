@@ -420,6 +420,24 @@ class MateriasController
         return $codigo;
     }
 
+    public static function extenderCupoSeccion($idSeccion, $incremento = 5)
+    {
+        $idFacultad = self::facultadCoordinadorActual();
+        if (($_SESSION["rol"] ?? "") !== "coordinador") {
+            return ["exito" => false, "mensaje" => "Solo los coordinadores pueden realizar esta acción."];
+        }
+
+        if (!SeccionDao::usuarioPuedeGestionarSeccion($idSeccion, $idFacultad)) {
+            return ["exito" => false, "mensaje" => "No tiene permiso para gestionar esta sección."];
+        }
+
+        if (SeccionDao::extenderCupo($idSeccion, $incremento)) {
+            return ["exito" => true, "mensaje" => "Cupo de la sección extendido correctamente en +{$incremento} plazas."];
+        }
+
+        return ["exito" => false, "mensaje" => "No se pudo actualizar el cupo de la sección."];
+    }
+
     private static function alertarYRedirigir($mensaje, $url)
     {
         echo "<script>alert('" . htmlspecialchars($mensaje, ENT_QUOTES) . "'); window.location='" . $url . "';</script>";

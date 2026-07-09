@@ -95,6 +95,18 @@ switch ($rolActual) {
         .progress {
             height: 12px;
         }
+
+        .hover-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            border: 1px solid #e9ecef !important;
+        }
+        
+        .hover-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+            border-color: #dee2e6 !important;
+        }
     </style>
 </head>
 <body>
@@ -169,9 +181,65 @@ switch ($rolActual) {
                         </div>
                     </div>
 
-                    <div class="dashboard-section">
+                    <div class="dashboard-section mb-4">
                         <h2 class="h5 mb-3"><i class="bi bi-speedometer2"></i> Vista global institucional</h2>
                         <p class="text-muted mb-0">Estos indicadores resumen la actividad general del sistema y ayudan a detectar carga administrativa pendiente.</p>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3 text-dark fw-semibold"><i class="bi bi-grid-fill text-primary"></i> Atajos de Gestión Rápida</h5>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <a href="index.php?page=facultades" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-info-subtle text-info mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-building fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Facultades</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <a href="index.php?page=periodos" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-warning-subtle text-warning mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-calendar-event-fill fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Períodos</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <a href="index.php?page=carreras" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-success-subtle text-success mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-tags fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Carreras</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <a href="index.php?page=secciones" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-primary-subtle text-primary mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-calendar-event fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Secciones</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <a href="index.php?page=matriculas" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-danger-subtle text-danger mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-card-checklist fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Matrículas</div>
+                                </div>
+                            </a>
+                        </div>
                     </div>
 
                 <?php elseif ($rolActual === "coordinador"): ?>

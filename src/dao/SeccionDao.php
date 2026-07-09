@@ -133,7 +133,8 @@ class SeccionDao extends Table
     public static function obtenerMateriasProgramables($idFacultad = null)
     {
         $sqlstr = "SELECT m.id_materia, m.codigo, m.nombre, m.tipo_materia,
-                          f.nombre_facultad, c.nombre_carrera
+                          f.nombre_facultad, c.nombre_carrera,
+                          m.id_facultad, m.id_carrera
                    FROM materias m
                    LEFT JOIN facultades f ON m.id_facultad = f.id_facultad
                    LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
@@ -181,7 +182,8 @@ class SeccionDao extends Table
 
     public static function obtenerMaestrosSeleccionables($excluirCoordinadores = true)
     {
-        $sqlstr = "SELECT ma.id_maestro, ma.numero_empleado AS codigo, u.nombre, u.correo
+        $sqlstr = "SELECT ma.id_maestro, ma.numero_empleado AS codigo, u.nombre, u.correo,
+                          ma.id_facultad, ma.id_carrera
                    FROM maestros ma
                    INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
                    WHERE u.estado = 'activo'";
@@ -526,5 +528,16 @@ class SeccionDao extends Table
         }
 
         return $codigo;
+    }
+
+    public static function extenderCupo($idSeccion, $incremento = 5)
+    {
+        $sqlstr = "UPDATE secciones 
+                   SET cupo_maximo = cupo_maximo + :incremento 
+                   WHERE id_seccion = :id_seccion";
+        return self::executeNonQuery($sqlstr, [
+            "incremento" => intval($incremento),
+            "id_seccion" => intval($idSeccion)
+        ]);
     }
 }

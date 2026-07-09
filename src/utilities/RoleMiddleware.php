@@ -42,10 +42,6 @@ class RoleMiddleware
                 "home",
                 "dashboard",
                 "estudiantes",
-                "estudiante_nuevo",
-                "estudiante_guardar",
-                "estudiante_editar",
-                "estudiante_eliminar",
                 "maestros",
                 "maestro_nuevo",
                 "maestro_guardar",
@@ -66,6 +62,7 @@ class RoleMiddleware
                 "mis_materias",
                 "logout",
                 "facultades",
+                "periodos",
                 "facultad_nueva",
                 "facultad_guardar",
                 "carreras",
@@ -102,10 +99,9 @@ class RoleMiddleware
     "mis_materias",
 
     "matriculas_nueva",
+    "matricula_estudiante",
     "actualizar_carrera",
     
-
-    "calificaciones",
 
     "logout",
     "historial_academico",
@@ -148,6 +144,17 @@ class RoleMiddleware
                     window.location='index.php?page=home';
                   </script>";
             exit();
+        }
+
+        if ($page === "matricula_estudiante" && $rol === "estudiante") {
+            require_once __DIR__ . "/../controllers/MatriculasController.php";
+            if (!\Controllers\MatriculasController::esPeriodoMatriculaActivo()) {
+                echo "<script>
+                        alert('La matrícula no está habilitada o el período académico ha expirado.');
+                        window.location='index.php?page=home';
+                      </script>";
+                exit();
+            }
         }
 
         return true;

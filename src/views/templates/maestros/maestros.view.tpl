@@ -52,10 +52,15 @@
         </select>
     </div>
 
-    <div class="col-md-2">
-        <button class="btn btn-success w-100 shadow-sm">
-            <i class="bi bi-search"></i> Buscar / Filtrar
+    <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-success w-100 shadow-sm">
+            <i class="bi bi-search"></i>
         </button>
+        <?php if (!empty($_GET['buscar']) || ($_GET['estado'] ?? 'todos') !== 'todos'): ?>
+            <a href="index.php?page=maestros" class="btn btn-outline-danger shadow-sm" title="Limpiar Filtros">
+                <i class="bi bi-x-circle"></i>
+            </a>
+        <?php endif; ?>
     </div>
 
 </form>
@@ -111,7 +116,7 @@ if ($buscar != "") {
 
 <tr>
 
-<th>No. Empleado</th>
+<th>DNI</th>
 <th>Nombre</th>
 <th>Correo</th>
 <th>Teléfono</th>
@@ -131,7 +136,7 @@ if ($buscar != "") {
 
 <tr>
 
-<td><?= htmlspecialchars($m["numero_empleado"]) ?></td>
+<td><?= htmlspecialchars($m["dni"] ?? 'N/D') ?></td>
 
 <td><?= htmlspecialchars($m["nombre"]) ?></td>
 
@@ -180,7 +185,7 @@ onclick="return confirm('¿Desea inactivar este maestro?')">
 
 <tr>
 
-<td colspan="6" class="text-center">
+<td colspan="7" class="text-center">
 
 No hay maestros registrados.
 
@@ -207,6 +212,7 @@ No hay maestros registrados.
 <table class="table table-striped table-hover table-bordered align-middle">
     <thead class="table-primary">
         <tr>
+            <th>DNI</th>
             <th>Nombre</th>
             <th>Correo</th>
             <th>Facultad</th>
@@ -219,6 +225,7 @@ No hay maestros registrados.
         <?php if (count($coordinadores) > 0): ?>
             <?php foreach ($coordinadores as $c): ?>
             <tr>
+                <td><?= htmlspecialchars($c["dni"] ?? 'N/D') ?></td>
                 <td><?= htmlspecialchars($c["nombre"]) ?></td>
                 <td><?= htmlspecialchars($c["correo"]) ?></td>
                 <td><?= htmlspecialchars($c["nombre_facultad"]) ?></td>
@@ -241,7 +248,7 @@ No hay maestros registrados.
             </tr>
             <?php endforeach; ?>
         <?php else: ?>
-            <tr><td colspan="6" class="text-center">No hay coordinadores registrados.</td></tr>
+            <tr><td colspan="7" class="text-center">No hay coordinadores registrados.</td></tr>
         <?php endif; ?>
     </tbody>
 </table>

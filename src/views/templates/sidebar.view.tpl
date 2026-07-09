@@ -28,13 +28,8 @@ $currentPage = $_GET['page'] ?? 'home';
                         <i class="bi bi-people-fill"></i> Personal
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'facultades' ? 'active' : ''; ?>" href="index.php?page=facultades">
-                        <i class="bi bi-building"></i> Facultades
-                    </a>
-                </li>
             <?php endif; ?>
-            <?php if (in_array($_SESSION["rol"], ["director", "coordinador"])): ?>
+            <?php if ($_SESSION["rol"] === "coordinador"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'carreras' ? 'active' : ''; ?>" href="index.php?page=carreras">
                         <i class="bi bi-tags"></i> Carreras
@@ -55,7 +50,7 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if (in_array($_SESSION["rol"], ["director", "maestro", "coordinador"])): ?>
+            <?php if (in_array($_SESSION["rol"], ["maestro", "coordinador"])): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'secciones' ? 'active' : ''; ?>" href="index.php?page=secciones">
                         <i class="bi bi-calendar-event"></i> Secciones
@@ -67,7 +62,7 @@ $currentPage = $_GET['page'] ?? 'home';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if (in_array($_SESSION["rol"], ["maestro", "estudiante"])): ?>
+            <?php if ($_SESSION["rol"] === "maestro"): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'calificaciones' ? 'active' : ''; ?>" href="index.php?page=calificaciones">
                         <i class="bi bi-graph-up"></i> Calificaciones
@@ -85,6 +80,16 @@ $currentPage = $_GET['page'] ?? 'home';
                         <i class="bi bi-file-earmark-text"></i> Historial
                     </a>
                 </li>
+                <?php 
+                require_once __DIR__ . "/../../controllers/MatriculasController.php";
+                if (\Controllers\MatriculasController::esPeriodoMatriculaActivo()): 
+                ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo $currentPage === 'matricula_estudiante' ? 'active' : ''; ?>" href="index.php?page=matricula_estudiante">
+                            <i class="bi bi-bookmark-plus-fill"></i> Matricular Clases
+                        </a>
+                    </li>
+                <?php endif; ?>
             <?php endif; ?>
 
             <li class="nav-item">

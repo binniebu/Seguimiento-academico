@@ -1,175 +1,268 @@
 <?php
+require_once __DIR__ . "/../../../dao/MaestroDao.php";
+require_once __DIR__ . "/../../../dao/FacultadDao.php";
+require_once __DIR__ . "/../../../dao/CarreraDao.php";
 
-require_once __DIR__ . "/../../../controllers/MaestrosController.php";
+$personal = null;
+$rolActual = 2; // Maestro por defecto
+$isEdit = false;
 
-use Controllers\MaestrosController;
-
-// -----------------------------------------------
-// Detectar si estamos editando un Maestro o Coordinador
-// -----------------------------------------------
-
-$idMaestro = $_GET["id"] ?? null;
-$idCoordinador = $_GET["id_coordinador"] ?? null;
-
-$editando = false;
-$tipo = "maestro"; // valor por defecto para el formulario nuevo
-$registro = null;
-$rolBloqueado = false;
-
-if ($idMaestro) {
-
-    $registro = MaestrosController::obtenerMaestro($idMaestro);
-    $editando = true;
-    $tipo = "maestro";
-
-    if ($registro) {
-        $rolBloqueado = MaestrosController::tieneClasesActivas($idMaestro);
-    }
-
-} elseif ($idCoordinador) {
-
-    $registro = MaestrosController::obtenerCoordinador($idCoordinador);
-    $editando = true;
-    $tipo = "coordinador";
+if (isset($_GET['id'])) {
+    $idMaestro = intval($_GET['id']);
+    $personal = \Dao\MaestroDao::obtenerMaestroPorId($idMaestro);
+    $rolActual = 2;
+    $isEdit = !empty($personal);
+} elseif (isset($_GET['id_coordinador'])) {
+    $idCoordinador = intval($_GET['id_coordinador']);
+    $personal = \Dao\MaestroDao::obtenerCoordinadorPorId($idCoordinador);
+    $rolActual = 4;
+    $isEdit = !empty($personal);
 }
 
-$facultades = MaestrosController::listarFacultades();
-
-// Helper para no repetir htmlspecialchars() en cada campo
-function val($valor)
-{
-    return htmlspecialchars($valor ?? "");
-}
-
+$todasFacultades = \Dao\FacultadDao::obtenerTodas();
+$todasCarreras = \Dao\CarreraDao::obtenerCarreras(false);
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <?php 
+        if (!$isEdit) echo "Registrar Personal";
+        elseif ($rolActual == 2) echo "Editar Maestro";
+        else echo "Editar Coordinador";
+        ?>
+    </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title><?= $editando ? "Editar" : "Nuevo" ?> Maestro / Coordinador</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="public/css/style.css">
 </head>
-<body class="bg-light p-5">
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <?php require_once __DIR__ . "/../sidebar.view.tpl"; ?>
 
-<div class="container">
-    <h2 class="mb-4"><?= $editando ? "Editar" : "Registrar" ?> Maestro / Coordinador</h2>
+        <main role="main" class="col-md-10 ml-sm-auto px-md-4 py-4">
+            <div class="main-content-card">
+                <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn" type="button">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <h1 class="h2 page-title mb-0">
+                            <?php 
+                            if (!$isEdit) echo "Registrar Maestro / Coordinador";
+                            elseif ($rolActual == 2) echo "Editar Maestro";
+                            else echo "Editar Coordinador";
+                            ?>
+                        </h1>
+                    </div>
+                    <a href="index.php?page=maestros" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
 
-    <form method="POST"
-          action="index.php?page=<?= $editando ? "maestro_actualizar" : "maestro_guardar" ?>"
-          class="p-4 border rounded shadow-sm bg-white">
-
-        <?php if ($editando): ?>
-            <input type="hidden" name="tipo" value="<?= val($tipo) ?>">
-            <input type="hidden" name="id" value="<?= val($registro[$tipo === "maestro" ? "id_maestro" : "id_coordinador"]) ?>">
-            <input type="hidden" name="id_usuario" value="<?= val($registro["id_usuario"]) ?>">
-        <?php endif; ?>
-
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Nombre Completo</label>
-                <input type="text" name="nombre" class="form-control"
-                       value="<?= val($registro["nombre"] ?? "") ?>" required>
-            </div>
-
-        <div class="col-md-6 mb-3">
-          <label class="form-label">DNI</label>
-           <input type="text" name="dni" class="form-control"
-           value="<?= val($registro["documento_dni"] ?? "") ?>" required>
-        </div>
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Correo Electrónico</label>
-                <input type="email" name="correo" class="form-control"
-                       value="<?= val($registro["correo"] ?? "") ?>" required>
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Teléfono</label>
-                <input type="text" name="telefono" class="form-control"
-                       value="<?= val($registro["telefono"] ?? "") ?>" required>
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Título Profesional</label>
-                <input type="text" name="titulo" class="form-control"
-                       value="<?= val($registro["titulo"] ?? "") ?>" required>
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label">
-                    Contraseña
-                    <?php if ($editando): ?>
-                        <small class="text-muted">(dejar vacío para no cambiarla)</small>
+                <form method="POST" action="index.php?page=maestro_guardar" class="p-4 border rounded shadow-sm bg-white row g-3">
+                    <?php if ($isEdit): ?>
+                        <input type="hidden" name="id_usuario" value="<?php echo htmlspecialchars($personal['id_usuario']); ?>">
+                        <?php if ($rolActual == 2): ?>
+                            <input type="hidden" name="id_maestro" value="<?php echo htmlspecialchars($personal['id_maestro']); ?>">
+                        <?php else: ?>
+                            <input type="hidden" name="id_coordinador" value="<?php echo htmlspecialchars($personal['id_coordinador']); ?>">
+                        <?php endif; ?>
                     <?php endif; ?>
-                </label>
-                <input type="password" name="password" class="form-control"
-                    <?= $editando ? "" : "required" ?>>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nombre Completo</label>
+                        <input type="text" name="nombre" class="form-control" 
+                               value="<?php echo htmlspecialchars($personal['nombre'] ?? ''); ?>" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">DNI</label>
+                        <input type="text" name="dni" class="form-control" 
+                               value="<?php echo htmlspecialchars($personal['dni'] ?? ''); ?>" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Correo Electrónico</label>
+                        <input type="email" name="correo" class="form-control" 
+                               value="<?php echo htmlspecialchars($personal['correo'] ?? ''); ?>" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Teléfono</label>
+                        <input type="text" name="telefono" class="form-control" 
+                               value="<?php echo htmlspecialchars($personal['telefono'] ?? ''); ?>" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Título Profesional</label>
+                        <input type="text" name="titulo" class="form-control" 
+                               value="<?php echo htmlspecialchars($personal['titulo'] ?? ''); ?>" required>
+                    </div>
+
+                    <?php if (!$isEdit): ?>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Contraseña</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Rol de Usuario</label>
+                        <?php if ($isEdit): ?>
+                            <!-- Bloqueamos el rol en edición para evitar inconsistencias y usamos un hidden -->
+                            <input type="hidden" name="rol" value="<?php echo $rolActual; ?>">
+                            <select class="form-select" disabled>
+                                <option value="2" <?php echo $rolActual == 2 ? 'selected' : ''; ?>>Maestro</option>
+                                <option value="4" <?php echo $rolActual == 4 ? 'selected' : ''; ?>>Coordinador</option>
+                            </select>
+                        <?php else: ?>
+                            <select name="rol" id="select_rol" class="form-select" onchange="toggleFields()" required>
+                                <option value="2" <?php echo $rolActual == 2 ? 'selected' : ''; ?>>Maestro</option>
+                                <option value="4" <?php echo $rolActual == 4 ? 'selected' : ''; ?>>Coordinador</option>
+                            </select>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Campos específicos para COORDINADOR -->
+                    <div id="campos_coordinador" class="col-12 mt-4" style="display:none;">
+                        <div class="card bg-light border-0">
+                            <div class="card-body row">
+                                <h6 class="text-primary mb-3"><i class="bi bi-building"></i> Datos de Facultad (Coordinador)</h6>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Facultad Asignada</label>
+                                    <select name="id_facultad" id="select_facultad_coordinador" class="form-select">
+                                        <option value="">-- Selecciona una facultad --</option>
+                                        <?php foreach ($todasFacultades as $fac): ?>
+                                            <option value="<?php echo $fac['id_facultad']; ?>" 
+                                                <?php echo ($personal['id_facultad'] ?? '') == $fac['id_facultad'] ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($fac['nombre_facultad']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos para MAESTRO -->
+                    <div id="campos_maestro" class="col-12 mt-4" style="display:none;">
+                        <div class="card bg-light border-0">
+                            <div class="card-body row g-3">
+                                <h6 class="text-primary mb-1"><i class="bi bi-person-workspace"></i> Adscripción Académica (Maestro)</h6>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Facultad de Clases</label>
+                                    <select name="id_facultad" id="select_facultad_maestro" class="form-select" onchange="filterCareers()">
+                                        <option value="">-- Selecciona una facultad --</option>
+                                        <?php foreach ($todasFacultades as $fac): ?>
+                                            <option value="<?php echo $fac['id_facultad']; ?>" 
+                                                <?php echo ($personal['id_facultad'] ?? '') == $fac['id_facultad'] ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($fac['nombre_facultad']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Carrera de Clases</label>
+                                    <select name="id_carrera" id="select_carrera_maestro" class="form-select">
+                                        <option value="">-- Selecciona una carrera --</option>
+                                        <?php foreach ($todasCarreras as $car): ?>
+                                            <option value="<?php echo $car['id_carrera']; ?>" 
+                                                data-facultad="<?php echo $car['id_facultad']; ?>"
+                                                <?php echo ($personal['id_carrera'] ?? '') == $car['id_carrera'] ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($car['nombre_carrera']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-4">
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="bi bi-save"></i> Guardar Registro
+                        </button>
+                        <a href="index.php?page=maestros" class="btn btn-secondary w-100 text-center py-2">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
             </div>
-
-            <div class="col-md-12 mb-3">
-                <label class="form-label">Rol de Usuario</label>
-                <select name="rol" id="select_rol" class="form-select"
-                        onchange="toggleFields()"
-                    <?= ($editando && $rolBloqueado) ? "disabled" : "" ?>
-                        required>
-                    <option value="2" <?= $tipo === "maestro" ? "selected" : "" ?>>Maestro</option>
-                    <option value="4" <?= $tipo === "coordinador" ? "selected" : "" ?>>Coordinador</option>
-                </select>
-
-                <?php if ($editando && $rolBloqueado): ?>
-                    <small class="text-danger d-block mt-1">
-                        El rol no se puede cambiar: este maestro tiene clases asignadas
-                        en el periodo activo.
-                    </small>
-                    <!-- Si el select está disabled, el navegador NO envía su valor en el POST.
-                         Este campo oculto asegura que el rol se siga enviando. -->
-                    <input type="hidden" name="rol" value="<?= $tipo === "maestro" ? 2 : 4 ?>">
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div id="campos_maestro" class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Número de Empleado</label>
-                <input type="text" name="numero_empleado" class="form-control"
-                       value="<?= val($registro["numero_empleado"] ?? "") ?>">
-            </div>
-        </div>
-
-        <div id="campos_coordinador" class="row" style="display:none;">
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Facultad Asignada</label>
-                <select name="id_facultad" class="form-select">
-                    <?php foreach ($facultades as $f): ?>
-                        <option value="<?= $f["id_facultad"] ?>"
-                            <?= (isset($registro["id_facultad"]) && $registro["id_facultad"] == $f["id_facultad"]) ? "selected" : "" ?>>
-                            <?= val($f["nombre_facultad"]) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary w-100">
-            <?= $editando ? "Guardar Cambios" : "Guardar Registro" ?>
-        </button>
-
-        <a href="index.php?page=maestros" class="btn btn-secondary w-100 mt-2">
-            Cancelar
-        </a>
-    </form>
+        </main>
+    </div>
 </div>
 
 <script>
 function toggleFields() {
-    const rol = document.getElementById('select_rol').value;
-    document.getElementById('campos_maestro').style.display = (rol == '2') ? 'flex' : 'none';
-    document.getElementById('campos_coordinador').style.display = (rol == '4') ? 'flex' : 'none';
+    // Si está bloqueado/disabled por edición, tomamos el valor del rol actual
+    const rolSelect = document.getElementById('select_rol');
+    const rol = rolSelect ? rolSelect.value : "<?php echo $rolActual; ?>";
+
+    const divMaestro = document.getElementById('campos_maestro');
+    const divCoordinador = document.getElementById('campos_coordinador');
+    const selFacCoord = document.getElementById('select_facultad_coordinador');
+    const selFacMaestro = document.getElementById('select_facultad_maestro');
+    const selCarMaestro = document.getElementById('select_carrera_maestro');
+
+    if (rol == '2') {
+        divMaestro.style.display = 'block';
+        divCoordinador.style.display = 'none';
+        
+        selFacMaestro.disabled = false;
+        selCarMaestro.disabled = false;
+        selFacCoord.disabled = true;
+    } else if (rol == '4') {
+        divMaestro.style.display = 'none';
+        divCoordinador.style.display = 'block';
+        
+        selFacMaestro.disabled = true;
+        selCarMaestro.disabled = true;
+        selFacCoord.disabled = false;
+    }
 }
 
-// Ejecutar al cargar la página, para que en modo edición
-// se muestren los campos correctos según el rol actual
-document.addEventListener('DOMContentLoaded', toggleFields);
+function filterCareers() {
+    const facultyId = document.getElementById('select_facultad_maestro').value;
+    const careerSelect = document.getElementById('select_carrera_maestro');
+    const options = careerSelect.options;
+    
+    let hasVisibleOptionSelected = false;
+    
+    for (let i = 0; i < options.length; i++) {
+        const opt = options[i];
+        if (opt.value === "") continue;
+        
+        const optFacId = opt.getAttribute('data-facultad');
+        if (!facultyId || optFacId == facultyId) {
+            opt.style.display = 'block';
+            if (opt.selected) {
+                hasVisibleOptionSelected = true;
+            }
+        } else {
+            opt.style.display = 'none';
+            if (opt.selected) {
+                opt.selected = false;
+            }
+        }
+    }
+    
+    if (!hasVisibleOptionSelected) {
+        careerSelect.value = "";
+    }
+}
+
+// Inicializar vistas y filtros
+window.onload = function() {
+    toggleFields();
+    if (document.getElementById('select_facultad_maestro').value !== "") {
+        filterCareers();
+    }
+};
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

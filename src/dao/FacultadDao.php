@@ -13,7 +13,7 @@ class FacultadDao extends Table
     public static function obtenerTodas()
     {
         $sqlstr = "SELECT f.id_facultad, f.nombre_facultad,
-                          (SELECT COUNT(*) FROM carreras c WHERE c.id_facultad = f.id_facultad) as total_carreras
+                          (SELECT COUNT(*) FROM carreras c WHERE c.id_facultad = f.id_facultad AND LOWER(c.estado) IN ('activa', 'activo')) as total_carreras
                    FROM facultades f
                    ORDER BY f.nombre_facultad ASC";
         return self::obtenerRegistros($sqlstr);

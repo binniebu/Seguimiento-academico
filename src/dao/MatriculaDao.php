@@ -7,127 +7,165 @@ require_once __DIR__ . "/Table.php";
 
 class MatriculaDao extends Table
 {
-    public static function listarMatriculas()
+    public static function listarMatriculas($buscar = "", $idFacultad = null)
     {
-        $sqlstr = "SELECT
-                        m.*,
-                        u.nombre AS estudiante_nombre,
-                        mat.nombre AS materia_nombre
+        $sqlstr = "SELECT m.id_matricula, m.fecha_matricula,
+                          u.nombre AS estudiante_nombre, e.cuenta AS estudiante_dni,
+                          c.nombre_carrera,
+                          sec.codigo_seccion, mat.nombre AS materia_nombre,
+                          pa.nombre_periodo
                    FROM matriculas m
-                   INNER JOIN estudiantes e
-                        ON m.id_estudiante = e.id_estudiante
-                   INNER JOIN usuarios u
-                        ON e.id_usuario = u.id_usuario
-                   INNER JOIN materias mat
-                        ON m.id_materia = mat.id_materia
-                   ORDER BY m.id_matricula DESC";
+                   INNER JOIN estudiantes e ON m.id_estudiante = e.id_estudiante
+                   INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                   INNER JOIN secciones sec ON m.id_seccion = sec.id_seccion
+                   INNER JOIN materias mat ON sec.id_materia = mat.id_materia
+                   INNER JOIN periodos_academicos pa ON m.id_periodo = pa.id_periodo
+                   LEFT JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
+                   WHERE 1=1";
 
-        return self::obtenerRegistros($sqlstr);
+        $params = [];
+        if ($buscar !== "") {
+            $sqlstr .= " AND (u.nombre LIKE :buscar OR e.cuenta LIKE :buscar OR mat.nombre LIKE :buscar OR sec.codigo_seccion LIKE :buscar)";
+            $params["buscar"] = "%" . $buscar . "%";
+        }
+
+        if ($idFacultad !== null) {
+            $sqlstr .= " AND (mat.id_facultad = :id_facultad OR c.id_facultad = :id_facultad)";
+            $params["id_facultad"] = intval($idFacultad);
+        }
+
+        $sqlstr .= " ORDER BY m.id_matricula DESC";
+        return self::obtenerRegistros($sqlstr, $params);
     }
 
-    public static function obtenerMatricula($id)
+    public static function registrarMatricula($idEstudiante, $idSeccion, $idPeriodo)
     {
-        $sqlstr = "SELECT *
-                   FROM matriculas
-                   WHERE id_matricula = :id";
-
-        return self::obtenerUnRegistro(
-            $sqlstr,
-            ["id" => $id]
-        );
+        $sqlstr = "INSERT INTO matriculas (id_estudiante, id_seccion, id_periodo)
+                   VALUES (:id_estudiante, :id_seccion, :id_periodo)";
+        return self::executeNonQuery($sqlstr, [
+            "id_estudiante" => intval($idEstudiante),
+            "id_seccion" => intval($idSeccion),
+            "id_periodo" => intval($idPeriodo)
+        ]);
     }
 
-    public static function registrarMatricula(
-        $id_estudiante,
-        $id_materia,
-        $periodo,
-        $estado = "activa"
-    ) {
-        $sqlstr = "INSERT INTO matriculas
-                    (
-                        id_estudiante,
-                        id_materia,
-                        periodo,
-                        estado
-                    )
-                    VALUES
-                    (
-                        :id_estudiante,
-                        :id_materia,
-                        :periodo,
-                        :estado
-                    )";
-
-        return self::executeNonQuery(
-            $sqlstr,
-            [
-                "id_estudiante" => $id_estudiante,
-                "id_materia" => $id_materia,
-                "periodo" => $periodo,
-                "estado" => $estado
-            ]
-        );
-    }
-
-    public static function actualizarMatricula(
-        $id,
-        $id_estudiante,
-        $id_materia,
-        $periodo,
-        $estado
-    ) {
-        $sqlstr = "UPDATE matriculas
-                   SET
-                        id_estudiante = :id_estudiante,
-                        id_materia = :id_materia,
-                        periodo = :periodo,
-                        estado = :estado
-                   WHERE id_matricula = :id";
-
-        return self::executeNonQuery(
-            $sqlstr,
-            [
-                "id" => $id,
-                "id_estudiante" => $id_estudiante,
-                "id_materia" => $id_materia,
-                "periodo" => $periodo,
-                "estado" => $estado
-            ]
-        );
-    }
-
-    public static function eliminarMatricula($id)
+    public static function cancelarMatricula($idMatricula)
     {
-        $sqlstr = "DELETE FROM matriculas
-                   WHERE id_matricula = :id";
-
-        return self::executeNonQuery(
-            $sqlstr,
-            ["id" => $id]
-        );
+        $sqlstr = "DELETE FROM matriculas WHERE id_matricula = :id_matricula";
+        return self::executeNonQuery($sqlstr, ["id_matricula" => intval($idMatricula)]);
     }
 
-    public static function obtenerEstudiantes()
+    public static function obtenerSeccionesMatriculadas($idEstudiante, $idPeriodo)
     {
-        $sqlstr = "SELECT
-                        e.id_estudiante,
-                        u.nombre
+        $sqlstr = "SELECT m.id_matricula, sec.id_seccion, sec.codigo_seccion, sec.aula, sec.dias, sec.hora_inicio, sec.hora_fin,
+                          mat.nombre AS nombre_materia, mat.codigo AS codigo_materia, mat.creditos
+                   FROM matriculas m
+                   INNER JOIN secciones sec ON m.id_seccion = sec.id_seccion
+                   INNER JOIN materias mat ON sec.id_materia = mat.id_materia
+                   WHERE m.id_estudiante = :id_estudiante AND m.id_periodo = :id_periodo";
+        return self::obtenerRegistros($sqlstr, [
+            "id_estudiante" => intval($idEstudiante),
+            "id_periodo" => intval($idPeriodo)
+        ]);
+    }
+
+    public static function obtenerSeccionesDisponiblesParaEstudiante($idEstudiante, $idPeriodo, $idCarrera, $idFacultad)
+    {
+        $sqlstr = "SELECT sec.*, mat.nombre AS nombre_materia, mat.codigo AS codigo_materia, mat.creditos, mat.id_requisito,
+                          u.nombre AS nombre_maestro,
+                          (SELECT COUNT(*) FROM matriculas mt WHERE mt.id_seccion = sec.id_seccion) AS cupo_actual,
+                          req.nombre AS nombre_requisito
+                   FROM secciones sec
+                   INNER JOIN materias mat ON sec.id_materia = mat.id_materia
+                   INNER JOIN maestros mae ON sec.id_maestro = mae.id_maestro
+                   INNER JOIN usuarios u ON mae.id_usuario = u.id_usuario
+                   LEFT JOIN materias req ON mat.id_requisito = req.id_materia
+                   WHERE sec.id_periodo = :id_periodo
+                     AND sec.estado = 'Activa'
+                     AND (
+                         mat.tipo_materia = 'institucional'
+                         OR (mat.tipo_materia = 'facultad' AND mat.id_facultad = :id_facultad)
+                         OR (mat.tipo_materia = 'carrera' AND mat.id_carrera = :id_carrera)
+                     )
+                     AND mat.id_materia NOT IN (
+                         SELECT s2.id_materia 
+                         FROM matriculas m2
+                         INNER JOIN secciones s2 ON m2.id_seccion = s2.id_seccion
+                         WHERE m2.id_estudiante = :id_estudiante AND m2.id_periodo = :id_periodo
+                     )
+                     AND mat.id_materia NOT IN (
+                         SELECT s3.id_materia
+                         FROM calificaciones cal
+                         INNER JOIN matriculas m3 ON cal.id_matricula = m3.id_matricula
+                         INNER JOIN secciones s3 ON m3.id_seccion = s3.id_seccion
+                         WHERE m3.id_estudiante = :id_estudiante AND cal.nota >= 70.00
+                     )";
+
+        return self::obtenerRegistros($sqlstr, [
+            "id_periodo" => intval($idPeriodo),
+            "id_facultad" => intval($idFacultad),
+            "id_carrera" => intval($idCarrera),
+            "id_estudiante" => intval($idEstudiante)
+        ]);
+    }
+
+    public static function verificarPrerrequisitoAprobado($idEstudiante, $idRequisito)
+    {
+        if (empty($idRequisito)) {
+            return true;
+        }
+
+        $sqlstr = "SELECT COUNT(*) AS total
+                   FROM calificaciones cal
+                   INNER JOIN matriculas m ON cal.id_matricula = m.id_matricula
+                   INNER JOIN secciones sec ON m.id_seccion = sec.id_seccion
+                   WHERE m.id_estudiante = :id_estudiante
+                     AND sec.id_materia = :id_requisito
+                     AND cal.nota >= 70.00";
+
+        $res = self::obtenerUnRegistro($sqlstr, [
+            "id_estudiante" => intval($idEstudiante),
+            "id_requisito" => intval($idRequisito)
+        ]);
+
+        return intval($res["total"] ?? 0) > 0;
+    }
+
+    public static function verificarConflictoHorario($idEstudiante, $idPeriodo, $idSeccion)
+    {
+        $sqlSec = "SELECT dias, hora_inicio, hora_fin FROM secciones WHERE id_seccion = :id_seccion";
+        $target = self::obtenerUnRegistro($sqlSec, ["id_seccion" => $idSeccion]);
+        if (!$target) {
+            return true;
+        }
+
+        $diasNuevos = array_filter(explode(",", str_replace(" ", "", strtolower($target["dias"]))));
+        $inicioNuevo = strtotime($target["hora_inicio"]);
+        $finNuevo = strtotime($target["hora_fin"]);
+
+        $yaMatriculadas = self::obtenerSeccionesMatriculadas($idEstudiante, $idPeriodo);
+
+        foreach ($yaMatriculadas as $m) {
+            $diasExistentes = array_filter(explode(",", str_replace(" ", "", strtolower($m["dias"]))));
+            $comparteDia = count(array_intersect($diasNuevos, $diasExistentes)) > 0;
+            $traslapaHora = strtotime($m["hora_inicio"]) < $finNuevo
+                && strtotime($m["hora_fin"]) > $inicioNuevo;
+
+            if ($comparteDia && $traslapaHora) {
+                return $m;
+            }
+        }
+
+        return false;
+    }
+
+    public static function obtenerEstudiantePorUsuario($idUsuario)
+    {
+        $sqlstr = "SELECT e.*, u.nombre, u.correo, c.id_facultad, c.id_carrera, c.nombre_carrera
                    FROM estudiantes e
-                   INNER JOIN usuarios u
-                        ON e.id_usuario = u.id_usuario
-                   ORDER BY u.nombre";
-
-        return self::obtenerRegistros($sqlstr);
-    }
-
-    public static function obtenerMaterias()
-    {
-        $sqlstr = "SELECT
-                        id_materia,
-                        nombre
-                   FROM materias
-                   ORDER BY nombre";
-
-        return self::obtenerRegistros($sqlstr);
+                   INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                   LEFT JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
+                   WHERE e.id_usuario = :id_usuario LIMIT 1";
+        return self::obtenerUnRegistro($sqlstr, ["id_usuario" => $idUsuario]);
     }
 }

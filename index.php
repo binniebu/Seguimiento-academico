@@ -255,6 +255,14 @@ break;
     require_once __DIR__ . "/src/views/templates/estudiantes/mis_materias.view.tpl";
     break;
 
+    // Matrícula
+    case "matricula_estudiante":
+        require_once __DIR__ . "/src/views/templates/matriculas/matricula_estudiante.view.tpl";
+        break;
+    case "matriculas":
+        require_once __DIR__ . "/src/views/templates/matriculas/matriculas.view.tpl";
+        break;
+
     case "materia_nueva":
         require_once __DIR__ . "/src/views/templates/materias/materias_form.view.tpl";
         break;
@@ -273,6 +281,11 @@ break;
 
     // --- Nuevas Rutas de Reingeniería ---
     
+    // Gestión de Periodos
+    case "periodos":
+        require_once __DIR__ . "/src/views/templates/facultades/periodos.view.tpl";
+        break;
+
     // Gestión de Facultades
     case "facultades":
         require_once __DIR__ . "/src/views/templates/facultades/facultades.view.tpl";

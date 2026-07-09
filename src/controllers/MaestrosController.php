@@ -111,99 +111,68 @@ class MaestrosController
     }
 
     //=================================
-    // GUARDAR (CREAR)
+    // GUARDAR
     //=================================
 
     public static function guardar()
     {
+        $idMaestro = $_POST["id_maestro"] ?? null;
+        $idCoordinador = $_POST["id_coordinador"] ?? null;
+        $isEdit = ($idMaestro !== null || $idCoordinador !== null);
+
         $data = [
             "nombre" => $_POST["nombre"],
             "correo" => $_POST["correo"],
-            "dni" => $_POST["dni"],
-            "password" => $_POST["password"],
             "id_rol" => $_POST["rol"],
-            "telefono" => $_POST["telefono"],
+            "telefono" => $_POST["telefono"] ?? null,
             "titulo" => $_POST["titulo"],
-            "numero_empleado" => $_POST["numero_empleado"] ?? null,
-            "id_facultad" => $_POST["id_facultad"] ?? null
+            "id_facultad" => (!empty($_POST["id_facultad"]) ? intval($_POST["id_facultad"]) : null),
+            "id_carrera" => (!empty($_POST["id_carrera"]) ? intval($_POST["id_carrera"]) : null),
+            "documento_dni" => $_POST["dni"] ?? null
         ];
 
-        if (MaestroDao::existeCorreo($data["correo"])) {
-            echo "<script>
-                    alert('El correo ya existe');
-                    history.back();
-                  </script>";
-            exit();
-        }
+        if ($isEdit) {
+            $idUsuario = $_POST["id_usuario"];
+            $data["id_usuario"] = $idUsuario;
+            if ($idMaestro !== null) {
+                $data["id_maestro"] = $idMaestro;
+            }
+            if ($idCoordinador !== null) {
+                $data["id_coordinador"] = $idCoordinador;
+            }
 
-        if (MaestroDao::existeDni($data["dni"])) {
-            echo "<script>
-                    alert('El DNI ya está registrado');
-                    history.back();
-                  </script>";
-            exit();
-        }
+            if (MaestroDao::existeCorreoExcluyendo($data["correo"], $idUsuario)) {
+                echo "<script>
+                        alert('El correo ya está registrado por otro usuario');
+                        history.back();
+                      </script>";
+                exit();
+            }
 
-        if (MaestroDao::insertarPersonal($data)) {
-            header("Location:index.php?page=maestros");
-            exit();
+            if (MaestroDao::actualizarPersonal($data)) {
+                header("Location:index.php?page=maestros");
+                exit();
+            }
+        } else {
+            $data["password"] = $_POST["password"];
+            $data["numero_empleado"] = $_POST["numero_empleado"] ?? ("EMP-" . time() . rand(1000, 9999));
+
+            if (MaestroDao::existeCorreo($data["correo"])) {
+                echo "<script>
+                        alert('El correo ya existe');
+                        history.back();
+                      </script>";
+                exit();
+            }
+
+            if (MaestroDao::insertarPersonal($data)) {
+                header("Location:index.php?page=maestros");
+                exit();
+            }
         }
 
         echo "<script>
                 alert('Error al guardar');
-                history.back();
-              </script>";
-    }
-
-    //=================================
-    // ACTUALIZAR (EDITAR)
-    //=================================
-
-    public static function actualizar()
-    {
-        $tipo = $_POST["tipo"];
-        $id = $_POST["id"];
-        $idUsuario = $_POST["id_usuario"];
-        $correo = $_POST["correo"];
-        $dni = $_POST["dni"];
-
-        $data = [
-            "tipo" => $tipo,
-            "id" => $id,
-            "id_usuario" => $idUsuario,
-            "nombre" => $_POST["nombre"],
-            "correo" => $correo,
-            "dni" => $dni,
-            "titulo" => $_POST["titulo"],
-            "password" => $_POST["password"] ?? "",
-            "telefono" => $_POST["telefono"] ?? null,
-            "numero_empleado" => $_POST["numero_empleado"] ?? null,
-            "id_facultad" => $_POST["id_facultad"] ?? null
-        ];
-
-        if (MaestroDao::existeCorreoExcluyendo($correo, $idUsuario)) {
-            echo "<script>
-                    alert('El correo ya está en uso por otro usuario');
-                    history.back();
-                  </script>";
-            exit();
-        }
-
-        if (MaestroDao::existeDniExcluyendo($dni, $idUsuario)) {
-            echo "<script>
-                    alert('El DNI ya está en uso por otro usuario');
-                    history.back();
-                  </script>";
-            exit();
-        }
-
-        if (MaestroDao::actualizarPersonal($data)) {
-            header("Location:index.php?page=maestros");
-            exit();
-        }
-
-        echo "<script>
-                alert('Error al actualizar');
                 history.back();
               </script>";
     }

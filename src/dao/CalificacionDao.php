@@ -13,21 +13,23 @@ class CalificacionDao extends Table
         int $intPage = 0,
         int $intItemsPerPage = 10
     ) {
-        // SQL combinado para extraer datos legibles de la matrícula, estudiante y materia
         $sqlstr = "SELECT c.id_calificacion, c.id_matricula, c.nota, c.observacion, c.fecha_registro,
-                          u.nombre as nombre_estudiante, m.nombre as nombre_materia, mat.periodo
+                          u.nombre as nombre_estudiante, m.nombre as nombre_materia, pa.nombre_periodo as periodo
                    FROM calificaciones c
                    INNER JOIN matriculas mat ON c.id_matricula = mat.id_matricula
                    INNER JOIN estudiantes e ON mat.id_estudiante = e.id_estudiante
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
-                   INNER JOIN materias m ON mat.id_materia = m.id_materia";
+                   INNER JOIN secciones sec ON mat.id_seccion = sec.id_seccion
+                   INNER JOIN materias m ON sec.id_materia = m.id_materia
+                   INNER JOIN periodos_academicos pa ON mat.id_periodo = pa.id_periodo";
         
         $sqlstrCount = "SELECT COUNT(*) as count 
                         FROM calificaciones c
                         INNER JOIN matriculas mat ON c.id_matricula = mat.id_matricula
                         INNER JOIN estudiantes e ON mat.id_estudiante = e.id_estudiante
                         INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
-                        INNER JOIN materias m ON mat.id_materia = m.id_materia";
+                        INNER JOIN secciones sec ON mat.id_seccion = sec.id_seccion
+                        INNER JOIN materias m ON sec.id_materia = m.id_materia";
         
         $conditions = [];
         $params = [];
@@ -106,16 +108,34 @@ class CalificacionDao extends Table
         return self::executeNonQuery($sqlstr, ["id_calificacion" => $intIdCalificacion]);
     }
 
-    // Auxiliar para cargar las opciones de matrículas existentes en el formulario
     public static function getMatriculasDisponibles()
     {
-        $sqlstr = "SELECT m.id_matricula, u.nombre as nombre_estudiante, mat.nombre as nombre_materia, m.periodo
+        $sqlstr = "SELECT m.id_matricula, u.nombre as nombre_estudiante, mat.nombre as nombre_materia, pa.nombre_periodo as periodo
                    FROM matriculas m
                    INNER JOIN estudiantes e ON m.id_estudiante = e.id_estudiante
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
-                   INNER JOIN materias mat ON m.id_materia = mat.id_materia
-                   WHERE m.estado = 'activa'";
+                   INNER JOIN secciones sec ON m.id_seccion = sec.id_seccion
+                   INNER JOIN materias mat ON sec.id_materia = mat.id_materia
+                   INNER JOIN periodos_academicos pa ON m.id_periodo = pa.id_periodo";
         return self::obtenerRegistros($sqlstr);
     }
-}
 
+    public static function obtenerCalificacionesEstudiante($idEstudiante, $idPeriodo)
+    {
+        $sqlstr = "SELECT mt.id_matricula, m.codigo as codigo_materia, m.nombre as nombre_materia, 
+                          m.creditos, sec.codigo_seccion, c.nota, c.observacion
+                   FROM matriculas mt
+                   INNER JOIN secciones sec ON mt.id_seccion = sec.id_seccion
+                   INNER JOIN materias m ON sec.id_materia = m.id_materia
+                   INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
+                   LEFT JOIN calificaciones c ON mt.id_matricula = c.id_matricula
+                   WHERE mt.id_estudiante = :id_estudiante
+                     AND pa.id_periodo = :id_periodo
+                     AND DATE(NOW()) <= DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY)
+                   ORDER BY m.nombre ASC";
+        return self::obtenerRegistros($sqlstr, [
+            "id_estudiante" => intval($idEstudiante),
+            "id_periodo" => intval($idPeriodo)
+        ]);
+    }
+}

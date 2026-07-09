@@ -39,6 +39,8 @@ if (isset($_GET["accion"])) {
         $resultado = \Controllers\MateriasController::clonarSeccionesPeriodoAnterior();
     } elseif ($accion === "activar_borradores") {
         $resultado = \Controllers\MateriasController::activarBorradores();
+    } elseif ($accion === "extender_cupo" && isset($_GET["id"])) {
+        $resultado = \Controllers\MateriasController::extenderCupoSeccion($_GET["id"], 5);
     }
 
     echo "<script>alert('" . htmlspecialchars($resultado["mensaje"], ENT_QUOTES) . "'); window.location='index.php?page=secciones';</script>";
@@ -194,6 +196,12 @@ $carrerasFiltro = \Dao\CarreraDao::obtenerCarreras(false, $idFacultadActual);
                                              <?php if ($esCoordinador): ?>
                                              <td class="text-end">
                                                  <div class="d-flex gap-2 justify-content-end">
+                                                     <a href="index.php?page=secciones&accion=extender_cupo&id=<?php echo urlencode($seccion["id_seccion"]); ?>" 
+                                                        class="btn btn-sm btn-outline-success"
+                                                        title="Extender Cupo (+5)"
+                                                        onclick="return confirm('¿Desea extender el cupo de esta sección en +5 plazas adicionales?');">
+                                                         <i class="bi bi-plus-circle"></i> +5 Cupos
+                                                     </a>
                                                      <a href="index.php?page=seccion_nueva&id=<?php echo urlencode($seccion["id_seccion"]); ?>" class="btn btn-sm btn-warning">
                                                          <i class="bi bi-pencil"></i> Editar
                                                      </a>

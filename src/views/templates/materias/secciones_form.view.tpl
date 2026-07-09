@@ -114,14 +114,17 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
 
                         <div class="col-md-8">
                             <label class="form-label">Asignatura <span class="text-danger">*</span></label>
-                            <select name="id_materia" class="form-select" required>
+                            <select name="id_materia" id="select_materia" class="form-select" onchange="filterMaestros()" required>
                                 <option value="">-- Seleccione una asignatura --</option>
                                 <?php foreach ($materias as $materia): ?>
                                     <?php
                                         $contexto = $materia["nombre_carrera"] ?? $materia["nombre_facultad"] ?? "Institucional";
                                         $selected = ($seccion["id_materia"] ?? "") == $materia["id_materia"] ? "selected" : "";
                                     ?>
-                                    <option value="<?php echo htmlspecialchars($materia["id_materia"]); ?>" <?php echo $selected; ?>>
+                                    <option value="<?php echo htmlspecialchars($materia["id_materia"]); ?>" 
+                                            data-facultad="<?php echo htmlspecialchars($materia["id_facultad"] ?? ""); ?>"
+                                            data-carrera="<?php echo htmlspecialchars($materia["id_carrera"] ?? ""); ?>"
+                                            <?php echo $selected; ?>>
                                         <?php echo htmlspecialchars($materia["codigo"] . " - " . $materia["nombre"] . " (" . $contexto . ")"); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -130,11 +133,14 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
 
                         <div class="col-md-6">
                             <label class="form-label">Docente asignado <span class="text-danger">*</span></label>
-                            <select name="id_maestro" class="form-select" required>
+                            <select name="id_maestro" id="select_maestro" class="form-select" required>
                                 <option value="">-- Seleccione un docente --</option>
                                 <?php foreach ($maestros as $maestro): ?>
                                     <?php $selected = ($seccion["id_maestro"] ?? "") == $maestro["id_maestro"] ? "selected" : ""; ?>
-                                    <option value="<?php echo htmlspecialchars($maestro["id_maestro"]); ?>" <?php echo $selected; ?>>
+                                    <option value="<?php echo htmlspecialchars($maestro["id_maestro"]); ?>" 
+                                            data-facultad="<?php echo htmlspecialchars($maestro["id_facultad"] ?? ""); ?>"
+                                            data-carrera="<?php echo htmlspecialchars($maestro["id_carrera"] ?? ""); ?>"
+                                            <?php echo $selected; ?>>
                                         <?php echo htmlspecialchars($maestro["nombre"] . " - " . $maestro["codigo"]); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -156,7 +162,7 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </select>
-                            <div class="form-text">Los maestros que tambien son coordinadores quedan excluidos.</div>
+                            <div class="form-text">Los maestros que tambien son coordinadores quedan excluidos. Se segmentan según la carrera y facultad de la asignatura.</div>
                         </div>
 
                         <div class="col-md-3">
@@ -181,24 +187,27 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label d-block">Dias <span class="text-danger">*</span></label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <?php foreach ($diasSemana as $codigo => $nombre): ?>
-                                    <input type="checkbox"
-                                           class="btn-check"
-                                           id="dia_<?php echo $codigo; ?>"
-                                           name="dias[]"
-                                           value="<?php echo $codigo; ?>"
-                                           <?php echo in_array($codigo, $diasSeleccionados, true) ? "checked" : ""; ?>>
-                                    <label class="btn btn-outline-primary" for="dia_<?php echo $codigo; ?>">
-                                        <?php echo htmlspecialchars($nombre); ?>
-                                    </label>
+                            <label class="form-label">Dias <span class="text-danger">*</span></label>
+                            <div class="d-flex flex-wrap gap-3 p-2 border rounded bg-light">
+                                <?php foreach ($diasSemana as $diaKey => $diaLabel): ?>
+                                    <?php $checked = in_array($diaKey, $diasSeleccionados) ? "checked" : ""; ?>
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="dias[]"
+                                               value="<?php echo $diaKey; ?>"
+                                               id="dia_<?php echo $diaKey; ?>"
+                                               <?php echo $checked; ?>>
+                                        <label class="form-check-label" for="dia_<?php echo $diaKey; ?>">
+                                            <?php echo $diaLabel; ?>
+                                        </label>
+                                    </div>
                                 <?php endforeach; ?>
                             </div>
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label">Hora de Inicio <span class="text-danger">*</span></label>
+                            <label class="form-label">Hora Inicio <span class="text-danger">*</span></label>
                             <input type="time"
                                    name="hora_inicio"
                                    class="form-control"
@@ -207,7 +216,7 @@ if (!function_exists("periodoFormularioSeccionLabel")) {
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label">Hora de Fin <span class="text-danger">*</span></label>
+                            <label class="form-label">Hora Fin <span class="text-danger">*</span></label>
                             <input type="time"
                                    name="hora_fin"
                                    class="form-control"
@@ -262,6 +271,65 @@ document.querySelectorAll('.toggleSidebarBtn').forEach(btn => {
             main.classList.replace('col-md-10', 'col-md-12');
         }
     });
+});
+
+function filterMaestros() {
+    const matSelect = document.getElementById('select_materia');
+    if (!matSelect) return;
+    const selectedOpt = matSelect.options[matSelect.selectedIndex];
+    if (!selectedOpt) return;
+    
+    const matFacId = selectedOpt.getAttribute('data-facultad');
+    const matCarId = selectedOpt.getAttribute('data-carrera');
+    
+    const maestroSelect = document.getElementById('select_maestro');
+    const options = maestroSelect.options;
+    
+    let hasSelectedVisible = false;
+    
+    for (let i = 0; i < options.length; i++) {
+        const opt = options[i];
+        if (opt.value === "") continue;
+        
+        const maeFacId = opt.getAttribute('data-facultad');
+        const maeCarId = opt.getAttribute('data-carrera');
+        
+        const esInstitucional = (!matFacId && !matCarId);
+        const coincideFacultad = (matFacId && maeFacId == matFacId);
+        const coincideCarrera = (matCarId && maeCarId == matCarId);
+        
+        if (esInstitucional || coincideCarrera || coincideFacultad) {
+            opt.style.display = 'block';
+            if (coincideCarrera) {
+                opt.text = opt.getAttribute('data-original-text') + ' ⭐ (Especialista)';
+            } else {
+                opt.text = opt.getAttribute('data-original-text');
+            }
+            if (opt.selected) {
+                hasSelectedVisible = true;
+            }
+        } else {
+            opt.style.display = 'none';
+            if (opt.selected) {
+                opt.selected = false;
+            }
+        }
+    }
+    
+    if (!hasSelectedVisible) {
+        maestroSelect.value = "";
+    }
+}
+
+window.addEventListener('load', function() {
+    const maestroSelect = document.getElementById('select_maestro');
+    if (maestroSelect) {
+        for (let i = 0; i < maestroSelect.options.length; i++) {
+            const opt = maestroSelect.options[i];
+            opt.setAttribute('data-original-text', opt.text);
+        }
+        filterMaestros();
+    }
 });
 </script>
 </body>

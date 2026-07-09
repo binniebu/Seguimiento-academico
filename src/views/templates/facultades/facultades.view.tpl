@@ -48,7 +48,6 @@ $todasLasCarreras = \Dao\CarreraDao::obtenerCarreras(); // Incluye c.id_facultad
                         <table class="table table-hover align-middle">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
                                     <th>Nombre de la Facultad</th>
                                     <th class="text-center">Carreras Adscritas</th>
                                     <th class="text-end">Acciones</th>
@@ -59,7 +58,6 @@ $todasLasCarreras = \Dao\CarreraDao::obtenerCarreras(); // Incluye c.id_facultad
                                     $totalCarreras = intval($f['total_carreras'] ?? 0);
                                 ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($f['id_facultad']); ?></td>
                                         <td class="fw-bold">
                                             <a href="#" class="text-decoration-none text-primary" data-bs-toggle="modal" data-bs-target="#modalFacultad<?php echo $f['id_facultad']; ?>" title="Ver carreras de esta facultad">
                                                 <?php echo htmlspecialchars($f['nombre_facultad']); ?> <i class="bi bi-window ms-1 small"></i>

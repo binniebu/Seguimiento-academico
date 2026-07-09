@@ -84,6 +84,22 @@ class CalificacionController extends PublicController
 
         if ($this->calificacion["id_matricula"] <= 0) {
             $errors["id_matricula_error"] = "Debe seleccionar una matrícula válida";
+        } else {
+            // Validar plazo límite para subir calificaciones (fecha_fin del periodo + 7 días)
+            $matriculaInfo = CalificacionDao::obtenerUnRegistro("
+                SELECT pa.fecha_fin, pa.nombre_periodo 
+                FROM matriculas m
+                INNER JOIN periodos_academicos pa ON m.id_periodo = pa.id_periodo
+                WHERE m.id_matricula = :id_matricula",
+                ["id_matricula" => $this->calificacion["id_matricula"]]
+            );
+            if ($matriculaInfo) {
+                $hoy = date('Y-m-d');
+                $fechaLimite = date('Y-m-d', strtotime($matriculaInfo["fecha_fin"] . ' +7 days'));
+                if ($hoy > $fechaLimite) {
+                    $errors["nota_error"] = "El plazo límite para que los docentes registren calificaciones para el periodo '{$matriculaInfo['nombre_periodo']}' ha expirado (límite: $fechaLimite).";
+                }
+            }
         }
 
         if ($this->calificacion["nota"] < 0 || $this->calificacion["nota"] > 100) {
