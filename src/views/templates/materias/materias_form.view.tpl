@@ -264,7 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Swal.fire({
                 icon: 'error',
                 title: 'No se pudo guardar',
-                text: '<?php echo addslashes($errorMsg); ?>',
+                text: <?php echo json_encode($errorMsg); ?>,
                 confirmButtonColor: '#0d6efd'
             });
             <?php endif; ?>
@@ -273,7 +273,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Swal.fire({
                 icon: 'success',
                 title: '¡Éxito!',
-                text: '<?php echo addslashes($successMsg); ?>',
+                text: <?php echo json_encode($successMsg); ?>,
                 confirmButtonColor: '#198754',
                 allowOutsideClick: false
             }).then(() => {

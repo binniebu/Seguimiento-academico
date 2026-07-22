@@ -75,52 +75,53 @@ $todasLasCarreras = \Dao\CarreraDao::obtenerCarreras(); // Incluye c.id_facultad
                                             </a>
                                         </td>
                                     </tr>
-                                    
-                                    <!-- Modal para listar carreras -->
-                                    <div class="modal fade" id="modalFacultad<?php echo $f['id_facultad']; ?>" tabindex="-1" aria-labelledby="modalLabel<?php echo $f['id_facultad']; ?>" aria-hidden="true">
-                                      <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow">
-                                          <div class="modal-header bg-light">
-                                            <h5 class="modal-title text-primary" id="modalLabel<?php echo $f['id_facultad']; ?>">
-                                                <i class="bi bi-building me-2"></i><?php echo htmlspecialchars($f['nombre_facultad']); ?>
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                          </div>
-                                          <div class="modal-body">
-                                            <h6 class="text-muted mb-3">Carreras Adscritas:</h6>
-                                            <?php 
-                                            $carrerasFacultad = array_filter($todasLasCarreras, function($c) use ($f) {
-                                                return $c['id_facultad'] == $f['id_facultad'];
-                                            });
-                                            if (empty($carrerasFacultad)): ?>
-                                                <div class="alert alert-secondary border-0 text-center py-4 mb-0">
-                                                    <i class="bi bi-inbox fs-3 d-block mb-2 text-muted"></i>
-                                                    No hay carreras adscritas a esta facultad actualmente.
-                                                </div>
-                                            <?php else: ?>
-                                                <div class="list-group list-group-flush border rounded">
-                                                <?php foreach ($carrerasFacultad as $cf): ?>
-                                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                                        <span class="fw-medium text-dark"><?php echo htmlspecialchars($cf['nombre_carrera']); ?></span>
-                                                        <a href="index.php?page=carrera_flujograma&id=<?php echo $cf['id_carrera']; ?>" class="btn btn-sm btn-outline-primary rounded-pill" title="Ver Flujograma">
-                                                            <i class="bi bi-diagram-3 me-1"></i> Flujograma
-                                                        </a>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                                </div>
-                                            <?php endif; ?>
-                                          </div>
-                                          <div class="modal-footer border-top-0 pt-0">
-                                            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Modales para listar carreras (fuera de la tabla para evitar errores de DOM y backdrop) -->
+                    <?php foreach ($facultades as $f): ?>
+                        <div class="modal fade" id="modalFacultad<?php echo $f['id_facultad']; ?>" tabindex="-1" aria-labelledby="modalLabel<?php echo $f['id_facultad']; ?>" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                              <div class="modal-header bg-light">
+                                <h5 class="modal-title text-primary" id="modalLabel<?php echo $f['id_facultad']; ?>">
+                                    <i class="bi bi-building me-2"></i><?php echo htmlspecialchars($f['nombre_facultad']); ?>
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <h6 class="text-muted mb-3">Carreras Adscritas:</h6>
+                                <?php 
+                                $carrerasFacultad = array_filter($todasLasCarreras, function($c) use ($f) {
+                                    return $c['id_facultad'] == $f['id_facultad'];
+                                });
+                                if (empty($carrerasFacultad)): ?>
+                                    <div class="alert alert-secondary border-0 text-center py-4 mb-0">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2 text-muted"></i>
+                                        No hay carreras adscritas a esta facultad actualmente.
+                                    </div>
+                                <?php else: ?>
+                                    <div class="list-group list-group-flush border rounded">
+                                    <?php foreach ($carrerasFacultad as $cf): ?>
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span class="fw-medium text-dark"><?php echo htmlspecialchars($cf['nombre_carrera']); ?></span>
+                                            <a href="index.php?page=carrera_flujograma&id=<?php echo $cf['id_carrera']; ?>" class="btn btn-sm btn-outline-primary rounded-pill" title="Ver Flujograma">
+                                                <i class="bi bi-diagram-3 me-1"></i> Flujograma
+                                            </a>
+                                        </div>
+                                    <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                              </div>
+                              <div class="modal-footer border-top-0 pt-0">
+                                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <div class="alert alert-warning">
                         No hay facultades registradas en el sistema. <a href="index.php?page=facultad_nueva" class="alert-link">Registrar la primera</a>

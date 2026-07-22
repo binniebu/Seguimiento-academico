@@ -285,7 +285,7 @@ if (!function_exists('diasLabel')) {
         Swal.fire({
             icon: 'error',
             title: 'No se pudo procesar',
-            text: '<?php echo addslashes($mensajeError); ?>',
+            text: <?php echo json_encode($mensajeError); ?>,
             confirmButtonColor: '#0057d8'
         });
     </script>
@@ -296,7 +296,7 @@ if (!function_exists('diasLabel')) {
         Swal.fire({
             icon: 'success',
             title: '¡Operación Exitosa!',
-            text: '<?php echo addslashes($mensajeExito); ?>',
+            text: <?php echo json_encode($mensajeExito); ?>,
             confirmButtonColor: '#0057d8'
         }).then(() => {
             window.location = "index.php?page=matricula_estudiante";

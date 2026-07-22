@@ -241,7 +241,7 @@
     Swal.fire({
         icon: 'error',
         title: 'Error al enviar solicitud',
-        text: '<?php echo addslashes($errorMsg); ?>',
+        text: <?php echo json_encode($errorMsg); ?>,
         confirmButtonColor: '#003b8e'
     });
     <?php endif; ?>

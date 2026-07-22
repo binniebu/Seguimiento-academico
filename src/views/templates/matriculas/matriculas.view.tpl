@@ -155,7 +155,7 @@ $matriculas = MatriculasController::listar($buscar);
         Swal.fire({
             icon: 'error',
             title: 'Error Administrativo',
-            text: '<?php echo addslashes($mensajeError); ?>',
+            text: <?php echo json_encode($mensajeError); ?>,
             confirmButtonColor: '#0057d8'
         });
     </script>
@@ -166,7 +166,7 @@ $matriculas = MatriculasController::listar($buscar);
         Swal.fire({
             icon: 'success',
             title: '¡Operación Exitosa!',
-            text: '<?php echo addslashes($mensajeExito); ?>',
+            text: <?php echo json_encode($mensajeExito); ?>,
             confirmButtonColor: '#0057d8'
         }).then(() => {
             window.location = "index.php?page=matriculas";

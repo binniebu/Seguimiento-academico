@@ -219,7 +219,7 @@ $matriculaActiva = \Controllers\MatriculasController::esPeriodoMatriculaActivo()
         Swal.fire({
             icon: 'error',
             title: 'Error de Validación',
-            text: '<?php echo addslashes($mensajeError); ?>',
+            text: <?php echo json_encode($mensajeError); ?>,
             confirmButtonColor: '#0057d8'
         });
     </script>
@@ -230,7 +230,7 @@ $matriculaActiva = \Controllers\MatriculasController::esPeriodoMatriculaActivo()
         Swal.fire({
             icon: 'success',
             title: '¡Operación Exitosa!',
-            text: '<?php echo addslashes($mensajeExito); ?>',
+            text: <?php echo json_encode($mensajeExito); ?>,
             confirmButtonColor: '#0057d8'
         }).then(() => {
             window.location = "index.php?page=periodos";

@@ -99,7 +99,17 @@ class MatriculaDao extends Table
                          INNER JOIN matriculas m3 ON cal.id_matricula = m3.id_matricula
                          INNER JOIN secciones s3 ON m3.id_seccion = s3.id_seccion
                          WHERE m3.id_estudiante = :id_estudiante AND cal.nota >= 70.00
-                     )";
+                     )
+                     AND (
+                          mat.id_requisito IS NULL 
+                          OR mat.id_requisito IN (
+                              SELECT s_req.id_materia
+                              FROM calificaciones c_req
+                              INNER JOIN matriculas m_req ON c_req.id_matricula = m_req.id_matricula
+                              INNER JOIN secciones s_req ON m_req.id_seccion = s_req.id_seccion
+                              WHERE m_req.id_estudiante = :id_estudiante AND c_req.nota >= 70.00
+                          )
+                      )";
 
         return self::obtenerRegistros($sqlstr, [
             "id_periodo" => intval($idPeriodo),

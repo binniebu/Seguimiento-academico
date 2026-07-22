@@ -24,26 +24,7 @@ if ($rolUsuario === "estudiante") {
         $clasesEstudiante = \Dao\CalificacionDao::obtenerCalificacionesEstudiante($idEstudiante, $periodoActivo["id_periodo"]);
     }
 
-    // Función determinista para calcular parciales a partir del promedio final
-    if (!function_exists('calcularParciales')) {
-        function calcularParciales($nota) {
-            $nota = floatval($nota);
-            if ($nota <= 0) return [0, 0, 0];
-            if ($nota >= 100) return [100, 100, 100];
-            
-            $p1 = max(0, min(100, round($nota - 3)));
-            $p2 = max(0, min(100, round($nota + 4)));
-            $p3 = max(0, min(100, round(3 * $nota - $p1 - $p2)));
-            
-            $sumaEsperada = round(3 * $nota);
-            $sumaActual = $p1 + $p2 + $p3;
-            $diferencia = $sumaEsperada - $sumaActual;
-            $p3 += $diferencia;
-            
-            $p3 = max(0, min(100, $p3));
-            return [$p1, $p2, $p3];
-        }
-    }
+
 } else {
     // Lógica de Maestro/Director
     $partialName = trim($_GET["partialName"] ?? "");
@@ -92,18 +73,36 @@ if ($rolUsuario === "estudiante") {
                         <?php if (!empty($clasesEstudiante)): ?>
                             <div class="row g-4">
                                 <?php foreach ($clasesEstudiante as $c): 
-                                    $tieneNota = $c["nota"] !== null;
-                                    if ($tieneNota) {
-                                        list($p1, $p2, $p3) = calcularParciales($c["nota"]);
-                                        $promedio = number_format(floatval($c["nota"]), 2) . "%";
-                                        $aprobado = floatval($c["nota"]) >= 70;
-                                        $badgeClass = $aprobado ? "bg-success" : "bg-danger";
-                                        $badgeText = $aprobado ? "Aprobado" : "Reprobado";
-                                    } else {
+                                    $p1_val = $c["nota_parcial1"];
+                                    $p2_val = $c["nota_parcial2"];
+                                    $p3_val = $c["nota_parcial3"];
+
+                                    // Si no se ha ingresado ninguna nota
+                                    if ($p1_val === null && $p2_val === null && $p3_val === null) {
                                         $p1 = $p2 = $p3 = "-";
                                         $promedio = "En Curso";
-                                        $badgeClass = "bg-warning text-dark";
-                                        $badgeText = "Pendiente";
+                                        $badgeClass = "bg-info text-white";
+                                        $badgeText = "Cursando";
+                                        $tieneNota = false;
+                                    } else {
+                                        $p1 = $p1_val !== null ? number_format(floatval($p1_val), 2) : "0.00";
+                                        $p2 = $p2_val !== null ? number_format(floatval($p2_val), 2) : "0.00";
+                                        $p3 = $p3_val !== null ? number_format(floatval($p3_val), 2) : "0.00";
+                                        
+                                        $promVal = $c["nota"] !== null ? floatval($c["nota"]) : 0.00;
+                                        $promedio = number_format($promVal, 2) . "%";
+
+                                        // Solo se considera aprobado/reprobado oficial si ya están los 3 parciales asentados
+                                        if ($p1_val !== null && $p2_val !== null && $p3_val !== null) {
+                                            $aprobado = $promVal >= 70;
+                                            $badgeClass = $aprobado ? "bg-success" : "bg-danger";
+                                            $badgeText = $aprobado ? "Aprobado" : "Reprobado";
+                                            $tieneNota = true;
+                                        } else {
+                                            $badgeClass = "bg-info text-white";
+                                            $badgeText = "Cursando";
+                                            $tieneNota = true; // Para que muestre el % en los parciales individuales
+                                        }
                                     }
                                 ?>
                                     <div class="col-md-6 col-xxl-4">

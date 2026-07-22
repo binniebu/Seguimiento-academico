@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var element = e.target.closest('[data-confirmar]');
         if (!element) return;
 
-        // Si es un submit de formulario, lo gestiona el listener de submit
-        if (element.tagName === 'BUTTON' && element.type === 'submit') {
+        // Si es un formulario o un botón de submit, lo gestiona el listener de submit
+        if (element.tagName === 'FORM' || (element.tagName === 'BUTTON' && element.type === 'submit')) {
             return;
         }
 
