@@ -212,6 +212,24 @@ public static function obtenerFacultadCoordinador($id_usuario)
     return $result ? intval($result["id_facultad"]) : null;
 }
 
+public static function obtenerCampusUsuario($id_usuario, $rol)
+{
+    $table = "";
+    if ($rol === "coordinador") {
+        $table = "coordinadores";
+    } elseif ($rol === "estudiante") {
+        $table = "estudiantes";
+    } elseif ($rol === "maestro") {
+        $table = "maestros";
+    } else {
+        return null;
+    }
+
+    $sqlstr = "SELECT id_campus FROM $table WHERE id_usuario = :id_usuario LIMIT 1";
+    $result = self::obtenerUnRegistro($sqlstr, array("id_usuario" => $id_usuario));
+    return $result ? ($result["id_campus"] !== null ? intval($result["id_campus"]) : null) : null;
+}
+
 public static function getDashboardDirector()
 {
     return array(

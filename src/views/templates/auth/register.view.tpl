@@ -131,6 +131,23 @@
                     </select>
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label-custom">Campus / Sede <span class="text-danger">*</span></label>
+                    <select name="id_campus" class="form-select" required>
+                        <option value="">Selecciona la sede de tu elección</option>
+                        <?php
+                        require_once __DIR__ . '/../../../dao/CampusDao.php';
+                        $campusesActivos = \Dao\CampusDao::obtenerCampuses();
+                        foreach ($campusesActivos as $cp):
+                        ?>
+                            <option value="<?php echo htmlspecialchars($cp['id_campus']); ?>"
+                                    <?php echo (isset($_POST['id_campus']) && intval($_POST['id_campus']) === intval($cp['id_campus'])) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($cp['nombre_campus']); ?> (<?php echo htmlspecialchars($cp['departamento']); ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <div class="row mt-4">
                     <div class="col-md-6 mb-3">
                         <label class="form-label-custom text-danger" style="font-size: 13px;"><i class="bi bi-file-earmark-person"></i> Documento DNI / Identificación <span class="text-danger">*</span></label>

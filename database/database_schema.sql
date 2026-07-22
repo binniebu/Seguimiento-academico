@@ -44,6 +44,14 @@ CREATE TABLE facultades (
     nombre_facultad VARCHAR(100) NOT NULL UNIQUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 4b. Tabla de Campus (Sedes)
+CREATE TABLE campus (
+    id_campus INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_campus VARCHAR(100) NOT NULL UNIQUE,
+    departamento VARCHAR(100) NOT NULL,
+    estado VARCHAR(20) DEFAULT 'activo'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 5. Tabla de Carreras
 CREATE TABLE carreras (
     id_carrera INT AUTO_INCREMENT PRIMARY KEY,
@@ -61,7 +69,9 @@ CREATE TABLE estudiantes (
     carrera VARCHAR(100) NOT NULL, -- Se guarda el nombre de la carrera a la que pertenece
     telefono VARCHAR(20) NULL,
     estado VARCHAR(20) DEFAULT 'Admitido', -- 'Admitido', 'activo', 'inactivo', 'graduado'
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+    id_campus INT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_campus) REFERENCES campus(id_campus) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 7. Tabla de Maestros
@@ -70,7 +80,9 @@ CREATE TABLE maestros (
     id_usuario INT NOT NULL,
     numero_empleado VARCHAR(20) NOT NULL UNIQUE,
     telefono VARCHAR(20) NULL,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+    id_campus INT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_campus) REFERENCES campus(id_campus) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. Tabla de Coordinadores de Facultad
@@ -78,8 +90,10 @@ CREATE TABLE coordinadores (
     id_coordinador INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL UNIQUE,
     id_facultad INT NOT NULL,
+    id_campus INT NULL,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
-    FOREIGN KEY (id_facultad) REFERENCES facultades(id_facultad) ON DELETE CASCADE
+    FOREIGN KEY (id_facultad) REFERENCES facultades(id_facultad) ON DELETE CASCADE,
+    FOREIGN KEY (id_campus) REFERENCES campus(id_campus) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 9. Tabla de Periodos Académicos
@@ -168,6 +182,12 @@ INSERT INTO facultades (id_facultad, nombre_facultad) VALUES
 (2, 'Facultad de Ciencias de la Salud'),
 (3, 'Facultad de Ciencias Económicas');
 
+-- Inserción de Campus (Sedes)
+INSERT INTO campus (id_campus, nombre_campus, departamento, estado) VALUES
+(1, 'Campus Central - Tegucigalpa', 'Francisco Morazán', 'activo'),
+(2, 'Campus Valle de Sula - San Pedro Sula', 'Cortés', 'activo'),
+(3, 'Campus La Ceiba - La Ceiba', 'Atlántida', 'activo');
+
 -- Inserción de Carreras
 INSERT INTO carreras (id_carrera, nombre_carrera, id_facultad, estado) VALUES
 (1, 'Ingeniería en Sistemas', 1, 'activo'),
@@ -200,9 +220,9 @@ INSERT INTO usuarios (id_usuario, nombre, correo, password, id_rol, estado, titu
 INSERT INTO usuarios_roles (id_usuario, id_rol) VALUES
 (13, 4);
 
--- Vincular a Juan Delarca como Coordinador de la Facultad de Ingeniería (id_facultad = 1)
-INSERT INTO coordinadores (id_usuario, id_facultad) VALUES
-(13, 1);
+-- Vincular a Juan Delarca como Coordinador de la Facultad de Ingeniería (id_facultad = 1) en el Campus Central (id_campus = 1)
+INSERT INTO coordinadores (id_usuario, id_facultad, id_campus) VALUES
+(13, 1, 1);
 
 -- Inserción de un Maestro de Prueba (Contraseña: '123456' encriptada)
 INSERT INTO usuarios (id_usuario, nombre, correo, password, id_rol, estado, titulo) VALUES
@@ -211,5 +231,5 @@ INSERT INTO usuarios (id_usuario, nombre, correo, password, id_rol, estado, titu
 INSERT INTO usuarios_roles (id_usuario, id_rol) VALUES
 (14, 2);
 
-INSERT INTO maestros (id_usuario, numero_empleado, telefono) VALUES
-(14, 'EMP-1400', '9933-2211');
+INSERT INTO maestros (id_usuario, numero_empleado, telefono, id_campus) VALUES
+(14, 'EMP-1400', '9933-2211', 1);

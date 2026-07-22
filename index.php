@@ -36,6 +36,7 @@ switch ($page) {
             $_SESSION["usuario"] = $usuario["nombre"];
             $_SESSION["correo"] = $usuario["correo"];
             $_SESSION["rol"] = $usuario["nombre_rol"];
+            $_SESSION["id_campus"] = \Dao\UsuarioDao::obtenerCampusUsuario($usuario["id_usuario"], $usuario["nombre_rol"]);
 
             if ($usuario["nombre_rol"] === "coordinador") {
                 $_SESSION["id_facultad"] = \Dao\UsuarioDao::obtenerFacultadCoordinador($usuario["id_usuario"]);
@@ -73,6 +74,7 @@ switch ($page) {
         $dni = $_POST["dni"] ?? "";
         $carrera = $_POST["carrera"] ?? "";
         $telefono = $_POST["telefono"] ?? "";
+        $idCampus = $_POST["id_campus"] ?? null;
         
         if ($password !== $confirmPassword) {
             $errorMsg = 'Las contraseñas no coinciden';
@@ -128,7 +130,8 @@ switch ($page) {
                         $carrera,
                         $telefono,
                         $dniPath,
-                        $tituloPath
+                        $tituloPath,
+                        $idCampus
                     );
 
                     if ($resultado) {
@@ -351,6 +354,28 @@ break;
         require_once __DIR__ . "/src/controllers/FacultadesController.php";
         \Controllers\FacultadesController::guardar();
         break;
+
+    // Gestión de Campus / Sedes
+    case "campuses":
+        require_once __DIR__ . "/src/views/templates/campus/campus.view.tpl";
+        break;
+    case "campus_nuevo":
+        require_once __DIR__ . "/src/views/templates/campus/campus_form.view.tpl";
+        break;
+    case "campus_guardar":
+        require_once __DIR__ . "/src/controllers/CampusController.php";
+        $id = $_POST["id_campus"] ?? "";
+        $nombre = $_POST["nombre_campus"] ?? "";
+        $departamento = $_POST["departamento"] ?? "";
+        $estado = $_POST["estado"] ?? "activo";
+        $res = \Controllers\CampusController::guardar($id, $nombre, $departamento, $estado);
+        if ($res["exito"]) {
+            echo "<script>alert('" . addslashes($res["mensaje"]) . "'); window.location='index.php?page=campuses';</script>";
+        } else {
+            echo "<script>alert('" . addslashes($res["mensaje"]) . "'); window.history.back();</script>";
+        }
+        exit();
+        break;
     
     // Gestión de Carreras
     case "carreras":
@@ -417,6 +442,7 @@ break;
             $rolesUsuario = \Dao\UsuarioDao::obtenerRolesPorCorreo($_SESSION["correo"]);
             if (in_array($nuevoRol, $rolesUsuario)) {
                 $_SESSION["rol"] = $nuevoRol;
+                $_SESSION["id_campus"] = \Dao\UsuarioDao::obtenerCampusUsuario($_SESSION["id_usuario"], $nuevoRol);
                 
                 if ($nuevoRol === "coordinador" && isset($_SESSION["id_usuario"])) {
                     $_SESSION["id_facultad"] = \Dao\UsuarioDao::obtenerFacultadCoordinador($_SESSION["id_usuario"]);

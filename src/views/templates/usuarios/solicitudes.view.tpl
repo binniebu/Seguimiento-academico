@@ -9,7 +9,7 @@ require_once __DIR__ . "/../../../dao/SolicitudDao.php";
 $rolActivo = $_SESSION["rol"] ?? "";
 if (!isset($solicitudes)) {
     if ($rolActivo === "coordinador" && isset($_SESSION["id_facultad"])) {
-        $solicitudes = \Dao\SolicitudDao::obtenerSolicitudesPendientesPorFacultad($_SESSION["id_facultad"]);
+        $solicitudes = \Dao\SolicitudDao::obtenerSolicitudesPendientesPorFacultad($_SESSION["id_facultad"], $_SESSION["id_campus"] ?? null);
     } else {
         $solicitudes = \Dao\SolicitudDao::obtenerSolicitudesPendientes();
     }
@@ -74,6 +74,7 @@ function solicitudDocumentoLink(?string $ruta, string $texto, string $icono): st
                                     <th>Aspirante</th>
                                     <th>DNI / Identidad</th>
                                     <th>Carrera</th>
+                                    <th>Campus / Sede</th>
                                     <th>Telefono</th>
                                     <th>Documentos</th>
                                     <th>Fecha</th>
@@ -89,6 +90,7 @@ function solicitudDocumentoLink(?string $ruta, string $texto, string $icono): st
                                         </td>
                                         <td><?php echo htmlspecialchars($solicitud["dni"] ?? ""); ?></td>
                                         <td><?php echo htmlspecialchars($solicitud["carrera"] ?? ""); ?></td>
+                                        <td><span class="badge bg-light text-secondary border"><?php echo htmlspecialchars($solicitud["campus"] ?? "Sin asignar"); ?></span></td>
                                         <td><?php echo htmlspecialchars($solicitud["telefono"] ?? ""); ?></td>
                                         <td>
                                             <div class="d-flex flex-wrap gap-2">

@@ -210,6 +210,16 @@ switch ($rolActual) {
                                 </div>
                             </a>
                         </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <a href="index.php?page=campuses" class="text-decoration-none text-dark">
+                                <div class="card h-100 border-0 shadow-sm text-center p-3 hover-card">
+                                    <div class="icon-box bg-danger-subtle text-danger mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-geo-alt fs-4"></i>
+                                    </div>
+                                    <div class="small fw-semibold">Campus</div>
+                                </div>
+                            </a>
+                        </div>
                     </div>
 
                 <?php elseif ($rolActual === "coordinador"): ?>

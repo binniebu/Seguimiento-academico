@@ -10,25 +10,32 @@ class SolicitudDao extends Table
     public static function obtenerSolicitudesPendientes()
     {
         $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
-                          e.cuenta as dni, e.carrera, e.telefono, e.estado as estado_estudiante
+                          e.cuenta as dni, e.carrera, e.telefono, e.estado as estado_estudiante, cp.nombre_campus AS campus
                    FROM usuarios u
                    INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
+                   LEFT JOIN campus cp ON e.id_campus = cp.id_campus
                    WHERE u.estado = 'pendiente'
                    ORDER BY u.id_usuario DESC";
         return self::obtenerRegistros($sqlstr);
     }
 
-    public static function obtenerSolicitudesPendientesPorFacultad($id_facultad)
+    public static function obtenerSolicitudesPendientesPorFacultad($id_facultad, $id_campus = null)
     {
         $sqlstr = "SELECT u.id_usuario, u.nombre, u.correo, u.documento_dni, u.documento_titulo, u.fecha_creacion,
-                          e.cuenta as dni, e.carrera, e.telefono, e.estado as estado_estudiante
+                          e.cuenta as dni, e.carrera, e.telefono, e.estado as estado_estudiante, cp.nombre_campus AS campus
                    FROM usuarios u
                    INNER JOIN estudiantes e ON u.id_usuario = e.id_usuario
+                   LEFT JOIN campus cp ON e.id_campus = cp.id_campus
                    INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
                    WHERE u.estado = 'pendiente'
-                     AND c.id_facultad = :id_facultad
-                   ORDER BY u.id_usuario DESC";
-        return self::obtenerRegistros($sqlstr, ["id_facultad" => $id_facultad]);
+                     AND c.id_facultad = :id_facultad";
+        $params = ["id_facultad" => $id_facultad];
+        if ($id_campus !== null) {
+            $sqlstr .= " AND e.id_campus = :id_campus";
+            $params["id_campus"] = intval($id_campus);
+        }
+        $sqlstr .= " ORDER BY u.id_usuario DESC";
+        return self::obtenerRegistros($sqlstr, $params);
     }
 
     public static function obtenerSolicitudPorId($idUsuario)
@@ -57,7 +64,7 @@ class SolicitudDao extends Table
         ]);
     }
 
-    public static function registrarPreRegistro($nombre, $correo, $password, $dni, $carrera, $telefono, $documentoDni, $documentoTitulo)
+    public static function registrarPreRegistro($nombre, $correo, $password, $dni, $carrera, $telefono, $documentoDni, $documentoTitulo, $idCampus = null)
     {
         $conn = self::getConn();
         try {
@@ -76,14 +83,15 @@ class SolicitudDao extends Table
 
             $idUsuario = $conn->lastInsertId();
 
-            $sqlEstudiante = "INSERT INTO estudiantes (id_usuario, cuenta, carrera, telefono, estado)
-                              VALUES (:id_usuario, :cuenta, :carrera, :telefono, 'pendiente')";
+            $sqlEstudiante = "INSERT INTO estudiantes (id_usuario, cuenta, carrera, telefono, estado, id_campus)
+                              VALUES (:id_usuario, :cuenta, :carrera, :telefono, 'pendiente', :id_campus)";
             $stmtEstudiante = $conn->prepare($sqlEstudiante);
             $stmtEstudiante->execute([
                 "id_usuario" => $idUsuario,
                 "cuenta" => $dni,
                 "carrera" => $carrera,
-                "telefono" => $telefono
+                "telefono" => $telefono,
+                "id_campus" => $idCampus !== null ? intval($idCampus) : null
             ]);
 
             $conn->commit();

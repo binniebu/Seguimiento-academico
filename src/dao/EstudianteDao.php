@@ -9,7 +9,7 @@ use PDOException;
 
 class EstudianteDao extends Table
 {
-    public static function obtenerEstudiantes($buscar = "", $estadoFiltro = "activos", $limit = 10, $offset = 0, $idFacultad = null, $idCarrera = null)
+    public static function obtenerEstudiantes($buscar = "", $estadoFiltro = "activos", $limit = 10, $offset = 0, $idFacultad = null, $idCarrera = null, $idCampus = null)
     {
         if (is_bool($estadoFiltro)) {
             $estadoFiltro = $estadoFiltro ? "inactivos" : "activos";
@@ -26,6 +26,7 @@ class EstudianteDao extends Table
         $facultadJoin = "";
         $facultadCondicion = "";
         $carreraCondicion = "";
+        $campusCondicion = "";
         $params = array(
             "buscar" => "%" . $buscar . "%",
             "buscar_exacto" => $buscar
@@ -43,6 +44,11 @@ class EstudianteDao extends Table
         if ($idCarrera !== null && $idCarrera !== "") {
             $carreraCondicion = " AND c.id_carrera = :id_carrera ";
             $params["id_carrera"] = intval($idCarrera);
+        }
+
+        if ($idCampus !== null) {
+            $campusCondicion = " AND e.id_campus = :id_campus ";
+            $params["id_campus"] = intval($idCampus);
         }
 
         $sqlstr = "SELECT 
@@ -53,9 +59,12 @@ class EstudianteDao extends Table
                         e.telefono,
                         u.nombre,
                         u.correo,
-                        e.estado
+                        e.estado,
+                        e.id_campus,
+                        cp.nombre_campus AS campus
                    FROM estudiantes e
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                   LEFT JOIN campus cp ON e.id_campus = cp.id_campus
                    $facultadJoin
                     WHERE (u.nombre LIKE :buscar
                        OR u.correo LIKE :buscar
@@ -64,13 +73,14 @@ class EstudianteDao extends Table
                        AND $estadoCondicion
                        $facultadCondicion
                        $carreraCondicion
+                       $campusCondicion
                     ORDER BY e.id_estudiante DESC
                     LIMIT " . intval($limit) . " OFFSET " . intval($offset);
 
         return self::obtenerRegistros($sqlstr, $params);
     }
 
-    public static function obtenerTotalEstudiantes($buscar = "", $estadoFiltro = "activos", $idFacultad = null, $idCarrera = null)
+    public static function obtenerTotalEstudiantes($buscar = "", $estadoFiltro = "activos", $idFacultad = null, $idCarrera = null, $idCampus = null)
     {
         if (is_bool($estadoFiltro)) {
             $estadoFiltro = $estadoFiltro ? "inactivos" : "activos";
@@ -87,6 +97,7 @@ class EstudianteDao extends Table
         $facultadJoin = "";
         $facultadCondicion = "";
         $carreraCondicion = "";
+        $campusCondicion = "";
         $params = array(
             "buscar" => "%" . $buscar . "%",
             "buscar_exacto" => $buscar
@@ -104,6 +115,11 @@ class EstudianteDao extends Table
         if ($idCarrera !== null && $idCarrera !== "") {
             $carreraCondicion = " AND c.id_carrera = :id_carrera ";
             $params["id_carrera"] = intval($idCarrera);
+        }
+
+        if ($idCampus !== null) {
+            $campusCondicion = " AND e.id_campus = :id_campus ";
+            $params["id_campus"] = intval($idCampus);
         }
 
         $sqlstr = "SELECT COUNT(*) as total
@@ -116,7 +132,8 @@ class EstudianteDao extends Table
                       OR CAST(e.id_estudiante AS CHAR) = :buscar_exacto)
                       AND $estadoCondicion
                       $facultadCondicion
-                      $carreraCondicion";
+                      $carreraCondicion
+                      $campusCondicion";
 
         $res = self::obtenerUnRegistro($sqlstr, $params);
         return intval($res['total'] ?? 0);

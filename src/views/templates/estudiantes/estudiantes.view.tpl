@@ -108,10 +108,11 @@
             $limit = 5; // 5 estudiantes por página
             $offset = ($p - 1) * $limit;
 
-            // Determinar si es coordinador para filtrar por su facultad
+            // Determinar si es coordinador para filtrar por su facultad y campus
             $idFacultad = ($rolUsuario === "coordinador") ? ($_SESSION["id_facultad"] ?? null) : null;
+            $idCampus = ($rolUsuario === "coordinador") ? ($_SESSION["id_campus"] ?? null) : null;
 
-            $totalEstudiantes = \Dao\EstudianteDao::obtenerTotalEstudiantes($buscar, $ver, $idFacultad, $idCarreraFiltro);
+            $totalEstudiantes = \Dao\EstudianteDao::obtenerTotalEstudiantes($buscar, $ver, $idFacultad, $idCarreraFiltro, $idCampus);
             $totalPages = ceil($totalEstudiantes / $limit);
             if ($totalPages < 1) $totalPages = 1;
             if ($p > $totalPages) {
@@ -119,7 +120,7 @@
                 $offset = ($p - 1) * $limit;
             }
 
-            $estudiantes = \Dao\EstudianteDao::obtenerEstudiantes($buscar, $ver, $limit, $offset, $idFacultad, $idCarreraFiltro);
+            $estudiantes = \Dao\EstudianteDao::obtenerEstudiantes($buscar, $ver, $limit, $offset, $idFacultad, $idCarreraFiltro, $idCampus);
 
             if (!empty($estudiantes)): ?>
                 <div class="table-responsive">
@@ -130,6 +131,7 @@
                                 <th>Nombre</th>
                                 <th>Correo</th>
                                 <th>Carrera</th>
+                                <th>Campus / Sede</th>
                                 <th>Teléfono</th>
                                 <th>Estado</th>
                                 <?php if ($puedeAcciones): ?>
@@ -144,6 +146,7 @@
                                     <td class="fw-semibold text-dark"><?php echo htmlspecialchars($estudiante['nombre']); ?></td>
                                     <td><?php echo htmlspecialchars($estudiante['correo']); ?></td>
                                     <td><span class="badge bg-light text-primary border"><?php echo htmlspecialchars($estudiante['carrera']); ?></span></td>
+                                    <td><span class="badge bg-light text-secondary border"><?php echo htmlspecialchars($estudiante['campus'] ?? 'Sin asignar'); ?></span></td>
                                     <td><?php echo htmlspecialchars($estudiante['telefono']); ?></td>
                                      <td>
                                          <?php

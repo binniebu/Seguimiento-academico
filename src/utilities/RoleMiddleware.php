@@ -78,6 +78,11 @@ class RoleMiddleware
                 "carrera_guardar",
                 "carrera_flujograma",
 
+                // Campus / Sedes
+                "campuses",
+                "campus_nuevo",
+                "campus_guardar",
+
                 // Estudiantes: CRUD completo
                 "estudiantes",
                 "estudiante_nuevo",
