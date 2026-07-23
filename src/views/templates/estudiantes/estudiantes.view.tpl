@@ -179,12 +179,16 @@
                                                <?php elseif ($ver === 'graduados'): ?>
                                                    <span class="text-muted small">Sin acciones</span>
                                                <?php else: ?>
-                                                   <?php if ($esDirector): ?>
-                                                       <a href="index.php?page=estudiante_nuevo&id=<?php echo $estudiante['id_estudiante']; ?>"
-                                                          class="btn btn-sm btn-warning">
-                                                           <i class="bi bi-pencil"></i> Editar
-                                                       </a>
-                                                   <?php endif; ?>
+                                                    <a href="index.php?page=historial_alumno&id=<?php echo $estudiante['id_estudiante']; ?>"
+                                                       class="btn btn-sm btn-info text-white">
+                                                        <i class="bi bi-file-earmark-text"></i> Historial
+                                                    </a>
+                                                    <?php if ($esDirector): ?>
+                                                        <a href="index.php?page=estudiante_nuevo&id=<?php echo $estudiante['id_estudiante']; ?>"
+                                                           class="btn btn-sm btn-warning">
+                                                            <i class="bi bi-pencil"></i> Editar
+                                                        </a>
+                                                    <?php endif; ?>
                                                    <a href="index.php?page=estudiantes&accion=eliminar&id=<?php echo $estudiante['id_estudiante']; ?>"
                                                       class="btn btn-sm btn-danger"
                                                       data-confirmar="¿Está seguro de dar de baja a este estudiante? Perderá acceso al sistema hasta que sea reactivado de nuevo por la administración."

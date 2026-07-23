@@ -9,7 +9,7 @@ class HistorialDao extends Table
 {
     public static function obtenerHistorialAcademico($idEstudiante)
     {
-        $sqlstr = "SELECT pa.nombre_periodo AS periodo, m.codigo as codigo_materia, m.nombre as nombre_materia, 
+        $sqlstr = "SELECT pa.nombre_periodo AS periodo, YEAR(pa.fecha_inicio) AS anio, m.codigo as codigo_materia, m.nombre as nombre_materia, 
                           m.creditos, c.nota, c.observacion, c.fecha_registro
                    FROM calificaciones c
                    INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
@@ -18,7 +18,7 @@ class HistorialDao extends Table
                    INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
                    WHERE mt.id_estudiante = :id_estudiante
                      AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))
-                   ORDER BY pa.fecha_inicio ASC, m.nombre ASC";
+                   ORDER BY pa.fecha_inicio DESC, m.nombre ASC";
         return self::obtenerRegistros($sqlstr, ["id_estudiante" => $idEstudiante]);
     }
 

@@ -149,9 +149,16 @@ class EstudianteDao extends Table
                         e.telefono,
                         u.nombre,
                         u.correo,
-                        u.estado
+                        u.estado,
+                        e.id_campus,
+                        cp.nombre_campus AS campus,
+                        c.id_facultad,
+                        c.id_carrera,
+                        u.fecha_creacion
                    FROM estudiantes e
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                   LEFT JOIN campus cp ON e.id_campus = cp.id_campus
+                   LEFT JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
                    WHERE e.id_estudiante = :id_estudiante";
 
         return self::obtenerUnRegistro($sqlstr, array(

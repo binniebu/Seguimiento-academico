@@ -85,6 +85,40 @@
 
         // Inicializar
         actualizarEstado();
+
+        // 5. Habilitar arrastre horizontal (Drag-to-Scroll) en tablas responsivas
+        var dragTables = document.querySelectorAll('.table-responsive');
+        dragTables.forEach(function (el) {
+            var isDown = false;
+            var startX;
+            var scrollLeft;
+
+            el.addEventListener('mousedown', function (e) {
+                // Evitar arrastre si hace clic en botones, enlaces o selectores
+                if (e.target.closest('a') || e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) {
+                    return;
+                }
+                isDown = true;
+                el.style.cursor = 'grabbing';
+                startX = e.pageX - el.offsetLeft;
+                scrollLeft = el.scrollLeft;
+            });
+            el.addEventListener('mouseleave', function () {
+                isDown = false;
+                el.style.cursor = 'grab';
+            });
+            el.addEventListener('mouseup', function () {
+                isDown = false;
+                el.style.cursor = 'grab';
+            });
+            el.addEventListener('mousemove', function (e) {
+                if (!isDown) return;
+                e.preventDefault();
+                var x = e.pageX - el.offsetLeft;
+                var walk = (x - startX) * 1.5; // Velocidad de arrastre
+                el.scrollLeft = scrollLeft - walk;
+            });
+        });
     }
 
     if (document.readyState === 'loading') {

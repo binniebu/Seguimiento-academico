@@ -1,23 +1,45 @@
 <?php
 require_once __DIR__ . "/../../../dao/HistorialDao.php";
-require_once __DIR__ . "/../../../dao/MatriculaDao.php";
+require_once __DIR__ . "/../../../dao/EstudianteDao.php";
 
 use Dao\HistorialDao;
-use Dao\MatriculaDao;
+use Dao\EstudianteDao;
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$idUsuario = $_SESSION["id_usuario"] ?? null;
-$estudiante = MatriculaDao::obtenerEstudiantePorUsuario($idUsuario);
+$rolUsuario = $_SESSION["rol"] ?? "";
+$idEstudiante = intval($_GET["id"] ?? 0);
 
-if (!$estudiante) {
-    echo "<h3>No se encontró el estudiante relacionado con este usuario.</h3>";
+if (!$idEstudiante) {
+    echo "<script>alert('ID de estudiante no válido.'); window.location='index.php?page=estudiantes';</script>";
     exit();
 }
 
-$idEstudiante = $estudiante["id_estudiante"];
+$estudiante = EstudianteDao::obtenerEstudiantePorId($idEstudiante);
+
+if (!$estudiante) {
+    echo "<script>alert('No se encontró el estudiante.'); window.location='index.php?page=estudiantes';</script>";
+    exit();
+}
+
+// -----------------------------------------------------------------
+// VALIDACIÓN DE SEGURIDAD / SCOPE (Coordinador)
+// -----------------------------------------------------------------
+if ($rolUsuario === "coordinador") {
+    $facultadCoord = intval($_SESSION["id_facultad"] ?? 0);
+    $campusCoord = intval($_SESSION["id_campus"] ?? 0);
+
+    $facultadEstudiante = intval($estudiante["id_facultad"] ?? 0);
+    $campusEstudiante = intval($estudiante["id_campus"] ?? 0);
+
+    if ($facultadCoord !== $facultadEstudiante || $campusCoord !== $campusEstudiante) {
+        echo "<script>alert('No tiene permisos para ver el historial de este estudiante (Fuera de su campus o facultad).'); window.location='index.php?page=estudiantes';</script>";
+        exit();
+    }
+}
+
 $historial = HistorialDao::obtenerHistorialAcademico($idEstudiante);
 $indices = HistorialDao::obtenerIndicesAcademicos($idEstudiante);
 
@@ -52,7 +74,7 @@ foreach ($historial as $h) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial Académico</title>
+    <title>Historial Académico - <?php echo htmlspecialchars($estudiante["nombre"]); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="public/css/style.css">
@@ -75,6 +97,9 @@ foreach ($historial as $h) {
                         </button>
                         <h1 class="h2 page-title mb-0">Historial Académico</h1>
                     </div>
+                    <a href="index.php?page=estudiantes" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver a Estudiantes
+                    </a>
                 </div>
 
                 <!-- Resumen de Índices -->
@@ -104,7 +129,7 @@ foreach ($historial as $h) {
                                 </div>
                                 <div class="col-6 mb-2 text-truncate">
                                     <span class="text-muted small">Carrera:</span>
-                                    <div class="fw-bold text-primary text-truncate" title="<?php echo htmlspecialchars($estudiante["nombre_carrera"] ?? "General"); ?>"><?php echo htmlspecialchars($estudiante["nombre_carrera"] ?? "General"); ?></div>
+                                    <div class="fw-bold text-primary text-truncate" title="<?php echo htmlspecialchars($estudiante["carrera"] ?? "General"); ?>"><?php echo htmlspecialchars($estudiante["carrera"] ?? "General"); ?></div>
                                 </div>
                                 <div class="col-6 mb-2">
                                     <span class="text-muted small">Campus / Sede:</span>
@@ -228,7 +253,7 @@ foreach ($historial as $h) {
                         <div class="card-body">
                             <i class="bi bi-journal-x text-muted fs-1 d-block mb-3"></i>
                             <h5 class="text-secondary">Historial Vacío</h5>
-                            <p class="text-muted mb-0">Aún no posee calificaciones registradas en el sistema para periodos finalizados.</p>
+                            <p class="text-muted mb-0">El estudiante no posee calificaciones registradas en el sistema para periodos finalizados.</p>
                         </div>
                     </div>
                 <?php endif; ?>

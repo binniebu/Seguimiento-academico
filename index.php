@@ -198,6 +198,104 @@ break;
      
     // Estudiantes
     case "estudiantes":
+        if (isset($_GET["accion"]) && isset($_GET["id"])) {
+            require_once __DIR__ . "/src/controllers/EstudiantesController.php";
+            $accion = $_GET["accion"];
+            $id = intval($_GET["id"]);
+            if ($accion === "eliminar") {
+                $res = \Controllers\EstudiantesController::eliminar($id);
+                if ($res["exito"]) {
+                    echo "<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                    </head>
+                    <body>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Operación Exitosa',
+                                    text: '" . addslashes($res["mensaje"]) . "',
+                                    confirmButtonColor: '#0057d8'
+                                }).then(function() {
+                                    window.location = 'index.php?page=estudiantes';
+                                });
+                            });
+                        </script>
+                    </body>
+                    </html>";
+                } else {
+                    echo "<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                    </head>
+                    <body>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: '" . addslashes($res["mensaje"]) . "',
+                                    confirmButtonColor: '#0057d8'
+                                }).then(function() {
+                                    window.history.back();
+                                });
+                            });
+                        </script>
+                    </body>
+                    </html>";
+                }
+                exit();
+            } elseif ($accion === "activar") {
+                $res = \Controllers\EstudiantesController::activar($id);
+                if ($res["exito"]) {
+                    echo "<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                    </head>
+                    <body>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Operación Exitosa',
+                                    text: '" . addslashes($res["mensaje"]) . "',
+                                    confirmButtonColor: '#0057d8'
+                                }).then(function() {
+                                    window.location = 'index.php?page=estudiantes&ver=inactivos';
+                                });
+                            });
+                        </script>
+                    </body>
+                    </html>";
+                } else {
+                    echo "<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+                    </head>
+                    <body>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: '" . addslashes($res["mensaje"]) . "',
+                                    confirmButtonColor: '#0057d8'
+                                }).then(function() {
+                                    window.history.back();
+                                });
+                            });
+                        </script>
+                    </body>
+                    </html>";
+                }
+                exit();
+            }
+        }
         require_once __DIR__ . "/src/views/templates/estudiantes/estudiantes.view.tpl";
         break;
 
@@ -432,6 +530,12 @@ break;
     // Historial Académico
     case "historial_academico":
         require_once __DIR__ . "/src/views/templates/estudiantes/historial.view.tpl";
+        break;
+    case "historial_alumno":
+        require_once __DIR__ . "/src/views/templates/estudiantes/historial_alumno.view.tpl";
+        break;
+    case "historial_maestro":
+        require_once __DIR__ . "/src/views/templates/maestros/historial_maestro.view.tpl";
         break;
 
     // Conmutador de Roles (Switch Role)

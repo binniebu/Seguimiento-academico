@@ -1,0 +1,197 @@
+<?php
+require_once __DIR__ . "/../../../dao/MaestroDao.php";
+require_once __DIR__ . "/../../../dao/SeccionDao.php";
+
+use Dao\MaestroDao;
+use Dao\SeccionDao;
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$idUsuario = $_SESSION["id_usuario"] ?? 0;
+$maestroRow = MaestroDao::obtenerMaestroPorIdUsuario($idUsuario);
+
+if (!$maestroRow) {
+    echo "<h3>No se encontró información del docente relacionado con este usuario.</h3>";
+    exit();
+}
+
+$idMaestro = $maestroRow["id_maestro"];
+$seccionesPasadas = SeccionDao::obtenerHistorialSeccionesMaestro($idMaestro);
+
+// Agrupar secciones por año y luego por período
+$aniosAgrupados = [];
+foreach ($seccionesPasadas as $sec) {
+    $anio = $sec["anio"] ?? "Otros";
+    $periodo = $sec["periodo"];
+    $aniosAgrupados[$anio][$periodo][] = $sec;
+}
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Clases Impartidas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="public/css/style.css">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <?php require_once __DIR__ . "/../sidebar.view.tpl"; ?>
+
+        <!-- Main content -->
+        <main role="main" class="col-md-10 ml-sm-auto px-md-4 py-4">
+            <div class="main-content-card bg-white rounded shadow-sm p-4">
+                <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <h1 class="h2 page-title mb-0">Historial de Clases Impartidas</h1>
+                    </div>
+                </div>
+
+                <div class="alert alert-info border-0 shadow-sm mb-4">
+                    <i class="bi bi-info-circle-fill me-2"></i> <strong>Información:</strong> Aquí puede consultar las asignaturas que ha impartido en periodos académicos que ya han finalizado.
+                </div>
+
+                <!-- Filtros -->
+                <div class="card border-0 shadow-sm rounded-3 p-3 mb-4 bg-light border">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="searchHistorial" class="form-label fw-bold text-secondary">Buscar Asignatura</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="searchHistorial" class="form-control border-start-0 ps-0" placeholder="Escriba nombre o código de materia...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="yearFilter" class="form-label fw-bold text-secondary">Año Académico</label>
+                            <select id="yearFilter" class="form-select">
+                                <option value="all">Todos los años</option>
+                                <?php foreach (array_keys($aniosAgrupados) as $a): ?>
+                                    <option value="<?php echo htmlspecialchars($a); ?>"><?php echo htmlspecialchars($a); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historial agrupado por año y periodo (Acordeones Collapsible) -->
+                <?php if (!empty($aniosAgrupados)): ?>
+                    <div class="accordion" id="accordionHistorial">
+                        <?php
+                        $idx = 0;
+                        foreach ($aniosAgrupados as $anio => $periodos):
+                            foreach ($periodos as $nombrePeriodo => $secciones):
+                                $idx++;
+                                $accordionId = "collapse_" . $idx;
+                                $headerId = "heading_" . $idx;
+                                ?>
+                                <div class="accordion-item mb-3 border rounded shadow-sm overflow-hidden" data-year="<?php echo htmlspecialchars($anio); ?>">
+                                    <h2 class="accordion-header" id="<?php echo $headerId; ?>">
+                                        <button class="accordion-button collapsed fw-bold text-secondary bg-light d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#<?php echo $accordionId; ?>" aria-expanded="false" aria-controls="<?php echo $accordionId; ?>">
+                                            <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                                <i class="bi bi-calendar3 text-primary fs-5"></i>
+                                                <span><?php echo htmlspecialchars($nombrePeriodo); ?></span>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="<?php echo $accordionId; ?>" class="accordion-collapse collapse" aria-labelledby="<?php echo $headerId; ?>" data-bs-parent="#accordionHistorial">
+                                        <div class="accordion-body p-0">
+                                            <ul class="list-group list-group-flush">
+                                                <?php foreach ($secciones as $sec): ?>
+                                                    <li class="list-group-item d-flex align-items-center justify-content-between p-3 class-item" data-name="<?php echo htmlspecialchars(strtolower($sec["nombre_materia"] . ' ' . $sec["codigo_materia"])); ?>">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">
+                                                                <i class="bi bi-calendar-event text-primary fs-4"></i>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-1 fw-bold text-dark text-uppercase" style="font-size: 15px;"><?php echo htmlspecialchars($sec["nombre_materia"]); ?></h6>
+                                                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                                    <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 11px;"><?php echo htmlspecialchars($sec["codigo_materia"]); ?></span>
+                                                                    <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 11px;"><i class="bi bi-geo-alt"></i> Aula <?php echo htmlspecialchars($sec["aula"]); ?></span>
+                                                                    <span class="badge bg-light text-info border px-2 py-1" style="font-size: 11px;"><i class="bi bi-clock"></i> <?php echo htmlspecialchars($sec["dias"]); ?> | <?php echo date('H:i', strtotime($sec['hora_inicio'])) . ' - ' . date('H:i', strtotime($sec['hora_fin'])); ?></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <span class="badge bg-primary rounded-pill px-3 py-2 fw-semibold" style="font-size: 12px;">
+                                                                <?php echo intval($sec['cupo_actual']); ?> alumnos
+                                                            </span>
+                                                        </div>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php
+                            endforeach;
+                        endforeach;
+                        ?>
+                    </div>
+                <?php else: ?>
+                    <div class="card border-0 shadow-sm rounded-3 py-5 text-center">
+                        <div class="card-body">
+                            <i class="bi bi-calendar-x text-muted fs-1 d-block mb-3"></i>
+                            <h5 class="text-secondary">Historial Vacío</h5>
+                            <p class="text-muted mb-0">No se encontraron secciones finalizadas registradas para usted en el sistema.</p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("searchHistorial");
+    const yearSelect = document.getElementById("yearFilter");
+    const accordionItems = document.querySelectorAll(".accordion-item");
+
+    function filterHistorial() {
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+        const year = yearSelect ? yearSelect.value : "all";
+
+        accordionItems.forEach(item => {
+            const itemYear = item.getAttribute("data-year");
+            const classes = item.querySelectorAll(".class-item");
+            let visibleClassesCount = 0;
+
+            classes.forEach(c => {
+                const name = c.getAttribute("data-name");
+
+                const matchesSearch = !query || name.includes(query);
+
+                if (matchesSearch) {
+                    c.style.setProperty("display", "flex", "important");
+                    visibleClassesCount++;
+                } else {
+                    c.style.setProperty("display", "none", "important");
+                }
+            });
+
+            const matchesYear = (year === "all") || (itemYear === year);
+
+            if (visibleClassesCount > 0 && matchesYear) {
+                item.style.setProperty("display", "block", "important");
+            } else {
+                item.style.setProperty("display", "none", "important");
+            }
+        });
+    }
+
+    if (searchInput) searchInput.addEventListener("input", filterHistorial);
+    if (yearSelect) yearSelect.addEventListener("change", filterHistorial);
+});
+</script>
+</body>
+</html>

@@ -88,6 +88,7 @@ class RoleMiddleware
                 "estudiante_nuevo",
                 "estudiante_editar",
                 "estudiante_guardar",
+                "historial_alumno",
 
                 // Admisiones
                 "solicitudes_registro",
@@ -114,6 +115,7 @@ class RoleMiddleware
                 "notas_maestro",
                 "notas_alumnos_ajax",
                 "guardar_nota_parciales",
+                "historial_maestro",
 
                 "logout",
                 "switch_role",
@@ -151,6 +153,7 @@ class RoleMiddleware
 
                 // Estudiantes de su facultad (solo lectura + baja/reactivar)
                 "estudiantes",
+                "historial_alumno",
 
                 // Carreras y materias de su facultad
                 "carreras",

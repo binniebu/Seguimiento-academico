@@ -40,6 +40,11 @@ $currentPage = $_GET['page'] ?? 'home';
                         <i class="bi bi-calendar-event"></i> Mis Secciones
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo $currentPage === 'historial_maestro' ? 'active' : ''; ?>" href="index.php?page=historial_maestro">
+                        <i class="bi bi-clock-history"></i> Historial de Clases
+                    </a>
+                </li>
             <?php endif; ?>
 
             <?php if ($_SESSION["rol"] === "estudiante"): ?>

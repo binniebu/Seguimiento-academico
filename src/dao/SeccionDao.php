@@ -580,4 +580,34 @@ class SeccionDao extends Table
             "id_periodo2" => $idPeriodo,   // PDO no permite reusar el mismo parámetro nombrado
         ]);
     }
+
+    /**
+     * Devuelve el historial de secciones dictadas por el maestro en periodos pasados.
+     */
+    public static function obtenerHistorialSeccionesMaestro($idMaestro)
+    {
+        $sqlstr = "SELECT
+                       sec.id_seccion,
+                       sec.codigo_seccion,
+                       sec.aula,
+                       sec.dias,
+                       sec.hora_inicio,
+                       sec.hora_fin,
+                       sec.cupo_maximo,
+                       (SELECT COUNT(*) FROM matriculas mt WHERE mt.id_seccion = sec.id_seccion) AS cupo_actual,
+                       sec.estado,
+                       m.codigo        AS codigo_materia,
+                       m.nombre        AS nombre_materia,
+                       m.creditos,
+                       pa.nombre_periodo AS periodo,
+                       pa.fecha_inicio
+                   FROM secciones sec
+                   INNER JOIN materias m   ON sec.id_materia = m.id_materia
+                   INNER JOIN maestros mae ON sec.id_maestro = mae.id_maestro
+                   INNER JOIN periodos_academicos pa ON sec.id_periodo = pa.id_periodo
+                   WHERE sec.id_maestro = :id_maestro
+                     AND pa.estado = 'inactivo'
+                   ORDER BY pa.fecha_inicio DESC, m.nombre ASC";
+        return self::obtenerRegistros($sqlstr, ["id_maestro" => $idMaestro]);
+    }
 }
