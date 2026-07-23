@@ -226,9 +226,6 @@ foreach ($historial as $h) {
                                                                     <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 11px;"><?php echo htmlspecialchars($c["codigo_materia"]); ?></span>
                                                                     <span class="badge bg-light text-primary border px-2 py-1" style="font-size: 11px;"><?php echo number_format($nota, 2); ?>%</span>
                                                                     <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 11px;"><?php echo htmlspecialchars($c["creditos"]); ?> UV</span>
-                                                                    <?php if (!empty($c["observacion"])): ?>
-                                                                        <span class="badge bg-light text-warning border px-2 py-1" style="font-size: 11px;"><i class="bi bi-info-circle"></i> <?php echo htmlspecialchars($c["observacion"]); ?></span>
-                                                                    <?php endif; ?>
                                                                 </div>
                                                             </div>
                                                         </div>

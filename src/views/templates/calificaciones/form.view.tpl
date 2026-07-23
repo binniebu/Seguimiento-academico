@@ -137,12 +137,6 @@ $titulo = $titulos[$mode];
                                value="<?php echo htmlspecialchars($calificacion["nota"]); ?>" min="0" max="100" <?php echo $readonly ? "readonly" : ""; ?> required>
                     </div>
 
-                    <div class="col-12">
-                        <label class="form-label" for="observacion">Observacion</label>
-                        <input class="form-control" type="text" id="observacion" name="observacion"
-                               value="<?php echo htmlspecialchars($calificacion["observacion"] ?? ""); ?>" <?php echo $readonly ? "readonly" : ""; ?>>
-                    </div>
-
                     <div class="col-12 d-flex gap-2">
                         <?php if ($mode !== "DSP"): ?>
                             <button type="submit" class="btn <?php echo $mode === "DEL" ? "btn-danger" : "btn-primary"; ?>">

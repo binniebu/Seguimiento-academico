@@ -198,7 +198,6 @@ if ($rolUsuario === "estudiante") {
                                             <th>Materia</th>
                                             <th>Periodo</th>
                                             <th>Nota</th>
-                                            <th>Observacion</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -210,7 +209,6 @@ if ($rolUsuario === "estudiante") {
                                                 <td><?php echo htmlspecialchars($calificacion["nombre_materia"]); ?></td>
                                                 <td><?php echo htmlspecialchars($calificacion["periodo"]); ?></td>
                                                 <td><strong><?php echo htmlspecialchars($calificacion["nota"]); ?>%</strong></td>
-                                                <td><?php echo htmlspecialchars($calificacion["observacion"] ?? ""); ?></td>
                                                 <td>
                                                     <a href="index.php?page=Calificacion&mode=DSP&id_calificacion=<?php echo urlencode($calificacion["id_calificacion"]); ?>" class="btn btn-sm btn-secondary">Ver</a>
                                                     <a href="index.php?page=Calificacion&mode=UPD&id_calificacion=<?php echo urlencode($calificacion["id_calificacion"]); ?>" class="btn btn-sm btn-warning">Editar</a>

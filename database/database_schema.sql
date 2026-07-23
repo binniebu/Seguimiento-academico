@@ -158,8 +158,11 @@ CREATE TABLE matriculas (
 CREATE TABLE calificaciones (
     id_calificacion INT AUTO_INCREMENT PRIMARY KEY,
     id_matricula INT NOT NULL UNIQUE,
-    nota DECIMAL(5,2) NOT NULL,
-    observacion VARCHAR(150) NULL,
+    nota DECIMAL(5,2) NOT NULL, -- Nota final / Promedio acumulado de la asignatura
+    observacion VARCHAR(150) NULL, -- (Opcional) Observaciones adicionales
+    nota_parcial1 DECIMAL(5,2) NULL, -- Calificación del primer parcial
+    nota_parcial2 DECIMAL(5,2) NULL, -- Calificación del segundo parcial
+    nota_parcial3 DECIMAL(5,2) NULL, -- Calificación del tercer parcial
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_matricula) REFERENCES matriculas(id_matricula) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
