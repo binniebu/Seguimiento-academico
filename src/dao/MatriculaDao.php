@@ -220,10 +220,16 @@ class MatriculaDao extends Table
 
     public static function obtenerEstudiantePorUsuario($idUsuario)
     {
-        $sqlstr = "SELECT e.*, u.nombre, u.correo, u.fecha_creacion, c.id_facultad, c.id_carrera, c.nombre_carrera, cp.nombre_campus AS campus
+        $sqlstr = "SELECT e.*, u.nombre, u.correo, u.fecha_creacion,
+                          COALESCE(c_multi.id_facultad, c.id_facultad) AS id_facultad,
+                          COALESCE(c_multi.id_carrera, c.id_carrera) AS id_carrera,
+                          COALESCE(c_multi.nombre_carrera, c.nombre_carrera, e.carrera) AS nombre_carrera,
+                          cp.nombre_campus AS campus
                    FROM estudiantes e
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
                    LEFT JOIN campus cp ON e.id_campus = cp.id_campus
+                   LEFT JOIN estudiante_carreras ec ON e.id_estudiante = ec.id_estudiante AND ec.estado = 'activa' AND ec.es_principal = 1
+                   LEFT JOIN carreras c_multi ON ec.id_carrera = c_multi.id_carrera
                    LEFT JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
                    WHERE e.id_usuario = :id_usuario LIMIT 1";
         return self::obtenerUnRegistro($sqlstr, ["id_usuario" => $idUsuario]);
@@ -253,5 +259,4 @@ class MatriculaDao extends Table
         return self::obtenerUnRegistro($sqlstr, ["id" => intval($idMateria)]);
     }
 }
-
 

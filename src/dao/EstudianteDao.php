@@ -188,6 +188,16 @@ class EstudianteDao extends Table
         ));
     }
 
+    public static function obtenerEstudiantePorCorreo($correo)
+    {
+        $sqlstr = "SELECT e.*, u.nombre, u.correo
+                   FROM estudiantes e
+                   INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                   WHERE u.correo = :correo
+                   LIMIT 1";
+        return self::obtenerUnRegistro($sqlstr, ["correo" => $correo]);
+    }
+
     public static function insertarEstudiante($nombre, $correo, $password, $cuenta, $carrera, $telefono)
     {
         $conn = self::getConn();
@@ -206,18 +216,68 @@ class EstudianteDao extends Table
 
             $idUsuario = $conn->lastInsertId();
 
-            $sqlEstudiante = "INSERT INTO estudiantes 
+            self::executeNonQuery(
+                "INSERT IGNORE INTO usuarios_roles (id_usuario, id_rol) VALUES (:id_usuario, 3)",
+                ["id_usuario" => $idUsuario],
+                $conn
+            );
+
+            $sqlEstudiante = "INSERT INTO estudiantes
                             (id_usuario, cuenta, carrera, telefono)
                            VALUES 
                             (:id_usuario, :cuenta, :carrera, :telefono)";
 
-            return self::executeNonQuery($sqlEstudiante, array(
+            $insertado = self::executeNonQuery($sqlEstudiante, array(
                 "id_usuario" => $idUsuario,
                 "cuenta" => $cuenta,
                 "carrera" => $carrera,
                 "telefono" => $telefono
             ), $conn);
 
+            if ($insertado) {
+                self::sincronizarCarrerasEstudiante((int)$conn->lastInsertId(), [$carrera], $conn);
+            }
+
+            return $insertado;
+
+        } catch (PDOException $ex) {
+            return false;
+        }
+    }
+
+    public static function insertarEstudianteParaUsuarioExistente($idUsuario, $cuenta, $carrera, $telefono)
+    {
+        $conn = self::getConn();
+
+        try {
+            $sqlEstudiante = "INSERT INTO estudiantes
+                            (id_usuario, cuenta, carrera, telefono, estado)
+                           VALUES
+                            (:id_usuario, :cuenta, :carrera, :telefono, 'activo')";
+
+            $insertado = self::executeNonQuery($sqlEstudiante, array(
+                "id_usuario" => intval($idUsuario),
+                "cuenta" => $cuenta,
+                "carrera" => $carrera,
+                "telefono" => $telefono
+            ), $conn);
+
+            if ($insertado) {
+                $idEstudiante = (int)$conn->lastInsertId();
+                self::executeNonQuery(
+                    "INSERT IGNORE INTO usuarios_roles (id_usuario, id_rol) VALUES (:id_usuario, 3)",
+                    ["id_usuario" => intval($idUsuario)],
+                    $conn
+                );
+                self::executeNonQuery(
+                    "UPDATE usuarios SET id_rol = 3 WHERE id_usuario = :id_usuario AND id_rol NOT IN (1, 2, 4)",
+                    ["id_usuario" => intval($idUsuario)],
+                    $conn
+                );
+                self::sincronizarCarrerasEstudiante($idEstudiante, [$carrera], $conn);
+            }
+
+            return $insertado;
         } catch (PDOException $ex) {
             return false;
         }
@@ -250,6 +310,82 @@ class EstudianteDao extends Table
             "telefono" => $telefono,
             "id_estudiante" => $id_estudiante
         ), $conn);
+    }
+
+    public static function obtenerCarrerasEstudiante($idEstudiante)
+    {
+        $sqlstr = "SELECT ec.id_estudiante_carrera, ec.id_estudiante, ec.id_carrera,
+                          ec.estado, ec.es_principal, c.nombre_carrera, c.id_facultad
+                   FROM estudiante_carreras ec
+                   INNER JOIN carreras c ON ec.id_carrera = c.id_carrera
+                   WHERE ec.id_estudiante = :id_estudiante
+                   ORDER BY ec.es_principal DESC, c.nombre_carrera ASC";
+        return self::obtenerRegistros($sqlstr, ["id_estudiante" => intval($idEstudiante)]);
+    }
+
+    public static function sincronizarCarrerasEstudiante($idEstudiante, array $carreras, $conn = null)
+    {
+        $conn = $conn ?: self::getConn();
+        $ids = [];
+
+        foreach ($carreras as $carrera) {
+            if ($carrera === "" || $carrera === null) {
+                continue;
+            }
+
+            if (is_numeric($carrera)) {
+                $row = self::obtenerUnRegistro(
+                    "SELECT id_carrera, nombre_carrera FROM carreras WHERE id_carrera = :id LIMIT 1",
+                    ["id" => intval($carrera)],
+                    $conn
+                );
+            } else {
+                $row = self::obtenerUnRegistro(
+                    "SELECT id_carrera, nombre_carrera FROM carreras WHERE nombre_carrera = :nombre LIMIT 1",
+                    ["nombre" => $carrera],
+                    $conn
+                );
+            }
+
+            if ($row) {
+                $ids[(int)$row["id_carrera"]] = $row["nombre_carrera"];
+            }
+        }
+
+        if (empty($ids)) {
+            return false;
+        }
+
+        self::executeNonQuery(
+            "UPDATE estudiante_carreras SET estado = 'inactiva', es_principal = 0 WHERE id_estudiante = :id_estudiante",
+            ["id_estudiante" => intval($idEstudiante)],
+            $conn
+        );
+
+        $principal = true;
+        foreach ($ids as $idCarrera => $nombreCarrera) {
+            self::executeNonQuery(
+                "INSERT INTO estudiante_carreras (id_estudiante, id_carrera, estado, es_principal)
+                 VALUES (:id_estudiante, :id_carrera, 'activa', :principal)
+                 ON DUPLICATE KEY UPDATE estado = 'activa', es_principal = VALUES(es_principal)",
+                [
+                    "id_estudiante" => intval($idEstudiante),
+                    "id_carrera" => intval($idCarrera),
+                    "principal" => $principal ? 1 : 0
+                ],
+                $conn
+            );
+            $principal = false;
+        }
+
+        $primeraCarrera = reset($ids);
+        self::executeNonQuery(
+            "UPDATE estudiantes SET carrera = :carrera WHERE id_estudiante = :id_estudiante",
+            ["carrera" => $primeraCarrera, "id_estudiante" => intval($idEstudiante)],
+            $conn
+        );
+
+        return true;
     }
 
     public static function eliminarEstudiante($id_estudiante, $id_usuario)
@@ -312,7 +448,19 @@ class EstudianteDao extends Table
 
     public static function obtenerCarreraIdPorUsuario($id_usuario)
     {
-        // Intenta resolver el id_carrera tanto si 'carrera' guarda el nombre como si guarda el id
+        $sqlstr = "SELECT c.id_carrera, c.id_facultad
+                   FROM estudiantes e
+                   INNER JOIN estudiante_carreras ec ON e.id_estudiante = ec.id_estudiante AND ec.estado = 'activa'
+                   INNER JOIN carreras c ON ec.id_carrera = c.id_carrera
+                   WHERE e.id_usuario = :id_usuario
+                   ORDER BY ec.es_principal DESC, c.nombre_carrera ASC
+                   LIMIT 1";
+        $row = self::obtenerUnRegistro($sqlstr, ["id_usuario" => $id_usuario]);
+        if ($row) {
+            return $row;
+        }
+
+        // Fallback: esquema anterior donde estudiantes.carrera guarda nombre o id.
         $sqlstr = "SELECT c.id_carrera, c.id_facultad
                    FROM estudiantes e
                    INNER JOIN carreras c

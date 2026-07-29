@@ -89,6 +89,12 @@ class RoleMiddleware
                 "estudiante_editar",
                 "estudiante_guardar",
                 "historial_alumno",
+                "calificaciones",
+                "Calificaciones",
+                "Calificacion",
+                "reporte_pdf",
+                "correcciones_notas",
+                "resolver_correccion_nota",
 
                 // Admisiones
                 "solicitudes_registro",
@@ -115,6 +121,8 @@ class RoleMiddleware
                 "notas_maestro",
                 "notas_alumnos_ajax",
                 "guardar_nota_parciales",
+                "solicitar_correccion_nota",
+                "reporte_pdf",
                 "historial_maestro",
 
                 "logout",
@@ -138,6 +146,7 @@ class RoleMiddleware
                 "actualizar_carrera",
                 "logout",
                 "historial_academico",
+                "reporte_pdf",
                 "switch_role",
                 "perfil",
                 "perfil_actualizar"
@@ -154,6 +163,11 @@ class RoleMiddleware
                 // Estudiantes de su facultad (solo lectura + baja/reactivar)
                 "estudiantes",
                 "historial_alumno",
+                "calificaciones",
+                "Calificaciones",
+                "reporte_pdf",
+                "correcciones_notas",
+                "resolver_correccion_nota",
 
                 // Carreras y materias de su facultad
                 "carreras",

@@ -60,6 +60,9 @@ $secciones = $periodo
                             <div class="text-muted small"><?php echo $periodo ? htmlspecialchars($periodo["nombre_periodo"]) : "Sin periodo activo"; ?></div>
                         </div>
                     </div>
+                    <a href="index.php?page=reporte_pdf&tipo=notas_docente" target="_blank" class="btn btn-outline-danger">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>Reporte docente PDF
+                    </a>
                 </div>
 
                 <?php if (!$periodo): ?>
@@ -105,6 +108,11 @@ $secciones = $periodo
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-center gap-3 flex-wrap">
+                                            <a class="btn btn-sm btn-outline-danger"
+                                               href="index.php?page=reporte_pdf&tipo=notas_clase&id_seccion=<?php echo urlencode($s['id_seccion']); ?>"
+                                               target="_blank">
+                                                <i class="bi bi-file-earmark-pdf me-1"></i>PDF clase
+                                            </a>
                                             <div style="min-width:160px;">
                                                 <div class="d-flex justify-content-between mb-1">
                                                     <span class="badge-prog text-muted">Notas registradas</span>
@@ -188,8 +196,10 @@ function cargarAlumnos(btn) {
                     + mkInput('p2', a.id_matricula, p2)
                     + mkInput('p3', a.id_matricula, p3)
                     + '<td class="promedio-cell" id="prom_' + a.id_matricula + '">' + prHtml + '</td>'
-                    + '<td class="text-center"><button class="btn btn-sm btn-success" id="btn_' + a.id_matricula
-                    + '" onclick="guardar(\'' + a.id_matricula + '\')"><i class="bi bi-save me-1"></i>Guardar</button></td></tr>';
+                    + '<td class="text-center"><div class="d-flex gap-1 justify-content-center flex-wrap"><button class="btn btn-sm btn-success" id="btn_' + a.id_matricula
+                    + '" onclick="guardar(\'' + a.id_matricula + '\')"><i class="bi bi-save me-1"></i>Guardar</button>'
+                    + (a.id_calificacion ? '<button class="btn btn-sm btn-outline-warning" data-cal="' + a.id_calificacion + '" data-mat="' + a.id_matricula + '" onclick="solicitarCorreccion(this.dataset.cal,this.dataset.mat)"><i class="bi bi-pencil-square me-1"></i>Correccion</button>' : '')
+                    + '</div></td></tr>';
             });
             html += '</tbody></table></div>';
             tabla.innerHTML = html;
@@ -268,6 +278,45 @@ function guardar(id) {
         });
 }
 
+async function solicitarCorreccion(idCalificacion, idMatricula) {
+    const p1 = document.getElementById('p1_' + idMatricula)?.value || '';
+    const p2 = document.getElementById('p2_' + idMatricula)?.value || '';
+    const p3 = document.getElementById('p3_' + idMatricula)?.value || '';
+    const res = await Swal.fire({
+        icon: 'question',
+        title: 'Solicitar correccion de nota',
+        input: 'textarea',
+        inputLabel: 'Motivo de la correccion',
+        inputPlaceholder: 'Explique por que debe ajustarse la nota...',
+        showCancelButton: true,
+        confirmButtonText: 'Enviar solicitud',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#0057d8',
+        inputValidator: value => !value ? 'Debe indicar el motivo.' : undefined
+    });
+    if (!res.isConfirmed) return;
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'index.php?page=solicitar_correccion_nota';
+    const fields = {
+        id_calificacion: idCalificacion,
+        parcial1: p1,
+        parcial2: p2,
+        parcial3: p3,
+        motivo: res.value
+    };
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+}
+
 function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
 
 // Auto-expandir la sección si se pasa un id_seccion por GET
@@ -288,4 +337,3 @@ window.addEventListener('load', function() {
 </script>
 </body>
 </html>
-

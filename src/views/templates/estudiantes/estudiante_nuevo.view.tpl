@@ -35,6 +35,11 @@
             }
 
             $isEdit = !empty($estudiante);
+            require_once __DIR__ . "/../../../dao/CarreraDao.php";
+            require_once __DIR__ . "/../../../dao/EstudianteDao.php";
+            $carrerasList = \Dao\CarreraDao::obtenerCarrerasParaRegistro();
+            $carrerasAsignadas = $isEdit ? \Dao\EstudianteDao::obtenerCarrerasEstudiante($estudiante["id_estudiante"]) : [];
+            $idsCarrerasAsignadas = array_map(fn($c) => intval($c["id_carrera"]), $carrerasAsignadas);
 
             if (!function_exists('fixDoubleEncoding')) {
                 function fixDoubleEncoding($str) {
@@ -78,8 +83,8 @@
                         <label class="form-label">Contraseña</label>
                            <input type="password"
                                name="password"
-                               class="form-control"
-                               required>
+                               class="form-control">
+                            <div class="form-text">Obligatoria solo si el correo no existe. Si es un profesor existente, se usara su misma cuenta.</div>
                     </div>
                     <?php endif; ?>
 
@@ -94,25 +99,17 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Carrera</label>
-                        <?php if ($isEdit): ?>
-                            <?php $carreraFixed = fixDoubleEncoding($estudiante['carrera'] ?? ''); ?>
-                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($carreraFixed); ?>" disabled>
-                            <input type="hidden" name="carrera" value="<?php echo htmlspecialchars($estudiante['carrera'] ?? ''); ?>">
-                        <?php else: ?>
-                            <?php
-                            require_once __DIR__ . "/../../../dao/CarreraDao.php";
-                            $carrerasList = \Dao\CarreraDao::obtenerCarrerasParaRegistro();
-                            ?>
-                            <select name="carrera" id="carreraSelect" class="form-select" required>
-                                <option value="">Buscar carrera...</option>
-                                <?php foreach ($carrerasList as $c): ?>
-                                    <option value="<?php echo htmlspecialchars($c['nombre_carrera']); ?>">
-                                        <?php echo htmlspecialchars($c['nombre_carrera']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        <?php endif; ?>
+                        <label class="form-label">Carrera(s)</label>
+                        <select name="carreras[]" id="carreraSelect" class="form-select" multiple required>
+                            <?php foreach ($carrerasList as $c): ?>
+                                <?php $selected = in_array(intval($c["id_carrera"]), $idsCarrerasAsignadas, true); ?>
+                                <option value="<?php echo intval($c['id_carrera']); ?>" <?php echo $selected ? "selected" : ""; ?>>
+                                    <?php echo htmlspecialchars($c['nombre_carrera']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <input type="hidden" name="carrera" id="carreraPrincipal" value="<?php echo htmlspecialchars($estudiante['carrera'] ?? ''); ?>">
+                        <div class="form-text">Puede seleccionar mas de una. La primera queda como carrera principal.</div>
                     </div>
 
                     <div class="col-md-6 mb-3">
@@ -154,11 +151,20 @@
 <script>
 // Inicializar TomSelect solo en modo creación (no en edición donde la carrera está deshabilitada)
 if (document.getElementById('carreraSelect')) {
-    new TomSelect('#carreraSelect', {
+    const carreraSelect = new TomSelect('#carreraSelect', {
         placeholder: 'Escribe para buscar la carrera...',
-        allowEmptyOption: true,
+        plugins: ['remove_button'],
         maxOptions: 30,
     });
+    const hiddenPrincipal = document.getElementById('carreraPrincipal');
+    const syncPrincipal = () => {
+        const values = carreraSelect.getValue();
+        const firstValue = Array.isArray(values) ? values[0] : values;
+        const option = firstValue ? carreraSelect.options[firstValue] : null;
+        hiddenPrincipal.value = option ? option.text : '';
+    };
+    carreraSelect.on('change', syncPrincipal);
+    syncPrincipal();
 }
 </script>
 </body>

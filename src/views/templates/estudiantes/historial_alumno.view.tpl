@@ -97,9 +97,17 @@ foreach ($historial as $h) {
                         </button>
                         <h1 class="h2 page-title mb-0">Historial Académico</h1>
                     </div>
-                    <a href="index.php?page=estudiantes" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Volver a Estudiantes
-                    </a>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="index.php?page=reporte_pdf&tipo=historial&id_estudiante=<?php echo intval($idEstudiante); ?>" class="btn btn-outline-danger" target="_blank">
+                            <i class="bi bi-file-earmark-pdf"></i> Historial PDF
+                        </a>
+                        <a href="index.php?page=reporte_pdf&tipo=boleta_ultimo_periodo&id_estudiante=<?php echo intval($idEstudiante); ?>" class="btn btn-danger" target="_blank">
+                            <i class="bi bi-file-earmark-text"></i> Boleta PDF
+                        </a>
+                        <a href="index.php?page=estudiantes" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver a Estudiantes
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Resumen de Índices -->

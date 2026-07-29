@@ -75,6 +75,14 @@ foreach ($historial as $h) {
                         </button>
                         <h1 class="h2 page-title mb-0">Historial Académico</h1>
                     </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="index.php?page=reporte_pdf&tipo=historial" class="btn btn-outline-danger">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Historial PDF
+                        </a>
+                        <a href="index.php?page=reporte_pdf&tipo=boleta_ultimo_periodo" class="btn btn-danger">
+                            <i class="bi bi-file-earmark-text me-1"></i>Boleta ultimo periodo
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Resumen de Índices -->

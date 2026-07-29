@@ -65,9 +65,14 @@ if ($rolUsuario === "estudiante") {
                                 </button>
                                 <h1 class="h2 page-title mb-0">Mis Calificaciones en Curso</h1>
                             </div>
-                            <?php if ($periodoActivo): ?>
-                                <span class="badge bg-primary px-3 py-2 fw-semibold"><?php echo htmlspecialchars($periodoActivo["nombre_periodo"]); ?></span>
-                            <?php endif; ?>
+                            <div class="d-flex gap-2 align-items-center flex-wrap">
+                                <?php if ($periodoActivo): ?>
+                                    <span class="badge bg-primary px-3 py-2 fw-semibold"><?php echo htmlspecialchars($periodoActivo["nombre_periodo"]); ?></span>
+                                <?php endif; ?>
+                                <a href="index.php?page=reporte_pdf&tipo=boleta_ultimo_periodo" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i>Boleta PDF
+                                </a>
+                            </div>
                         </div>
 
                         <?php if (!empty($clasesEstudiante)): ?>
@@ -163,9 +168,14 @@ if ($rolUsuario === "estudiante") {
                                 </button>
                                 <h1 class="h2 page-title mb-0">Consultar Calificaciones</h1>
                             </div>
-                            <a href="index.php?page=Calificacion&mode=INS" class="btn btn-primary">
-                                <i class="bi bi-plus-circle"></i> Registrar Nota
-                            </a>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="index.php?page=correcciones_notas" class="btn btn-outline-warning">
+                                    <i class="bi bi-pencil-square"></i> Correcciones
+                                </a>
+                                <a href="index.php?page=Calificacion&mode=INS" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Registrar Nota
+                                </a>
+                            </div>
                         </div>
 
                         <?php if ($mensaje !== ""): ?>
