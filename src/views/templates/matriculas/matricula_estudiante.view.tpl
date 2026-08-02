@@ -44,11 +44,17 @@ $matriculadas = [];
 $totalCreditos = 0;
 
 if ($estudiante && $periodoActivo) {
+    $idCarreraActiva = $_SESSION["id_carrera"] ?? $estudiante["id_carrera"];
+    require_once __DIR__ . "/../../../dao/CarreraDao.php";
+    $carreraActivaInfo = \Dao\CarreraDao::obtenerCarreraPorId(intval($idCarreraActiva));
+    $idFacultadActiva = $carreraActivaInfo ? $carreraActivaInfo["id_facultad"] : $estudiante["id_facultad"];
+    $nombreCarreraMostrar = $carreraActivaInfo ? $carreraActivaInfo["nombre_carrera"] : ($estudiante["nombre_carrera"] ?? "General");
+
     $disponibles = MatriculaDao::obtenerSeccionesDisponiblesParaEstudiante(
         $estudiante["id_estudiante"],
         $periodoActivo["id_periodo"],
-        $estudiante["id_carrera"],
-        $estudiante["id_facultad"]
+        $idCarreraActiva,
+        $idFacultadActiva
     );
     $matriculadas = MatriculaDao::obtenerSeccionesMatriculadas(
         $estudiante["id_estudiante"],
@@ -97,9 +103,25 @@ if (!function_exists('diasLabel')) {
                         <div>
                             <span class="badge bg-primary px-3 py-2 mb-2" style="font-size: 13px;">Estudiante</span>
                             <h2 class="mb-1 text-dark fw-bold"><?php echo htmlspecialchars($estudiante["nombre"] ?? ""); ?></h2>
-                            <p class="text-muted mb-0">
-                                <i class="bi bi-card-text me-1"></i> Cuenta: <span class="fw-semibold text-dark"><?php echo htmlspecialchars($estudiante["cuenta"] ?? ""); ?></span> | 
-                                <i class="bi bi-mortarboard me-1"></i> Carrera: <span class="fw-semibold text-dark"><?php echo htmlspecialchars($estudiante["nombre_carrera"] ?? "General"); ?></span>
+                            <p class="text-muted mb-0 d-flex flex-wrap align-items-center gap-2">
+                                <span><i class="bi bi-card-text me-1"></i> Cuenta: <span class="fw-semibold text-dark"><?php echo htmlspecialchars($estudiante["cuenta"] ?? ""); ?></span></span>
+                                <span>|</span>
+                                <span><i class="bi bi-mortarboard me-1"></i> Carrera Activa:</span>
+                                <?php
+                                require_once __DIR__ . "/../../../dao/EstudianteDao.php";
+                                $carrEst = \Dao\EstudianteDao::obtenerCarrerasEstudiante(intval($estudiante["id_estudiante"]));
+                                if (count($carrEst) > 1):
+                                ?>
+                                    <select onchange="window.location='index.php?page=cambiar_carrera_activa&id_carrera=' + this.value" class="form-select form-select-sm w-auto header-carrera-select d-inline-block py-0 px-2" style="height: 26px; font-size: 12px; margin-top: -2px;">
+                                        <?php foreach ($carrEst as $car): ?>
+                                            <option value="<?php echo intval($car['id_carrera']); ?>" <?php echo intval($_SESSION["id_carrera"]) === intval($car['id_carrera']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($car['nombre_carrera']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php else: ?>
+                                    <span class="fw-semibold text-dark"><?php echo htmlspecialchars($nombreCarreraMostrar); ?></span>
+                                <?php endif; ?>
                             </p>
                         </div>
                         <div class="text-md-end bg-white p-3 rounded-3 shadow-xs border">

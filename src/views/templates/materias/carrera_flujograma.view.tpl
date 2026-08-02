@@ -70,8 +70,29 @@
                             <p class="text-muted mb-0 fs-5"><?php echo htmlspecialchars($carrera['nombre_carrera']); ?></p>
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 align-items-center">
                         <?php if ($_SESSION["rol"] === "estudiante"): ?>
+                            <?php
+                            require_once __DIR__ . "/../../../dao/EstudianteDao.php";
+                            $estData = \Dao\EstudianteDao::obtenerEstudiantePorCorreo($_SESSION["correo"]);
+                            if ($estData) {
+                                $carrEst = \Dao\EstudianteDao::obtenerCarrerasEstudiante(intval($estData["id_estudiante"]));
+                                if (count($carrEst) > 1):
+                            ?>
+                                <div class="d-flex align-items-center gap-2 me-2">
+                                    <label class="form-label mb-0 text-muted" style="font-size: 13px; white-space: nowrap;"><i class="bi bi-arrow-left-right me-1"></i> Carrera Activa:</label>
+                                    <select onchange="window.location='index.php?page=cambiar_carrera_activa&id_carrera=' + this.value" class="form-select form-select-sm w-auto header-carrera-select">
+                                        <?php foreach ($carrEst as $car): ?>
+                                            <option value="<?php echo intval($car['id_carrera']); ?>" <?php echo intval($_SESSION["id_carrera"]) === intval($car['id_carrera']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($car['nombre_carrera']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            <?php 
+                                endif;
+                            }
+                            ?>
                             <a href="index.php?page=home" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Volver al Inicio
                             </a>

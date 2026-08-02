@@ -363,7 +363,7 @@ public static function getDashboardMaestro($correo)
     );
 }
 
-public static function getDashboardEstudiante($correo)
+public static function getDashboardEstudiante($correo, $idCarrera = null)
 {
     $estudiante = self::safeOne(
         "SELECT e.id_estudiante, e.carrera
@@ -387,16 +387,37 @@ public static function getDashboardEstudiante($correo)
 
     $idEstudiante = intval($estudiante["id_estudiante"]);
 
-    // El promedio global solo toma en cuenta clases de periodos inactivos o finalizados
-    $promedio = self::safeScalar(
-        "SELECT ROUND(AVG(c.nota), 2) AS total
+    // Construir dinámicamente la condición de filtrado por carrera para evitar solapamientos booleanos
+    $carreraJoinCond = "";
+    $params = array("id_estudiante" => $idEstudiante);
+    $planParams = array();
+    if ($idCarrera) {
+        $carreraJoinCond = "AND cr.id_carrera = :id_carrera";
+        $params["id_carrera"] = intval($idCarrera);
+        $planParams["id_carrera"] = intval($idCarrera);
+    } else {
+        $carreraJoinCond = "AND (cr.nombre_carrera = :carrera OR CAST(cr.id_carrera AS CHAR) = CAST(:carrera AS CHAR))";
+        $params["carrera"] = $estudiante["carrera"];
+        $planParams["carrera"] = $estudiante["carrera"];
+    }
+
+    // El promedio global solo toma en cuenta clases de periodos inactivos o finalizados que pertenecen al plan de la carrera seleccionada
+    $sqlPromedio = "SELECT ROUND(AVG(c.nota), 2) AS total
          FROM calificaciones c
          INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
+         INNER JOIN secciones s ON mt.id_seccion = s.id_seccion
+         INNER JOIN materias m ON s.id_materia = m.id_materia
+         CROSS JOIN carreras cr
          INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
          WHERE mt.id_estudiante = :id_estudiante
-           AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))",
-        array("id_estudiante" => $idEstudiante)
-    );
+           AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))
+           $carreraJoinCond
+           AND (
+                m.tipo_materia = 'institucional'
+                OR (m.tipo_materia = 'facultad' AND m.id_facultad = cr.id_facultad)
+                OR (m.tipo_materia = 'carrera' AND m.id_carrera = cr.id_carrera)
+           )";
+    $promedio = self::safeScalar($sqlPromedio, $params);
 
     // Contar el número de materias matriculadas en el periodo actual
     $materiasMatriculadas = self::safeScalar(
@@ -418,28 +439,33 @@ public static function getDashboardEstudiante($correo)
         array("id_estudiante" => $idEstudiante)
     );
 
-    $materiasPlan = self::safeScalar(
-        "SELECT COUNT(*) AS total
+    $sqlPlan = "SELECT COUNT(*) AS total
          FROM materias m
-         LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
+         CROSS JOIN carreras cr
          WHERE m.estado = 'activa'
+           $carreraJoinCond
            AND (
                 m.tipo_materia = 'institucional'
-                OR c.nombre_carrera = :carrera
-                OR CAST(c.id_carrera AS CHAR) = CAST(:carrera AS CHAR)
-           )",
-        array("carrera" => $estudiante["carrera"])
-    );
+                OR (m.tipo_materia = 'facultad' AND m.id_facultad = cr.id_facultad)
+                OR (m.tipo_materia = 'carrera' AND m.id_carrera = cr.id_carrera)
+           )";
+    $materiasPlan = self::safeScalar($sqlPlan, $planParams);
 
-    $materiasAprobadas = self::safeScalar(
-        "SELECT COUNT(DISTINCT s.id_materia) AS total
+    $sqlAprobadas = "SELECT COUNT(DISTINCT s.id_materia) AS total
          FROM calificaciones c
          INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
          INNER JOIN secciones s ON mt.id_seccion = s.id_seccion
+         INNER JOIN materias m ON s.id_materia = m.id_materia
+         CROSS JOIN carreras cr
          WHERE mt.id_estudiante = :id_estudiante
-           AND c.nota >= 65",
-        array("id_estudiante" => $idEstudiante)
-    );
+           AND c.nota >= 70
+           $carreraJoinCond
+           AND (
+                m.tipo_materia = 'institucional'
+                OR (m.tipo_materia = 'facultad' AND m.id_facultad = cr.id_facultad)
+                OR (m.tipo_materia = 'carrera' AND m.id_carrera = cr.id_carrera)
+           )";
+    $materiasAprobadas = self::safeScalar($sqlAprobadas, $params);
 
     $avance = $materiasPlan > 0 ? round(($materiasAprobadas / $materiasPlan) * 100) : 0;
 

@@ -22,11 +22,6 @@ $currentPage = $_GET['page'] ?? 'home';
                         <i class="bi bi-people"></i> Estudiantes
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'correcciones_notas' ? 'active' : ''; ?>" href="index.php?page=correcciones_notas">
-                        <i class="bi bi-pencil-square"></i> Correcciones Notas
-                    </a>
-                </li>
             <?php endif; ?>
 
             <?php if ($_SESSION["rol"] === "director"): ?>
@@ -66,11 +61,6 @@ $currentPage = $_GET['page'] ?? 'home';
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'historial_academico' ? 'active' : ''; ?>" href="index.php?page=historial_academico">
                         <i class="bi bi-file-earmark-text"></i> Historial
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'calificaciones' ? 'active' : ''; ?>" href="index.php?page=calificaciones">
-                        <i class="bi bi-clipboard-data"></i> Mis Notas
                     </a>
                 </li>
                 <?php

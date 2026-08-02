@@ -86,6 +86,7 @@ class EstudiantesController
                 self::mostrarSweetAlert("El DNI o Número de cuenta ya está registrado por otro estudiante.", "warning", "index.php?page=estudiante_nuevo&id=" . intval($id_estudiante), "Identificación Duplicada");
             }
 
+            $carreras = $_POST["carreras"] ?? [];
             $resultado = EstudianteDao::actualizarEstudiante(
                 $id_estudiante,
                 $id_usuario,
@@ -93,7 +94,8 @@ class EstudiantesController
                 $correo,
                 $cuenta,
                 $carrera,
-                $telefono
+                $telefono,
+                $carreras
             );
 
             if ($resultado) {
@@ -104,8 +106,9 @@ class EstudiantesController
         }
 
         // Inserción nueva
-        if ($nombre == "" || $correo == "" || $password == "" || $cuenta == "" || $carrera == "") {
-            self::mostrarSweetAlert("Debe completar todos los campos obligatorios para registrar al estudiante.", "warning", "index.php?page=estudiante_nuevo", "Campos Incompletos");
+        $id_campus = $_POST["id_campus"] ?? "";
+        if ($nombre == "" || $correo == "" || $password == "" || $cuenta == "" || $carrera == "" || $id_campus == "") {
+            self::mostrarSweetAlert("Debe completar todos los campos obligatorios para registrar al estudiante, incluyendo el campus.", "warning", "index.php?page=estudiante_nuevo", "Campos Incompletos");
         }
 
         if (EstudianteDao::existeCorreo($correo)) {
@@ -116,13 +119,16 @@ class EstudiantesController
             self::mostrarSweetAlert("El DNI o Número de cuenta ya está registrado en el sistema.", "warning", "index.php?page=estudiante_nuevo", "Identificación Duplicada");
         }
 
+        $carreras = $_POST["carreras"] ?? [];
         $resultado = EstudianteDao::insertarEstudiante(
             $nombre,
             $correo,
             $password,
             $cuenta,
             $carrera,
-            $telefono
+            $telefono,
+            $carreras,
+            $id_campus
         );
 
         if ($resultado) {

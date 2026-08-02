@@ -62,8 +62,9 @@ class ReportesController
             return;
         }
 
-        $historial = HistorialDao::obtenerHistorialAcademico((int)$estudiante["id_estudiante"]);
-        $indices = HistorialDao::obtenerIndicesAcademicos((int)$estudiante["id_estudiante"]);
+        $idCarrera = $_SESSION["id_carrera"] ?? null;
+        $historial = HistorialDao::obtenerHistorialAcademico((int)$estudiante["id_estudiante"], $idCarrera);
+        $indices = HistorialDao::obtenerIndicesAcademicos((int)$estudiante["id_estudiante"], $idCarrera);
 
         $pdf = new SimplePdf("Historial academico");
         self::datosEstudiante($pdf, $estudiante);
@@ -79,7 +80,7 @@ class ReportesController
                 $rows[] = [
                     $h["periodo"],
                     $h["codigo_materia"],
-                    self::limitar($h["nombre_materia"], 28),
+                    $h["nombre_materia"],
                     $h["creditos"] . " UV",
                     $nota,
                     ((float)$h["nota"] >= 70 ? "Aprobado" : "Reprobado")
@@ -87,7 +88,8 @@ class ReportesController
             }
             $pdf->addTable(["Periodo", "Codigo", "Materia", "UV", "Nota", "Estado"], $rows);
         }
-        $pdf->output("historial_academico.pdf");
+        $dni = preg_replace('/[^0-9]/', '', $estudiante["cuenta"] ?? '');
+        $pdf->output("historial" . $dni . ".pdf");
     }
 
     private static function boletaUltimoPeriodo(): void
@@ -98,7 +100,8 @@ class ReportesController
             return;
         }
 
-        $boleta = HistorialDao::obtenerBoletaUltimoPeriodo((int)$estudiante["id_estudiante"]);
+        $idCarrera = $_SESSION["id_carrera"] ?? null;
+        $boleta = HistorialDao::obtenerBoletaUltimoPeriodo((int)$estudiante["id_estudiante"], $idCarrera);
         $pdf = new SimplePdf("Boleta del ultimo periodo");
         self::datosEstudiante($pdf, $estudiante);
 
@@ -112,9 +115,9 @@ class ReportesController
                 $nota = $c["nota"] !== null ? number_format((float)$c["nota"], 2) : "Pendiente";
                 $rows[] = [
                     $c["codigo_materia"],
-                    self::limitar($c["nombre_materia"], 25),
+                    $c["nombre_materia"],
                     $c["codigo_seccion"],
-                    self::limitar($c["nombre_maestro"], 20),
+                    $c["nombre_maestro"],
                     self::fmtNota($c["nota_parcial1"]),
                     self::fmtNota($c["nota_parcial2"]),
                     self::fmtNota($c["nota_parcial3"]),
@@ -124,7 +127,8 @@ class ReportesController
             $pdf->addTable(["Cod", "Materia", "Sec", "Docente", "P1", "P2", "P3", "Prom"], $rows);
         }
 
-        $pdf->output("boleta_ultimo_periodo.pdf");
+        $dni = preg_replace('/[^0-9]/', '', $estudiante["cuenta"] ?? '');
+        $pdf->output("boleta" . $dni . ".pdf");
     }
 
     private static function notasDocente(): void
@@ -206,14 +210,24 @@ class ReportesController
     {
         $pdf->addKeyValue("Estudiante", $estudiante["nombre"] ?? "");
         $pdf->addKeyValue("Cuenta/DNI", $estudiante["cuenta"] ?? "");
-        $pdf->addKeyValue("Carrera principal", $estudiante["nombre_carrera"] ?? $estudiante["carrera"] ?? "");
+        
+        $idCarrera = $_SESSION["id_carrera"] ?? null;
+        $nombreCarrera = $estudiante["nombre_carrera"] ?? $estudiante["carrera"] ?? "";
+        if ($idCarrera) {
+            require_once __DIR__ . "/../dao/CarreraDao.php";
+            $car = \Dao\CarreraDao::obtenerCarreraPorId($idCarrera);
+            if ($car) {
+                $nombreCarrera = $car["nombre_carrera"];
+            }
+        }
+        $pdf->addKeyValue("Carrera", $nombreCarrera);
         $pdf->addKeyValue("Campus", $estudiante["campus"] ?? "Sin asignar");
         $pdf->addKeyValue("Fecha de emision", date("d/m/Y H:i"));
     }
 
     private static function fmtNota($nota): string
     {
-        return $nota === null || $nota === "" ? "-" : number_format((float)$nota, 2);
+        return $nota === null || $nota === "" ? "-" : number_format((float)$nota, 0);
     }
 
     private static function limitar(string $texto, int $max): string

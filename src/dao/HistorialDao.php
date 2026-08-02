@@ -20,42 +20,80 @@ class HistorialDao extends Table
         return self::obtenerUnRegistro($sqlstr, ["id_estudiante" => intval($idEstudiante)]);
     }
 
-    public static function obtenerHistorialAcademico($idEstudiante)
+    public static function obtenerHistorialAcademico($idEstudiante, $idCarrera = null)
     {
+        $carreraJoinCond = "";
+        $params = ["id_estudiante" => $idEstudiante];
+        
+        if ($idCarrera) {
+            $carreraJoinCond = "CROSS JOIN carreras cr 
+                               WHERE mt.id_estudiante = :id_estudiante 
+                                 AND cr.id_carrera = :id_carrera 
+                                 AND (
+                                     m.tipo_materia = 'institucional'
+                                     OR (m.tipo_materia = 'facultad' AND m.id_facultad = cr.id_facultad)
+                                     OR (m.tipo_materia = 'carrera' AND m.id_carrera = cr.id_carrera)
+                                 )";
+            $params["id_carrera"] = intval($idCarrera);
+        } else {
+            $carreraJoinCond = "WHERE mt.id_estudiante = :id_estudiante";
+        }
+
         $sqlstr = "SELECT pa.nombre_periodo AS periodo, YEAR(pa.fecha_inicio) AS anio, m.codigo as codigo_materia, m.nombre as nombre_materia, 
-                          m.creditos, c.nota, c.observacion, c.fecha_registro
-                   FROM calificaciones c
-                   INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
-                   INNER JOIN secciones sec ON mt.id_seccion = sec.id_seccion
-                   INNER JOIN materias m ON sec.id_materia = m.id_materia
-                   INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
-                   WHERE mt.id_estudiante = :id_estudiante
-                     AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))
-                   ORDER BY pa.fecha_inicio DESC, m.nombre ASC";
-        return self::obtenerRegistros($sqlstr, ["id_estudiante" => $idEstudiante]);
+                           m.creditos, c.nota, c.observacion, c.fecha_registro
+                    FROM calificaciones c
+                    INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
+                    INNER JOIN secciones sec ON mt.id_seccion = sec.id_seccion
+                    INNER JOIN materias m ON sec.id_materia = m.id_materia
+                    INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
+                    $carreraJoinCond
+                      AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))
+                    ORDER BY pa.fecha_inicio DESC, m.nombre ASC";
+        return self::obtenerRegistros($sqlstr, $params);
     }
 
-    public static function obtenerIndicesAcademicos($idEstudiante)
+    public static function obtenerIndicesAcademicos($idEstudiante, $idCarrera = null)
     {
+        $carreraJoinCond = "";
+        $params = ["id_estudiante" => $idEstudiante];
+        
+        if ($idCarrera) {
+            $carreraJoinCond = "CROSS JOIN carreras cr 
+                               WHERE mt.id_estudiante = :id_estudiante 
+                                 AND cr.id_carrera = :id_carrera 
+                                 AND (
+                                     m.tipo_materia = 'institucional'
+                                     OR (m.tipo_materia = 'facultad' AND m.id_facultad = cr.id_facultad)
+                                     OR (m.tipo_materia = 'carrera' AND m.id_carrera = cr.id_carrera)
+                                 )";
+            $params["id_carrera"] = intval($idCarrera);
+        } else {
+            $carreraJoinCond = "WHERE mt.id_estudiante = :id_estudiante";
+        }
+
         // 1. Promedio global acumulado (excluyendo el periodo actual mientras esté en curso o en semana de subir notas)
         $sqlstrGlobal = "SELECT ROUND(AVG(c.nota), 2) as promedio_global
-                         FROM calificaciones c
-                         INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
-                         INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
-                         WHERE mt.id_estudiante = :id_estudiante
-                           AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))";
-        $global = self::obtenerUnRegistro($sqlstrGlobal, ["id_estudiante" => $idEstudiante]);
+                          FROM calificaciones c
+                          INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
+                          INNER JOIN secciones s ON mt.id_seccion = s.id_seccion
+                          INNER JOIN materias m ON s.id_materia = m.id_materia
+                          INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
+                          $carreraJoinCond
+                            AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))";
+        $global = self::obtenerUnRegistro($sqlstrGlobal, $params);
 
         // 2. Promedio segmentado por periodo (excluyendo el periodo actual mientras esté en curso o en semana de subir notas)
         $sqlstrPeriodos = "SELECT pa.nombre_periodo AS periodo, ROUND(AVG(c.nota), 2) as promedio_periodo
-                           FROM calificaciones c
-                           INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
-                           INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
-                           WHERE mt.id_estudiante = :id_estudiante
-                             AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))
-                           GROUP BY pa.id_periodo
-                           ORDER BY pa.fecha_inicio DESC";
-        $periodos = self::obtenerRegistros($sqlstrPeriodos, ["id_estudiante" => $idEstudiante]);
+                            FROM calificaciones c
+                            INNER JOIN matriculas mt ON c.id_matricula = mt.id_matricula
+                            INNER JOIN secciones s ON mt.id_seccion = s.id_seccion
+                            INNER JOIN materias m ON s.id_materia = m.id_materia
+                            INNER JOIN periodos_academicos pa ON mt.id_periodo = pa.id_periodo
+                            $carreraJoinCond
+                              AND (pa.estado = 'inactivo' OR DATE(NOW()) > DATE_ADD(pa.fecha_fin, INTERVAL 7 DAY))
+                            GROUP BY pa.id_periodo, pa.nombre_periodo, pa.fecha_inicio
+                            ORDER BY pa.fecha_inicio DESC";
+        $periodos = self::obtenerRegistros($sqlstrPeriodos, $params);
 
         return [
             "promedio_global" => $global["promedio_global"] ?? 0,
@@ -84,7 +122,7 @@ class HistorialDao extends Table
         return self::obtenerRegistros($sqlstr, ["id_estudiante" => $idEstudiante]);
     }
 
-    public static function obtenerBoletaUltimoPeriodo($idEstudiante)
+    public static function obtenerBoletaUltimoPeriodo($idEstudiante, $idCarrera = null)
     {
         $periodo = self::obtenerUnRegistro(
             "SELECT pa.*
@@ -100,6 +138,27 @@ class HistorialDao extends Table
             return ["periodo" => null, "clases" => []];
         }
 
+        $carreraJoinCond = "";
+        $params = [
+            "id_estudiante" => intval($idEstudiante),
+            "id_periodo" => intval($periodo["id_periodo"])
+        ];
+
+        if ($idCarrera) {
+            $carreraJoinCond = "CROSS JOIN carreras cr 
+                               WHERE mt.id_estudiante = :id_estudiante 
+                                 AND mt.id_periodo = :id_periodo
+                                 AND cr.id_carrera = :id_carrera 
+                                 AND (
+                                     m.tipo_materia = 'institucional'
+                                     OR (m.tipo_materia = 'facultad' AND m.id_facultad = cr.id_facultad)
+                                     OR (m.tipo_materia = 'carrera' AND m.id_carrera = cr.id_carrera)
+                                 )";
+            $params["id_carrera"] = intval($idCarrera);
+        } else {
+            $carreraJoinCond = "WHERE mt.id_estudiante = :id_estudiante AND mt.id_periodo = :id_periodo";
+        }
+
         $sqlstr = "SELECT m.codigo AS codigo_materia, m.nombre AS nombre_materia, m.creditos,
                           sec.codigo_seccion, u.nombre AS nombre_maestro,
                           c.nota_parcial1, c.nota_parcial2, c.nota_parcial3,
@@ -110,16 +169,12 @@ class HistorialDao extends Table
                    INNER JOIN maestros mae ON sec.id_maestro = mae.id_maestro
                    INNER JOIN usuarios u ON mae.id_usuario = u.id_usuario
                    LEFT JOIN calificaciones c ON mt.id_matricula = c.id_matricula
-                   WHERE mt.id_estudiante = :id_estudiante
-                     AND mt.id_periodo = :id_periodo
+                   $carreraJoinCond
                    ORDER BY m.nombre ASC";
 
         return [
             "periodo" => $periodo,
-            "clases" => self::obtenerRegistros($sqlstr, [
-                "id_estudiante" => intval($idEstudiante),
-                "id_periodo" => intval($periodo["id_periodo"])
-            ])
+            "clases" => self::obtenerRegistros($sqlstr, $params)
         ];
     }
 }

@@ -74,11 +74,23 @@ if (!function_exists('diasLabel')) {
                 <div class="card border-0 shadow-sm mb-4 rounded-3 bg-light border">
                     <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div>
+                            <?php
+                            $carrerasTextos = [];
+                            require_once __DIR__ . "/../../../dao/EstudianteDao.php";
+                            $estData = \Dao\EstudianteDao::obtenerEstudiantePorCorreo($_SESSION["correo"]);
+                            if ($estData) {
+                                $carrEst = \Dao\EstudianteDao::obtenerCarrerasEstudiante(intval($estData["id_estudiante"]));
+                                foreach ($carrEst as $car) {
+                                    $carrerasTextos[] = $car['nombre_carrera'];
+                                }
+                            }
+                            $carrerasDisplay = !empty($carrerasTextos) ? implode(" / ", $carrerasTextos) : ($estudiante["nombre_carrera"] ?? "General");
+                            ?>
                             <span class="text-muted small text-uppercase fw-bold">Estudiante</span>
                             <h4 class="mb-1 text-dark fw-bold"><?php echo htmlspecialchars($estudiante["nombre"]); ?></h4>
                             <p class="text-muted mb-0 small">
                                 Cuenta: <span class="fw-semibold text-dark"><?php echo htmlspecialchars($estudiante["cuenta"]); ?></span> | 
-                                Carrera: <span class="fw-semibold text-dark"><?php echo htmlspecialchars($estudiante["nombre_carrera"] ?? "General"); ?></span>
+                                Carrera(s): <span class="fw-semibold text-dark"><?php echo htmlspecialchars($carrerasDisplay); ?></span>
                             </p>
                         </div>
                         <?php if ($periodoActivo): ?>

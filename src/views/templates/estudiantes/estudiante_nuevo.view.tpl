@@ -3,28 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Estudiante</title>
-
+    <title><?php echo isset($_GET['id']) ? 'Editar Estudiante' : 'Nuevo Estudiante'; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="public/css/style.css">
 </head>
-
 <body>
+<div class="container-fluid">
+    <div class="row">
+        <?php require_once __DIR__ . "/../sidebar.view.tpl"; ?>
 
-<div class="container mt-4">
-
-    <div class="card shadow">
-
-        <div class="card-header bg-primary text-white">
-            <h4>
-                <i class="bi bi-people"></i>
-                Registro de Estudiante
-            </h4>
-        </div>
-
-        <div class="card-body">
+        <div class="col-md-10 ml-sm-auto px-md-4 py-4">
+            <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
+                <h1 class="h2 page-title"><?php echo isset($_GET['id']) ? 'Editar Estudiante' : 'Nuevo Estudiante'; ?></h1>
+            </div>
 
             <?php
             require_once __DIR__ . "/../../../controllers/EstudiantesController.php";
@@ -37,9 +30,20 @@
             $isEdit = !empty($estudiante);
             require_once __DIR__ . "/../../../dao/CarreraDao.php";
             require_once __DIR__ . "/../../../dao/EstudianteDao.php";
+            require_once __DIR__ . "/../../../dao/CampusDao.php";
             $carrerasList = \Dao\CarreraDao::obtenerCarrerasParaRegistro();
             $carrerasAsignadas = $isEdit ? \Dao\EstudianteDao::obtenerCarrerasEstudiante($estudiante["id_estudiante"]) : [];
             $idsCarrerasAsignadas = array_map(fn($c) => intval($c["id_carrera"]), $carrerasAsignadas);
+            $campusesList = \Dao\CampusDao::obtenerCampuses(false);
+
+            if ($isEdit && empty($idsCarrerasAsignadas)) {
+                foreach ($carrerasList as $c) {
+                    if (trim($c["nombre_carrera"]) === trim($estudiante["carrera"]) || intval($c["id_carrera"]) === intval($estudiante["carrera"])) {
+                        $idsCarrerasAsignadas[] = intval($c["id_carrera"]);
+                        break;
+                    }
+                }
+            }
 
             if (!function_exists('fixDoubleEncoding')) {
                 function fixDoubleEncoding($str) {
@@ -103,9 +107,7 @@
                         <select name="carreras[]" id="carreraSelect" class="form-select" multiple required>
                             <?php foreach ($carrerasList as $c): ?>
                                 <?php $selected = in_array(intval($c["id_carrera"]), $idsCarrerasAsignadas, true); ?>
-                                <option value="<?php echo intval($c['id_carrera']); ?>" <?php echo $selected ? "selected" : ""; ?>>
-                                    <?php echo htmlspecialchars($c['nombre_carrera']); ?>
-                                </option>
+                                <option value="<?php echo intval($c['id_carrera']); ?>" <?php echo $selected ? "selected" : ""; ?>><?php echo htmlspecialchars($c['nombre_carrera']); ?></option>
                             <?php endforeach; ?>
                         </select>
                         <input type="hidden" name="carrera" id="carreraPrincipal" value="<?php echo htmlspecialchars($estudiante['carrera'] ?? ''); ?>">
@@ -118,6 +120,22 @@
                                name="telefono"
                                class="form-control"
                                value="<?php echo htmlspecialchars($estudiante['telefono'] ?? ''); ?>">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Campus / Sede</label>
+                        <?php if ($isEdit): ?>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($estudiante['campus'] ?? 'Sin asignar'); ?>" disabled>
+                        <?php else: ?>
+                            <select name="id_campus" class="form-select" required>
+                                <option value="">Seleccione el campus...</option>
+                                <?php foreach ($campusesList as $cp): ?>
+                                    <option value="<?php echo intval($cp['id_campus']); ?>">
+                                        <?php echo htmlspecialchars($cp['nombre_campus']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php endif; ?>
                     </div>
 
                 </div>
@@ -149,21 +167,34 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Inicializar TomSelect solo en modo creación (no en edición donde la carrera está deshabilitada)
+// Inicializar TomSelect
 if (document.getElementById('carreraSelect')) {
+    const idsPreexistentes = <?php echo json_encode($idsCarrerasAsignadas); ?>;
     const carreraSelect = new TomSelect('#carreraSelect', {
         placeholder: 'Escribe para buscar la carrera...',
         plugins: ['remove_button'],
         maxOptions: 30,
+        maxItems: 2,
     });
     const hiddenPrincipal = document.getElementById('carreraPrincipal');
     const syncPrincipal = () => {
         const values = carreraSelect.getValue();
         const firstValue = Array.isArray(values) ? values[0] : values;
         const option = firstValue ? carreraSelect.options[firstValue] : null;
-        hiddenPrincipal.value = option ? option.text : '';
+        hiddenPrincipal.value = option ? option.text.trim() : '';
     };
     carreraSelect.on('change', syncPrincipal);
+    carreraSelect.on('item_remove', function(value) {
+        if (idsPreexistentes.includes(parseInt(value))) {
+            carreraSelect.addItem(value, true);
+            Swal.fire({
+                icon: 'warning',
+                title: 'No permitido',
+                text: 'No se pueden eliminar carreras previamente guardadas.',
+                confirmButtonColor: '#0057d8'
+            });
+        }
+    });
     syncPrincipal();
 }
 </script>

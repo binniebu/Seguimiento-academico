@@ -69,7 +69,7 @@ if ($rolUsuario === "estudiante") {
                                 <?php if ($periodoActivo): ?>
                                     <span class="badge bg-primary px-3 py-2 fw-semibold"><?php echo htmlspecialchars($periodoActivo["nombre_periodo"]); ?></span>
                                 <?php endif; ?>
-                                <a href="index.php?page=reporte_pdf&tipo=boleta_ultimo_periodo" class="btn btn-sm btn-outline-danger">
+                                <a href="index.php?page=reporte_pdf&tipo=boleta_ultimo_periodo" class="btn btn-sm btn-outline-danger" target="_blank">
                                     <i class="bi bi-file-earmark-pdf me-1"></i>Boleta PDF
                                 </a>
                             </div>

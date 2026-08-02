@@ -298,7 +298,7 @@ if (document.getElementById('select_materia')) {
     new TomSelect('#select_materia', {
         placeholder: 'Escriba para buscar asignatura...',
         allowEmptyOption: true,
-        maxOptions: 100,
+        maxOptions: 5,
         onChange: function(value) {
             // Re-ejecutar el filtro de maestros al cambiar asignatura
             filterMaestros();
@@ -309,7 +309,7 @@ if (document.getElementById('select_maestro')) {
     new TomSelect('#select_maestro', {
         placeholder: 'Escriba para buscar docente...',
         allowEmptyOption: true,
-        maxOptions: 100,
+        maxOptions: 5,
     });
 }
 
@@ -344,36 +344,95 @@ function filterMaestros() {
     const matCarId = selectedOpt.getAttribute('data-carrera');
 
     const maestroSelect = document.getElementById('select_maestro');
-    const options = maestroSelect.options;
+    if (!maestroSelect) return;
 
-    let hasSelectedVisible = false;
+    const ts = maestroSelect.tomselect;
 
-    for (let i = 0; i < options.length; i++) {
-        const opt = options[i];
-        if (opt.value === "") continue;
-
-        const maeFacId = opt.getAttribute('data-facultad');
-        const maeCarId = opt.getAttribute('data-carrera');
-
-        const esInstitucional  = (!matFacId && !matCarId);
-        const coincideFacultad = (matFacId && maeFacId == matFacId);
-        const coincideCarrera  = (matCarId && maeCarId == matCarId);
-
-        if (esInstitucional || coincideCarrera || coincideFacultad) {
-            opt.style.display = 'block';
-            if (coincideCarrera) {
-                opt.text = (opt.getAttribute('data-original-text') || opt.text) + ' ⭐ (Especialista)';
-            } else {
-                opt.text = opt.getAttribute('data-original-text') || opt.text;
-            }
-            if (opt.selected) hasSelectedVisible = true;
-        } else {
-            opt.style.display = 'none';
-            if (opt.selected) opt.selected = false;
+    if (ts) {
+        if (!window.originalMaestroOptions) {
+            window.originalMaestroOptions = [];
+            Object.values(ts.options).forEach(opt => {
+                if (opt.value !== "") {
+                    // Extract data attributes from the original option element if available
+                    const origOpt = maestroSelect.querySelector(`option[value="${opt.value}"]`);
+                    window.originalMaestroOptions.push({
+                        value: opt.value,
+                        text: opt.text,
+                        originalText: opt.text,
+                        facultad: origOpt ? origOpt.getAttribute('data-facultad') : "",
+                        carrera: origOpt ? origOpt.getAttribute('data-carrera') : ""
+                    });
+                }
+            });
         }
-    }
 
-    if (!hasSelectedVisible) maestroSelect.value = "";
+        const filtered = window.originalMaestroOptions.filter(opt => {
+            const maeFacId = opt.facultad;
+            const maeCarId = opt.carrera;
+
+            if (!matFacId && !matCarId) return true; // Institucional
+            if (matCarId) return maeCarId == matCarId; // Carrera específica
+            if (matFacId) return maeFacId == matFacId; // Facultad general
+            return false;
+        });
+
+        const finalOptions = filtered.map(opt => {
+            const copy = {...opt};
+            const coincideCarrera  = (matCarId && opt.carrera == matCarId);
+            if (coincideCarrera) {
+                copy.text = (opt.originalText || opt.text) + ' ⭐ (Especialista)';
+            } else {
+                copy.text = opt.originalText || opt.text;
+            }
+            return copy;
+        });
+
+        finalOptions.unshift({value: "", text: "-- Seleccione un docente --"});
+
+        const currentValue = ts.getValue();
+
+        ts.clearOptions();
+        ts.addOptions(finalOptions);
+        
+        if (finalOptions.some(opt => opt.value == currentValue)) {
+            ts.setValue(currentValue, true);
+        } else {
+            ts.setValue("", true);
+        }
+        ts.refreshOptions(false);
+    } else {
+        const options = maestroSelect.options;
+        let hasSelectedVisible = false;
+
+        for (let i = 0; i < options.length; i++) {
+            const opt = options[i];
+            if (opt.value === "") continue;
+
+            const maeFacId = opt.getAttribute('data-facultad');
+            const maeCarId = opt.getAttribute('data-carrera');
+
+            let match = false;
+            if (!matFacId && !matCarId) match = true;
+            else if (matCarId) match = (maeCarId == matCarId);
+            else if (matFacId) match = (maeFacId == matFacId);
+
+            if (match) {
+                opt.style.display = 'block';
+                const coincideCarrera = (matCarId && maeCarId == matCarId);
+                if (coincideCarrera) {
+                    opt.text = (opt.getAttribute('data-original-text') || opt.text) + ' ⭐ (Especialista)';
+                } else {
+                    opt.text = opt.getAttribute('data-original-text') || opt.text;
+                }
+                if (opt.selected) hasSelectedVisible = true;
+            } else {
+                opt.style.display = 'none';
+                if (opt.selected) opt.selected = false;
+            }
+        }
+
+        if (!hasSelectedVisible) maestroSelect.value = "";
+    }
 }
 
 window.addEventListener('load', function() {
@@ -382,7 +441,7 @@ window.addEventListener('load', function() {
         for (let i = 0; i < maestroSelect.options.length; i++) {
             maestroSelect.options[i].setAttribute('data-original-text', maestroSelect.options[i].text);
         }
-        filterMaestros();
+        setTimeout(filterMaestros, 100);
     }
 });
 

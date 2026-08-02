@@ -165,7 +165,30 @@ switch ($page) {
     header("Location: index.php?page=mis_materias");
     exit();
 
-break;    
+    break;    
+
+    case "cambiar_carrera_activa":
+        if (($_SESSION["rol"] ?? "") === "estudiante" && isset($_GET["id_carrera"])) {
+            $idCarreraNueva = intval($_GET["id_carrera"]);
+            require_once __DIR__ . "/src/dao/EstudianteDao.php";
+            $est = \Dao\EstudianteDao::obtenerEstudiantePorCorreo($_SESSION["correo"]);
+            if ($est) {
+                $carreras = \Dao\EstudianteDao::obtenerCarrerasEstudiante(intval($est["id_estudiante"]));
+                $ids = array_map(fn($c) => intval($c["id_carrera"]), $carreras);
+                if (in_array($idCarreraNueva, $ids, true)) {
+                    require_once __DIR__ . "/src/dao/CarreraDao.php";
+                    $carInfo = \Dao\CarreraDao::obtenerCarreraPorId($idCarreraNueva);
+                    if ($carInfo) {
+                        $_SESSION["id_carrera"] = $idCarreraNueva;
+                        $_SESSION["id_facultad"] = intval($carInfo["id_facultad"]);
+                    }
+                }
+            }
+        }
+        $referer = $_SERVER["HTTP_REFERER"] ?? "index.php?page=home";
+        header("Location: " . $referer);
+        exit();
+        break;
 
      // Home
     case "home":
@@ -429,41 +452,7 @@ break;
         echo json_encode($resultado);
         exit();
 
-    case "solicitar_correccion_nota":
-        require_once __DIR__ . "/src/dao/CalificacionDao.php";
-        $idCalificacion = intval($_POST["id_calificacion"] ?? 0);
-        $motivo = trim($_POST["motivo"] ?? "");
-        $p1Raw = $_POST["parcial1"] ?? "";
-        $p2Raw = $_POST["parcial2"] ?? "";
-        $p3Raw = $_POST["parcial3"] ?? "";
-        $p1 = $p1Raw !== "" ? floatval($p1Raw) : null;
-        $p2 = $p2Raw !== "" ? floatval($p2Raw) : null;
-        $p3 = $p3Raw !== "" ? floatval($p3Raw) : null;
-        if (!$idCalificacion || $motivo === "") {
-            echo "<script>alert('Debe indicar la calificacion y el motivo de correccion.'); window.history.back();</script>";
-            exit();
-        }
-        $res = \Dao\CalificacionDao::solicitarCorreccionNota(
-            $idCalificacion,
-            ["parcial1" => $p1, "parcial2" => $p2, "parcial3" => $p3],
-            $motivo,
-            intval($_SESSION["id_usuario"])
-        );
-        echo "<script>alert('" . addslashes($res["mensaje"]) . "'); window.location='index.php?page=calificaciones';</script>";
-        exit();
 
-    case "correcciones_notas":
-        require_once __DIR__ . "/src/views/templates/calificaciones/correcciones.view.tpl";
-        break;
-
-    case "resolver_correccion_nota":
-        require_once __DIR__ . "/src/dao/CalificacionDao.php";
-        $idSolicitud = intval($_POST["id_solicitud"] ?? 0);
-        $accion = $_POST["accion_resolucion"] ?? "rechazar";
-        $comentario = trim($_POST["comentario"] ?? "");
-        $res = \Dao\CalificacionDao::resolverCorreccionNota($idSolicitud, $accion, intval($_SESSION["id_usuario"]), $comentario);
-        echo "<script>alert('" . addslashes($res["mensaje"]) . "'); window.location='index.php?page=correcciones_notas';</script>";
-        exit();
 
     case "calificacion_nueva":
     case "Calificacion":

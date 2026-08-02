@@ -90,29 +90,29 @@ foreach ($historial as $h) {
             <div class="main-content-card">
                 
                 <!-- Cabecera del Historial -->
-                <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center pb-3 mb-4 border-bottom gap-3">
                     <div class="d-flex align-items-center gap-3">
                         <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn">
                             <i class="bi bi-list"></i>
                         </button>
                         <h1 class="h2 page-title mb-0">Historial Académico</h1>
                     </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="index.php?page=reporte_pdf&tipo=historial&id_estudiante=<?php echo intval($idEstudiante); ?>" class="btn btn-outline-danger" target="_blank">
+                    <div class="d-flex gap-2 flex-wrap w-100 w-md-auto">
+                        <a href="index.php?page=reporte_pdf&tipo=historial&id_estudiante=<?php echo intval($idEstudiante); ?>" class="btn btn-sm btn-outline-danger flex-grow-1 w-md-auto text-nowrap" target="_blank">
                             <i class="bi bi-file-earmark-pdf"></i> Historial PDF
                         </a>
-                        <a href="index.php?page=reporte_pdf&tipo=boleta_ultimo_periodo&id_estudiante=<?php echo intval($idEstudiante); ?>" class="btn btn-danger" target="_blank">
+                        <a href="index.php?page=reporte_pdf&tipo=boleta_ultimo_periodo&id_estudiante=<?php echo intval($idEstudiante); ?>" class="btn btn-sm btn-danger flex-grow-1 w-md-auto text-nowrap" target="_blank">
                             <i class="bi bi-file-earmark-text"></i> Boleta PDF
                         </a>
-                        <a href="index.php?page=estudiantes" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left"></i> Volver a Estudiantes
+                        <a href="index.php?page=estudiantes" class="btn btn-sm btn-secondary flex-grow-1 w-md-auto text-nowrap">
+                            <i class="bi bi-arrow-left"></i> Volver
                         </a>
                     </div>
                 </div>
 
                 <!-- Resumen de Índices -->
                 <div class="row g-4 mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card border-0 shadow-sm rounded-3 bg-primary text-white p-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -123,23 +123,23 @@ foreach ($historial as $h) {
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-8">
                         <div class="card border-0 shadow-sm rounded-3 bg-light p-4 border">
                             <h6 class="text-muted text-uppercase fw-bold mb-2">Detalles del Estudiante</h6>
                             <div class="row">
-                                <div class="col-6 mb-2">
+                                <div class="col-12 col-md-6 mb-2">
                                     <span class="text-muted small">Nombre:</span>
                                     <div class="fw-bold text-dark text-truncate" title="<?php echo htmlspecialchars($estudiante["nombre"]); ?>"><?php echo htmlspecialchars($estudiante["nombre"]); ?></div>
                                 </div>
-                                <div class="col-6 mb-2">
+                                <div class="col-12 col-md-6 mb-2">
                                     <span class="text-muted small">Cuenta/DNI:</span>
                                     <div class="fw-bold text-dark"><?php echo htmlspecialchars($estudiante["cuenta"]); ?></div>
                                 </div>
-                                <div class="col-6 mb-2 text-truncate">
+                                <div class="col-12 col-md-6 mb-2 text-truncate">
                                     <span class="text-muted small">Carrera:</span>
                                     <div class="fw-bold text-primary text-truncate" title="<?php echo htmlspecialchars($estudiante["carrera"] ?? "General"); ?>"><?php echo htmlspecialchars($estudiante["carrera"] ?? "General"); ?></div>
                                 </div>
-                                <div class="col-6 mb-2">
+                                <div class="col-12 col-md-6 mb-2">
                                     <span class="text-muted small">Campus / Sede:</span>
                                     <div class="fw-bold text-secondary"><?php echo htmlspecialchars($estudiante["campus"] ?? "Sin asignar"); ?></div>
                                 </div>
@@ -223,7 +223,7 @@ foreach ($historial as $h) {
                                                     $badgeClass = $aprobada ? "border-success-subtle text-success bg-success-subtle" : "border-danger-subtle text-danger bg-danger-subtle";
                                                     $resultadoLabel = $aprobada ? "Aprobado" : "Reprobado";
                                                 ?>
-                                                    <li class="list-group-item d-flex align-items-center justify-content-between p-3 class-item" data-name="<?php echo htmlspecialchars(strtolower($c["nombre_materia"] . ' ' . $c["codigo_materia"])); ?>" data-status="<?php echo $aprobada ? 'aprobado' : 'reprobado'; ?>">
+                                                    <li class="list-group-item d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between p-3 gap-3 class-item" data-name="<?php echo htmlspecialchars(strtolower($c["nombre_materia"] . ' ' . $c["codigo_materia"])); ?>" data-status="<?php echo $aprobada ? 'aprobado' : 'reprobado'; ?>">
                                                         <div class="d-flex align-items-center gap-3">
                                                             <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">
                                                                 <i class="bi bi-journal-bookmark-fill text-primary fs-4"></i>

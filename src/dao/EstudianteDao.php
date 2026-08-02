@@ -23,7 +23,6 @@ class EstudianteDao extends Table
             $estadoCondicion = "LOWER(e.estado) IN ('activo', 'admitido')";
         }
 
-        $facultadJoin = "";
         $facultadCondicion = "";
         $carreraCondicion = "";
         $campusCondicion = "";
@@ -32,17 +31,43 @@ class EstudianteDao extends Table
             "buscar_exacto" => $buscar
         );
 
-        if ($idFacultad !== null || $idCarrera !== null) {
-            $facultadJoin = " INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR)) ";
-        }
-
         if ($idFacultad !== null) {
-            $facultadCondicion = " AND c.id_facultad = :id_facultad ";
+            $facultadCondicion = " AND (
+                EXISTS (
+                    SELECT 1 FROM estudiante_carreras ecf
+                    INNER JOIN carreras cf ON ecf.id_carrera = cf.id_carrera
+                    WHERE ecf.id_estudiante = e.id_estudiante
+                      AND ecf.estado = 'activa'
+                      AND cf.id_facultad = :id_facultad
+                )
+                OR (
+                    NOT EXISTS (SELECT 1 FROM estudiante_carreras ecf3 WHERE ecf3.id_estudiante = e.id_estudiante AND ecf3.estado = 'activa')
+                    AND EXISTS (
+                        SELECT 1 FROM carreras cf2 
+                        WHERE (e.carrera = cf2.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(cf2.id_carrera AS CHAR))
+                          AND cf2.id_facultad = :id_facultad
+                    )
+                )
+            ) ";
             $params["id_facultad"] = $idFacultad;
         }
 
         if ($idCarrera !== null && $idCarrera !== "") {
-            $carreraCondicion = " AND c.id_carrera = :id_carrera ";
+            $carreraCondicion = " AND (
+                EXISTS (
+                    SELECT 1 FROM estudiante_carreras ec2 
+                    WHERE ec2.id_estudiante = e.id_estudiante 
+                      AND ec2.id_carrera = :id_carrera 
+                      AND ec2.estado = 'activa'
+                )
+                OR (
+                    NOT EXISTS (SELECT 1 FROM estudiante_carreras ec3 WHERE ec3.id_estudiante = e.id_estudiante AND ec3.estado = 'activa')
+                    AND (
+                        e.carrera = CAST(:id_carrera AS CHAR)
+                        OR EXISTS (SELECT 1 FROM carreras c2 WHERE c2.id_carrera = :id_carrera AND c2.nombre_carrera = e.carrera)
+                    )
+                )
+            ) ";
             $params["id_carrera"] = intval($idCarrera);
         }
 
@@ -51,31 +76,50 @@ class EstudianteDao extends Table
             $params["id_campus"] = intval($idCampus);
         }
 
+        $carreraSelectExpr = "";
+        if ($idCarrera !== null && $idCarrera !== "") {
+            $carreraSelectExpr = "(SELECT nombre_carrera FROM carreras WHERE id_carrera = :id_carrera_display) AS carrera";
+            $params["id_carrera_display"] = intval($idCarrera);
+        } else {
+            $carreraSelectExpr = "GROUP_CONCAT(DISTINCT COALESCE(cr.nombre_carrera, e.carrera) SEPARATOR ' / ') AS carrera";
+        }
+
         $sqlstr = "SELECT 
                         e.id_estudiante,
                         e.id_usuario,
                         e.cuenta,
-                        e.carrera,
                         e.telefono,
                         u.nombre,
                         u.correo,
                         e.estado,
                         e.id_campus,
-                        cp.nombre_campus AS campus
+                        cp.nombre_campus AS campus,
+                        $carreraSelectExpr
                    FROM estudiantes e
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
                    LEFT JOIN campus cp ON e.id_campus = cp.id_campus
-                   $facultadJoin
-                    WHERE (u.nombre LIKE :buscar
-                       OR u.correo LIKE :buscar
-                       OR e.cuenta LIKE :buscar
-                       OR CAST(e.id_estudiante AS CHAR) = :buscar_exacto)
-                       AND $estadoCondicion
-                       $facultadCondicion
-                       $carreraCondicion
-                       $campusCondicion
-                    ORDER BY e.id_estudiante DESC
-                    LIMIT " . intval($limit) . " OFFSET " . intval($offset);
+                   LEFT JOIN estudiante_carreras ec ON e.id_estudiante = ec.id_estudiante AND ec.estado = 'activa'
+                   LEFT JOIN carreras cr ON ec.id_carrera = cr.id_carrera
+                   WHERE (u.nombre LIKE :buscar
+                      OR u.correo LIKE :buscar
+                      OR e.cuenta LIKE :buscar
+                      OR CAST(e.id_estudiante AS CHAR) = :buscar_exacto)
+                      AND $estadoCondicion
+                      $facultadCondicion
+                      $carreraCondicion
+                      $campusCondicion
+                   GROUP BY 
+                        e.id_estudiante,
+                        e.id_usuario,
+                        e.cuenta,
+                        e.telefono,
+                        u.nombre,
+                        u.correo,
+                        e.estado,
+                        e.id_campus,
+                        cp.nombre_campus
+                   ORDER BY e.id_estudiante DESC
+                   LIMIT " . intval($limit) . " OFFSET " . intval($offset);
 
         return self::obtenerRegistros($sqlstr, $params);
     }
@@ -94,7 +138,6 @@ class EstudianteDao extends Table
             $estadoCondicion = "LOWER(e.estado) IN ('activo', 'admitido')";
         }
 
-        $facultadJoin = "";
         $facultadCondicion = "";
         $carreraCondicion = "";
         $campusCondicion = "";
@@ -103,17 +146,43 @@ class EstudianteDao extends Table
             "buscar_exacto" => $buscar
         );
 
-        if ($idFacultad !== null || $idCarrera !== null) {
-            $facultadJoin = " INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR)) ";
-        }
-
         if ($idFacultad !== null) {
-            $facultadCondicion = " AND c.id_facultad = :id_facultad ";
+            $facultadCondicion = " AND (
+                EXISTS (
+                    SELECT 1 FROM estudiante_carreras ecf
+                    INNER JOIN carreras cf ON ecf.id_carrera = cf.id_carrera
+                    WHERE ecf.id_estudiante = e.id_estudiante
+                      AND ecf.estado = 'activa'
+                      AND cf.id_facultad = :id_facultad
+                )
+                OR (
+                    NOT EXISTS (SELECT 1 FROM estudiante_carreras ecf3 WHERE ecf3.id_estudiante = e.id_estudiante AND ecf3.estado = 'activa')
+                    AND EXISTS (
+                        SELECT 1 FROM carreras cf2 
+                        WHERE (e.carrera = cf2.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(cf2.id_carrera AS CHAR))
+                          AND cf2.id_facultad = :id_facultad
+                    )
+                )
+            ) ";
             $params["id_facultad"] = $idFacultad;
         }
 
         if ($idCarrera !== null && $idCarrera !== "") {
-            $carreraCondicion = " AND c.id_carrera = :id_carrera ";
+            $carreraCondicion = " AND (
+                EXISTS (
+                    SELECT 1 FROM estudiante_carreras ec2 
+                    WHERE ec2.id_estudiante = e.id_estudiante 
+                      AND ec2.id_carrera = :id_carrera 
+                      AND ec2.estado = 'activa'
+                )
+                OR (
+                    NOT EXISTS (SELECT 1 FROM estudiante_carreras ec3 WHERE ec3.id_estudiante = e.id_estudiante AND ec3.estado = 'activa')
+                    AND (
+                        e.carrera = CAST(:id_carrera AS CHAR)
+                        OR EXISTS (SELECT 1 FROM carreras c2 WHERE c2.id_carrera = :id_carrera AND c2.nombre_carrera = e.carrera)
+                    )
+                )
+            ) ";
             $params["id_carrera"] = intval($idCarrera);
         }
 
@@ -125,7 +194,6 @@ class EstudianteDao extends Table
         $sqlstr = "SELECT COUNT(*) as total
                    FROM estudiantes e
                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
-                   $facultadJoin
                    WHERE (u.nombre LIKE :buscar
                       OR u.correo LIKE :buscar
                       OR e.cuenta LIKE :buscar
