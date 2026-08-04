@@ -12,12 +12,14 @@ class MaestroDao extends Table
     // LISTAR MAESTROS
     //====================================
 
-    public static function obtenerTodos($estado = 'todos')
+    public static function obtenerTodos($estado = 'todos', $idCampus = null, $limit = null, $offset = null)
     {
         $sql = "SELECT 
                     m.id_maestro, 
                     m.numero_empleado, 
                     m.telefono, 
+                    m.id_campus,
+                    cp.nombre_campus AS campus,
                     u.id_usuario, 
                     u.nombre, 
                     u.correo, 
@@ -26,6 +28,7 @@ class MaestroDao extends Table
                     u.documento_dni AS dni
                 FROM maestros m
                 INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
+                LEFT JOIN campus cp ON m.id_campus = cp.id_campus
                 WHERE 1=1";
         
         $params = [];
@@ -33,8 +36,16 @@ class MaestroDao extends Table
             $sql .= " AND u.estado = :estado";
             $params["estado"] = $estado;
         }
+        if ($idCampus !== null && $idCampus !== "") {
+            $sql .= " AND m.id_campus = :id_campus";
+            $params["id_campus"] = intval($idCampus);
+        }
 
         $sql .= " ORDER BY u.nombre";
+
+        if ($limit !== null && $offset !== null) {
+            $sql .= " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
+        }
 
         return self::obtenerRegistros($sql, $params);
     }
@@ -43,10 +54,12 @@ class MaestroDao extends Table
     // LISTAR COORDINADORES
     //====================================
 
-    public static function obtenerCoordinadores($estado = 'todos')
+    public static function obtenerCoordinadores($estado = 'todos', $idCampus = null, $limit = null, $offset = null)
     {
         $sql = "SELECT
                     c.id_coordinador,
+                    c.id_campus,
+                    cp.nombre_campus AS campus,
                     u.id_usuario,
                     u.nombre,
                     u.correo,
@@ -59,6 +72,7 @@ class MaestroDao extends Table
                     ON c.id_usuario = u.id_usuario
                 INNER JOIN facultades f
                     ON f.id_facultad = c.id_facultad
+                LEFT JOIN campus cp ON c.id_campus = cp.id_campus
                 WHERE 1=1";
 
         $params = [];
@@ -66,8 +80,16 @@ class MaestroDao extends Table
             $sql .= " AND u.estado = :estado";
             $params["estado"] = $estado;
         }
+        if ($idCampus !== null && $idCampus !== "") {
+            $sql .= " AND c.id_campus = :id_campus";
+            $params["id_campus"] = intval($idCampus);
+        }
 
         $sql .= " ORDER BY u.nombre";
+
+        if ($limit !== null && $offset !== null) {
+            $sql .= " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
+        }
 
         return self::obtenerRegistros($sql, $params);
     }
@@ -108,12 +130,14 @@ class MaestroDao extends Table
     // BUSCAR MAESTROS
     //====================================
 
-    public static function buscar($buscar, $estado = 'todos')
+    public static function buscar($buscar, $estado = 'todos', $idCampus = null, $limit = null, $offset = null)
     {
         $sql = "SELECT
                     m.id_maestro,
                     m.numero_empleado,
                     m.telefono,
+                    m.id_campus,
+                    cp.nombre_campus AS campus,
                     u.id_usuario,
                     u.nombre,
                     u.correo,
@@ -123,6 +147,7 @@ class MaestroDao extends Table
                 FROM maestros m
                 INNER JOIN usuarios u
                     ON u.id_usuario = m.id_usuario
+                LEFT JOIN campus cp ON m.id_campus = cp.id_campus
                 WHERE (
                     u.nombre LIKE :buscar
                     OR u.correo LIKE :buscar
@@ -135,8 +160,16 @@ class MaestroDao extends Table
             $sql .= " AND u.estado = :estado";
             $params["estado"] = $estado;
         }
+        if ($idCampus !== null && $idCampus !== "") {
+            $sql .= " AND m.id_campus = :id_campus";
+            $params["id_campus"] = intval($idCampus);
+        }
 
         $sql .= " ORDER BY u.nombre";
+
+        if ($limit !== null && $offset !== null) {
+            $sql .= " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
+        }
 
         return self::obtenerRegistros($sql, $params);
     }
@@ -145,10 +178,12 @@ class MaestroDao extends Table
     // BUSCAR COORDINADORES
     //====================================
 
-    public static function buscarCoordinadores($buscar, $estado = 'todos')
+    public static function buscarCoordinadores($buscar, $estado = 'todos', $idCampus = null, $limit = null, $offset = null)
     {
         $sql = "SELECT
                     c.id_coordinador,
+                    c.id_campus,
+                    cp.nombre_campus AS campus,
                     u.id_usuario,
                     u.nombre,
                     u.correo,
@@ -161,6 +196,7 @@ class MaestroDao extends Table
                     ON c.id_usuario = u.id_usuario
                 INNER JOIN facultades f
                     ON f.id_facultad = c.id_facultad
+                LEFT JOIN campus cp ON c.id_campus = cp.id_campus
                 WHERE (
                     u.nombre LIKE :buscar
                     OR u.correo LIKE :buscar
@@ -173,10 +209,71 @@ class MaestroDao extends Table
             $sql .= " AND u.estado = :estado";
             $params["estado"] = $estado;
         }
+        if ($idCampus !== null && $idCampus !== "") {
+            $sql .= " AND c.id_campus = :id_campus";
+            $params["id_campus"] = intval($idCampus);
+        }
 
         $sql .= " ORDER BY u.nombre";
 
+        if ($limit !== null && $offset !== null) {
+            $sql .= " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
+        }
+
         return self::obtenerRegistros($sql, $params);
+    }
+
+    public static function obtenerTotalMaestros($buscar = "", $estado = 'todos', $idCampus = null)
+    {
+        $sql = "SELECT COUNT(DISTINCT m.id_maestro) AS total
+                FROM maestros m
+                INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
+                LEFT JOIN campus cp ON m.id_campus = cp.id_campus
+                WHERE 1=1";
+        
+        $params = [];
+        if ($buscar !== "") {
+            $sql .= " AND (u.nombre LIKE :buscar OR u.correo LIKE :buscar OR m.numero_empleado LIKE :buscar OR u.documento_dni LIKE :buscar)";
+            $params["buscar"] = "%" . $buscar . "%";
+        }
+        if ($estado === 'activo' || $estado === 'inactivo') {
+            $sql .= " AND u.estado = :estado";
+            $params["estado"] = $estado;
+        }
+        if ($idCampus !== null && $idCampus !== "") {
+            $sql .= " AND m.id_campus = :id_campus";
+            $params["id_campus"] = intval($idCampus);
+        }
+
+        $res = self::obtenerUnRegistro($sql, $params);
+        return intval($res["total"] ?? 0);
+    }
+
+    public static function obtenerTotalCoordinadores($buscar = "", $estado = 'todos', $idCampus = null)
+    {
+        $sql = "SELECT COUNT(DISTINCT c.id_coordinador) AS total
+                FROM coordinadores c
+                INNER JOIN usuarios u ON c.id_usuario = u.id_usuario
+                INNER JOIN facultades f ON f.id_facultad = c.id_facultad
+                LEFT JOIN campus cp ON c.id_campus = cp.id_campus
+                WHERE 1=1";
+        
+        $params = [];
+        if ($buscar !== "") {
+            $sql .= " AND (u.nombre LIKE :buscar OR u.correo LIKE :buscar OR f.nombre_facultad LIKE :buscar OR u.documento_dni LIKE :buscar)";
+            $params["buscar"] = "%" . $buscar . "%";
+        }
+        if ($estado === 'activo' || $estado === 'inactivo') {
+            $sql .= " AND u.estado = :estado";
+            $params["estado"] = $estado;
+        }
+        if ($idCampus !== null && $idCampus !== "") {
+            $sql .= " AND c.id_campus = :id_campus";
+            $params["id_campus"] = intval($idCampus);
+        }
+
+        $res = self::obtenerUnRegistro($sql, $params);
+        return intval($res["total"] ?? 0);
     }
 
     //====================================
@@ -237,7 +334,8 @@ class MaestroDao extends Table
                     numero_empleado,
                     telefono,
                     id_facultad,
-                    id_carrera
+                    id_carrera,
+                    id_campus
                 )
                 VALUES
                 (
@@ -245,7 +343,8 @@ class MaestroDao extends Table
                     :numero_empleado,
                     :telefono,
                     :id_facultad,
-                    :id_carrera
+                    :id_carrera,
+                    :id_campus
                 )";
 
                 self::executeNonQuery(
@@ -255,7 +354,8 @@ class MaestroDao extends Table
                         "numero_empleado" => $data["numero_empleado"],
                         "telefono" => $data["telefono"],
                         "id_facultad" => $data["id_facultad"] ?? null,
-                        "id_carrera" => $data["id_carrera"] ?? null
+                        "id_carrera" => $data["id_carrera"] ?? null,
+                        "id_campus" => $data["id_campus"] ?? null
                     ],
                     $conn
                 );
@@ -268,19 +368,22 @@ class MaestroDao extends Table
                 $sql = "INSERT INTO coordinadores
                 (
                     id_usuario,
-                    id_facultad
+                    id_facultad,
+                    id_campus
                 )
                 VALUES
                 (
                     :id_usuario,
-                    :id_facultad
+                    :id_facultad,
+                    :id_campus
                 )";
 
                 self::executeNonQuery(
                     $sql,
                     [
                         "id_usuario" => $idUsuario,
-                        "id_facultad" => $data["id_facultad"]
+                        "id_facultad" => $data["id_facultad"],
+                        "id_campus" => $data["id_campus"] ?? null
                     ],
                     $conn
                 );
@@ -408,7 +511,7 @@ class MaestroDao extends Table
 
     public static function obtenerMaestroPorId($idMaestro)
     {
-        $sql = "SELECT m.id_maestro, m.telefono, m.id_facultad, m.id_carrera, u.id_usuario, u.nombre, u.correo, u.titulo, u.documento_dni AS dni, u.id_rol
+        $sql = "SELECT m.id_maestro, m.telefono, m.id_facultad, m.id_carrera, m.id_campus, u.id_usuario, u.nombre, u.correo, u.titulo, u.documento_dni AS dni, u.id_rol
                 FROM maestros m
                 INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
                 WHERE m.id_maestro = :id";
@@ -417,7 +520,7 @@ class MaestroDao extends Table
 
     public static function obtenerCoordinadorPorId($idCoordinador)
     {
-        $sql = "SELECT c.id_coordinador, c.id_facultad, u.id_usuario, u.nombre, u.correo, u.titulo, u.documento_dni AS dni, u.id_rol
+        $sql = "SELECT c.id_coordinador, c.id_facultad, c.id_campus, u.id_usuario, u.nombre, u.correo, u.titulo, u.documento_dni AS dni, u.id_rol
                 FROM coordinadores c
                 INNER JOIN usuarios u ON c.id_usuario = u.id_usuario
                 WHERE c.id_coordinador = :id";
@@ -434,18 +537,18 @@ class MaestroDao extends Table
 
     public static function existeDni($dni)
     {
-        return self::obtenerUnRegistro(
-            "SELECT id_usuario FROM usuarios WHERE documento_dni=:dni",
-            ["dni" => $dni]
-        );
+        $sql = "SELECT id_usuario FROM usuarios WHERE documento_dni = :dni
+                UNION
+                SELECT id_usuario FROM estudiantes WHERE cuenta = :dni";
+        return self::obtenerUnRegistro($sql, ["dni" => $dni]);
     }
 
     public static function existeDniExcluyendo($dni, $idUsuario)
     {
-        return self::obtenerUnRegistro(
-            "SELECT id_usuario FROM usuarios WHERE documento_dni=:dni AND id_usuario != :id_usuario",
-            ["dni" => $dni, "id_usuario" => $idUsuario]
-        );
+        $sql = "SELECT id_usuario FROM usuarios WHERE documento_dni = :dni AND id_usuario <> :id_usuario
+                UNION
+                SELECT id_usuario FROM estudiantes WHERE cuenta = :dni AND id_usuario <> :id_usuario";
+        return self::obtenerUnRegistro($sql, ["dni" => $dni, "id_usuario" => $idUsuario]);
     }
 
     public static function actualizarPersonal($data)
@@ -472,20 +575,24 @@ class MaestroDao extends Table
                 $sqlMaestro = "UPDATE maestros 
                                SET telefono = :telefono, 
                                    id_facultad = :id_facultad, 
-                                   id_carrera = :id_carrera 
+                                   id_carrera = :id_carrera,
+                                   id_campus = :id_campus
                                WHERE id_maestro = :id_maestro";
                 self::executeNonQuery($sqlMaestro, [
                     "telefono" => $data["telefono"],
                     "id_facultad" => $data["id_facultad"],
                     "id_carrera" => $data["id_carrera"],
+                    "id_campus" => $data["id_campus"],
                     "id_maestro" => $data["id_maestro"]
                 ], $conn);
             } elseif ($data["id_rol"] == 4 && isset($data["id_coordinador"])) {
                 $sqlCoordinador = "UPDATE coordinadores 
-                                   SET id_facultad = :id_facultad 
+                                   SET id_facultad = :id_facultad,
+                                       id_campus = :id_campus
                                    WHERE id_coordinador = :id_coordinador";
                 self::executeNonQuery($sqlCoordinador, [
                     "id_facultad" => $data["id_facultad"],
+                    "id_campus" => $data["id_campus"],
                     "id_coordinador" => $data["id_coordinador"]
                 ], $conn);
             }

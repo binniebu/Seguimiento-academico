@@ -255,7 +255,7 @@ public static function getDashboardDirector()
     );
 }
 
-public static function getDashboardCoordinador($idFacultad)
+public static function getDashboardCoordinador($idFacultad, $idCampus = null)
 {
     if (empty($idFacultad)) {
         return array(
@@ -265,6 +265,11 @@ public static function getDashboardCoordinador($idFacultad)
         );
     }
 
+    $params = array("id_facultad" => intval($idFacultad));
+    if ($idCampus !== null && $idCampus !== "") {
+        $params["id_campus"] = intval($idCampus);
+    }
+
     return array(
         "estudiantes_matriculados" => self::safeScalar(
             "SELECT COUNT(DISTINCT mt.id_estudiante) AS total
@@ -272,14 +277,17 @@ public static function getDashboardCoordinador($idFacultad)
              INNER JOIN estudiantes e ON mt.id_estudiante = e.id_estudiante
              INNER JOIN carreras c ON (e.carrera = c.nombre_carrera OR CAST(e.carrera AS CHAR) = CAST(c.id_carrera AS CHAR))
              INNER JOIN periodos_academicos p ON mt.id_periodo = p.id_periodo AND p.estado = 'activo'
-             WHERE c.id_facultad = :id_facultad",
-            array("id_facultad" => intval($idFacultad))
+             WHERE c.id_facultad = :id_facultad" . 
+             (($idCampus !== null && $idCampus !== "") ? " AND e.id_campus = :id_campus" : ""),
+            $params
         ),
         "secciones_activas" => self::safeScalar(
             "SELECT COUNT(*) AS total
              FROM secciones s
              INNER JOIN materias m ON s.id_materia = m.id_materia
              LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
+             INNER JOIN maestros mae ON s.id_maestro = mae.id_maestro" . 
+             (($idCampus !== null && $idCampus !== "") ? " AND mae.id_campus = :id_campus" : "") . "
              INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo AND p.estado = 'activo'
              WHERE s.estado = 'Activa'
                AND (
@@ -287,7 +295,7 @@ public static function getDashboardCoordinador($idFacultad)
                     OR m.id_facultad = :id_facultad
                     OR c.id_facultad = :id_facultad
                )",
-            array("id_facultad" => intval($idFacultad))
+            $params
         ),
         "secciones_cupo_bajo" => self::safeRows(
             "SELECT s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin,
@@ -297,6 +305,8 @@ public static function getDashboardCoordinador($idFacultad)
              FROM secciones s
              INNER JOIN materias m ON s.id_materia = m.id_materia
              LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
+             INNER JOIN maestros mae ON s.id_maestro = mae.id_maestro" . 
+             (($idCampus !== null && $idCampus !== "") ? " AND mae.id_campus = :id_campus" : "") . "
              INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo AND p.estado = 'activo'
              LEFT JOIN matriculas mt ON s.id_seccion = mt.id_seccion
              WHERE s.estado = 'Activa'
@@ -307,9 +317,8 @@ public static function getDashboardCoordinador($idFacultad)
                )
              GROUP BY s.id_seccion, s.codigo_seccion, s.aula, s.dias, s.hora_inicio, s.hora_fin, s.cupo_maximo, m.nombre
              HAVING cupos_disponibles < 5
-             ORDER BY cupos_disponibles ASC, m.nombre ASC
-             LIMIT 6",
-            array("id_facultad" => intval($idFacultad))
+             ORDER BY cupos_disponibles ASC, m.nombre ASC",
+            $params
         )
     );
 }

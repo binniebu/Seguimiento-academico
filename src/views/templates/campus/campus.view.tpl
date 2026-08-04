@@ -1,6 +1,16 @@
 <?php
 require_once __DIR__ . "/../../../controllers/CampusController.php";
-$campuses = \Controllers\CampusController::listar();
+require_once __DIR__ . "/../../../dao/CampusDao.php";
+
+$p = intval($_GET['p'] ?? 1);
+if ($p < 1) $p = 1;
+$limit = 4;
+$offset = ($p - 1) * $limit;
+
+$totalCampuses = \Dao\CampusDao::obtenerTotalCampuses(true);
+$totalPages = ceil($totalCampuses / $limit);
+
+$campuses = \Controllers\CampusController::listar($limit, $offset);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -73,6 +83,36 @@ $campuses = \Controllers\CampusController::listar();
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Control de Paginación -->
+                    <?php if ($totalPages > 1): ?>
+                        <nav class="mt-4" aria-label="Navegación de páginas">
+                            <ul class="pagination justify-content-center">
+                                <!-- Anterior -->
+                                <li class="page-item <?php echo $p <= 1 ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="index.php?page=campus&p=<?php echo ($p - 1); ?>" aria-label="Anterior">
+                                         <span aria-hidden="true">&laquo; Anterior</span>
+                                    </a>
+                                </li>
+
+                                <!-- Páginas -->
+                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                    <li class="page-item <?php echo $p === $i ? 'active' : ''; ?>">
+                                        <a class="page-link" href="index.php?page=campus&p=<?php echo $i; ?>">
+                                            <?php echo $i; ?>
+                                        </a>
+                                    </li>
+                                <?php endfor; ?>
+
+                                <!-- Siguiente -->
+                                <li class="page-item <?php echo $p >= $totalPages ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="index.php?page=campus&p=<?php echo ($p + 1); ?>" aria-label="Siguiente">
+                                         <span aria-hidden="true">Siguiente &raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
                 <?php else: ?>
                     <div class="text-center py-5">
                         <i class="bi bi-building fs-1 text-muted"></i>
@@ -85,5 +125,25 @@ $campuses = \Controllers\CampusController::listar();
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Mostrar alerta SweetAlert2 si existen parámetros de redirección en la URL
+<?php
+$msg = $_GET['msg'] ?? '';
+$tipo_msg = $_GET['tipo_msg'] ?? '';
+if ($msg && $tipo_msg):
+?>
+Swal.fire({
+    title: <?php echo json_encode($tipo_msg === "success" ? "¡Éxito!" : "Atención"); ?>,
+    text: <?php echo json_encode($msg); ?>,
+    icon: <?php echo json_encode($tipo_msg); ?>,
+    confirmButtonColor: '#0057d8',
+    confirmButtonText: 'Aceptar',
+    customClass: {
+        popup: 'rounded-4 shadow',
+        confirmButton: 'px-4 py-2 font-weight-bold'
+    }
+});
+<?php endif; ?>
+</script>
 </body>
 </html>

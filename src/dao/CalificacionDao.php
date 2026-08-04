@@ -253,6 +253,16 @@ class CalificacionDao extends Table
         ];
     }
 
+    public static function obtenerAutorizacionCalificacion(int $idMatricula)
+    {
+        $sqlstr = "SELECT s.id_maestro, s.estado AS estado_seccion, p.estado AS estado_periodo
+                   FROM matriculas m
+                   INNER JOIN secciones s ON m.id_seccion = s.id_seccion
+                   INNER JOIN periodos_academicos p ON s.id_periodo = p.id_periodo
+                   WHERE m.id_matricula = :id_matricula";
+        return self::obtenerUnRegistro($sqlstr, ["id_matricula" => $idMatricula]);
+    }
+
     public static function obtenerDetalleCalificacion(int $idCalificacion)
     {
         $sqlstr = "SELECT c.*, mt.id_estudiante, mt.id_seccion, mt.id_periodo,

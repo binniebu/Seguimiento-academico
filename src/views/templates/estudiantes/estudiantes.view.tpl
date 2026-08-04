@@ -105,7 +105,7 @@
             $buscar = $_GET['buscar'] ?? '';
             $p = intval($_GET['p'] ?? 1);
             if ($p < 1) $p = 1;
-            $limit = 5; // 5 estudiantes por página
+            $limit = 4; // 4 estudiantes por página
             $offset = ($p - 1) * $limit;
 
             // Determinar si es coordinador para filtrar por su facultad y campus

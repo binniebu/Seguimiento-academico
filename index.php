@@ -54,7 +54,28 @@ switch ($page) {
             header("Location: index.php?page=home");
             exit();
         } else {
-            echo "<script>alert('Correo o contraseña incorrectos'); window.location='index.php?page=login';</script>";
+            echo "<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='UTF-8'>
+                <title>Acceso Denegado</title>
+                <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+            </head>
+            <body>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de Autenticación',
+                            text: 'El correo o la contraseña son incorrectos. Por favor, intente de nuevo.',
+                            confirmButtonColor: '#0057d8'
+                        }).then(function() {
+                            window.location = 'index.php?page=login';
+                        });
+                    });
+                </script>
+            </body>
+            </html>";
             exit();
         }
     }
@@ -218,7 +239,19 @@ switch ($page) {
         require_once __DIR__ . "/src/views/templates/dashboard/dashboard.view.tpl";
         break;
       
-     
+    // Estadísticas
+    case "estadisticas":
+        if (!isset($_SESSION["usuario"])) {
+            header("Location: index.php?page=login");
+            exit();
+        }
+        if (!in_array($_SESSION["rol"] ?? "", ["director", "coordinador", "maestro"], true)) {
+            header("Location: index.php?page=home");
+            exit();
+        }
+        require_once __DIR__ . "/src/views/templates/reportes/estadisticas.view.tpl";
+        break;
+
     // Estudiantes
     case "estudiantes":
         if (isset($_GET["accion"]) && isset($_GET["id"])) {
@@ -431,16 +464,55 @@ switch ($page) {
     // Endpoint AJAX POST: guarda las notas parciales de un alumno y devuelve el promedio calculado
     case "guardar_nota_parciales":
         header("Content-Type: application/json; charset=UTF-8");
+        
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $rol = $_SESSION["rol"] ?? "";
+        if ($rol !== "maestro") {
+            echo json_encode(["exito" => false, "mensaje" => "Solo los docentes pueden registrar calificaciones."]);
+            exit();
+        }
+
         require_once __DIR__ . "/src/dao/CalificacionDao.php";
         $idMatricula = intval($_POST["id_matricula"] ?? 0);
         if (!$idMatricula) {
             echo json_encode(["exito" => false, "mensaje" => "ID de matricula invalido."]);
             exit();
         }
+
+        // Validación de permisos y alcances
+        require_once __DIR__ . "/src/dao/MaestroDao.php";
+        $maestro = \Dao\MaestroDao::obtenerMaestroPorIdUsuario($_SESSION["id_usuario"] ?? null);
+        $idMaestro = $maestro ? intval($maestro["id_maestro"]) : 0;
+
+        $check = \Dao\CalificacionDao::obtenerAutorizacionCalificacion($idMatricula);
+        if (!$check) {
+            echo json_encode(["exito" => false, "mensaje" => "La matricula especificada no existe."]);
+            exit();
+        }
+
+        if (intval($check["id_maestro"]) !== $idMaestro) {
+            echo json_encode(["exito" => false, "mensaje" => "No tiene autorizacion para modificar calificaciones en esta seccion."]);
+            exit();
+        }
+
+        if ($check["estado_seccion"] === "Cerrada") {
+            echo json_encode(["exito" => false, "mensaje" => "La seccion de clase se encuentra Cerrada. No se pueden registrar calificaciones."]);
+            exit();
+        }
+
+        if ($check["estado_periodo"] === "inactivo") {
+            echo json_encode(["exito" => false, "mensaje" => "El periodo academico de esta seccion ya no esta activo."]);
+            exit();
+        }
+
         // Leer cada parcial solo si viene en el POST; null = no ingresado todavia
         $p1 = isset($_POST["parcial1"]) && $_POST["parcial1"] !== "" ? floatval($_POST["parcial1"]) : null;
         $p2 = isset($_POST["parcial2"]) && $_POST["parcial2"] !== "" ? floatval($_POST["parcial2"]) : null;
         $p3 = isset($_POST["parcial3"]) && $_POST["parcial3"] !== "" ? floatval($_POST["parcial3"]) : null;
+        
         // Validar rango 0-100 para cada parcial que venga
         foreach ([$p1, $p2, $p3] as $pVal) {
             if ($pVal !== null && ($pVal < 0 || $pVal > 100)) {
@@ -448,6 +520,7 @@ switch ($page) {
                 exit();
             }
         }
+        
         $resultado = \Dao\CalificacionDao::guardarNotasParciales($idMatricula, $p1, $p2, $p3);
         echo json_encode($resultado);
         exit();
@@ -492,10 +565,13 @@ switch ($page) {
         $departamento = $_POST["departamento"] ?? "";
         $estado = $_POST["estado"] ?? "activo";
         $res = \Controllers\CampusController::guardar($id, $nombre, $departamento, $estado);
+        $redirMsg = urlencode($res["mensaje"]);
+        $redirTipo = $res["exito"] ? "success" : "error";
         if ($res["exito"]) {
-            echo "<script>alert('" . addslashes($res["mensaje"]) . "'); window.location='index.php?page=campuses';</script>";
+            header("Location: index.php?page=campuses&msg=$redirMsg&tipo_msg=$redirTipo");
         } else {
-            echo "<script>alert('" . addslashes($res["mensaje"]) . "'); window.history.back();</script>";
+            $redirUrl = $id ? "index.php?page=campus_nuevo&id=$id" : "index.php?page=campus_nuevo";
+            header("Location: $redirUrl&msg=$redirMsg&tipo_msg=$redirTipo");
         }
         exit();
         break;

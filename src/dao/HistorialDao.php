@@ -9,14 +9,21 @@ class HistorialDao extends Table
 {
     public static function obtenerDatosEstudiante($idEstudiante)
     {
-        $sqlstr = "SELECT e.id_estudiante, e.cuenta, e.carrera, e.telefono, e.estado,
-                          u.nombre, u.correo, u.fecha_creacion,
-                          cp.nombre_campus AS campus
-                   FROM estudiantes e
-                   INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
-                   LEFT JOIN campus cp ON e.id_campus = cp.id_campus
-                   WHERE e.id_estudiante = :id_estudiante
-                   LIMIT 1";
+        $sqlstr = "SELECT e.id_estudiante, e.cuenta, e.telefono, e.estado,
+                           u.nombre, u.correo, u.fecha_creacion,
+                           cp.nombre_campus AS campus,
+                           COALESCE(
+                               (SELECT GROUP_CONCAT(c.nombre_carrera SEPARATOR ' / ')
+                                FROM estudiante_carreras ec
+                                INNER JOIN carreras c ON ec.id_carrera = c.id_carrera
+                                WHERE ec.id_estudiante = e.id_estudiante AND ec.estado = 'activa'),
+                               e.carrera
+                           ) AS carrera
+                    FROM estudiantes e
+                    INNER JOIN usuarios u ON e.id_usuario = u.id_usuario
+                    LEFT JOIN campus cp ON e.id_campus = cp.id_campus
+                    WHERE e.id_estudiante = :id_estudiante
+                    LIMIT 1";
         return self::obtenerUnRegistro($sqlstr, ["id_estudiante" => intval($idEstudiante)]);
     }
 

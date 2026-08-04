@@ -102,7 +102,8 @@ class RoleMiddleware
                 "logout",
                 "switch_role",
                 "perfil",
-                "perfil_actualizar"
+                "perfil_actualizar",
+                "estadisticas"
             ),
 
             // ---------------------------------------------------------------
@@ -125,7 +126,8 @@ class RoleMiddleware
                 "logout",
                 "switch_role",
                 "perfil",
-                "perfil_actualizar"
+                "perfil_actualizar",
+                "estadisticas"
             ),
 
             // ---------------------------------------------------------------
@@ -190,7 +192,8 @@ class RoleMiddleware
                 "logout",
                 "switch_role",
                 "perfil",
-                "perfil_actualizar"
+                "perfil_actualizar",
+                "estadisticas"
             ),
         );
 

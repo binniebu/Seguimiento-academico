@@ -47,7 +47,7 @@ class SeccionDao extends Table
         ]);
     }
 
-    public static function obtenerSecciones($buscar = "", $idPeriodo = null, $idFacultad = null, $naturaleza = "todas", $filtroCarrera = "todas")
+    public static function obtenerSecciones($buscar = "", $idPeriodo = null, $idFacultad = null, $naturaleza = "todas", $filtroCarrera = "todas", $idCampus = null)
     {
         $sqlstr = "SELECT s.id_seccion, s.codigo_seccion, s.id_materia, s.id_maestro, s.id_periodo,
                           s.aula, s.dias, s.hora_inicio, s.hora_fin, s.cupo_maximo, s.estado,
@@ -56,15 +56,20 @@ class SeccionDao extends Table
                           f.nombre_facultad,
                           c.nombre_carrera,
                           (SELECT COUNT(*) FROM matriculas mt WHERE mt.id_seccion = s.id_seccion) AS cupo_actual
-                   FROM secciones s
-                   INNER JOIN materias m ON s.id_materia = m.id_materia
-                   INNER JOIN maestros ma ON s.id_maestro = ma.id_maestro
-                   INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
-                   LEFT JOIN facultades f ON m.id_facultad = f.id_facultad
-                   LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
-                   WHERE 1 = 1";
+                    FROM secciones s
+                    INNER JOIN materias m ON s.id_materia = m.id_materia
+                    INNER JOIN maestros ma ON s.id_maestro = ma.id_maestro
+                    INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
+                    LEFT JOIN facultades f ON m.id_facultad = f.id_facultad
+                    LEFT JOIN carreras c ON m.id_carrera = c.id_carrera
+                    WHERE 1 = 1";
 
         $params = [];
+
+        if ($idCampus !== null && $idCampus !== "") {
+            $sqlstr .= " AND ma.id_campus = :id_campus";
+            $params["id_campus"] = intval($idCampus);
+        }
 
         if ($buscar !== "") {
             $sqlstr .= " AND (
@@ -180,14 +185,15 @@ class SeccionDao extends Table
         ]);
     }
 
-    public static function obtenerMaestrosSeleccionables($excluirCoordinadores = true)
+    public static function obtenerMaestrosSeleccionables($excluirCoordinadores = true, $idCampus = null)
     {
         $sqlstr = "SELECT ma.id_maestro, ma.numero_empleado AS codigo, u.nombre, u.correo,
-                          ma.id_facultad, ma.id_carrera
-                   FROM maestros ma
-                   INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
-                   WHERE u.estado = 'activo'";
+                           ma.id_facultad, ma.id_carrera, ma.id_campus
+                    FROM maestros ma
+                    INNER JOIN usuarios u ON ma.id_usuario = u.id_usuario
+                    WHERE u.estado = 'activo'";
 
+        $params = [];
         if ($excluirCoordinadores) {
             $sqlstr .= " AND NOT EXISTS (
                             SELECT 1
@@ -196,8 +202,13 @@ class SeccionDao extends Table
                         )";
         }
 
+        if ($idCampus !== null && $idCampus !== "") {
+            $sqlstr .= " AND ma.id_campus = :id_campus";
+            $params["id_campus"] = intval($idCampus);
+        }
+
         $sqlstr .= " ORDER BY u.nombre ASC";
-        return self::obtenerRegistros($sqlstr);
+        return self::obtenerRegistros($sqlstr, $params);
     }
 
     public static function maestroPuedeImpartir($idMaestro, $excluirCoordinadores = true)

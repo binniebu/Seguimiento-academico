@@ -40,7 +40,8 @@ switch ($rolActual) {
         break;
     case "coordinador":
         $idFacultad = $_SESSION["id_facultad"] ?? null;
-        $dashboard = \Dao\UsuarioDao::getDashboardCoordinador($idFacultad);
+        $idCampus = $_SESSION["id_campus"] ?? null;
+        $dashboard = \Dao\UsuarioDao::getDashboardCoordinador($idFacultad, $idCampus);
         break;
     case "maestro":
         $dashboard = \Dao\UsuarioDao::getDashboardMaestro($correoActual);

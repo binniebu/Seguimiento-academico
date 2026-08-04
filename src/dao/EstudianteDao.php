@@ -247,7 +247,11 @@ class EstudianteDao extends Table
 
     public static function existeCuenta($cuenta)
     {
-        $sqlstr = "SELECT id_estudiante, id_usuario 
+        $sqlstr = "SELECT 0 AS id_estudiante, id_usuario 
+                   FROM usuarios 
+                   WHERE documento_dni = :cuenta
+                   UNION
+                   SELECT id_estudiante, id_usuario 
                    FROM estudiantes 
                    WHERE cuenta = :cuenta";
 

@@ -133,7 +133,7 @@ foreach ($historial as $h) {
                                     <span class="text-muted small">Cuenta/DNI:</span>
                                     <div class="fw-bold text-dark"><?php echo htmlspecialchars($estudiante["cuenta"]); ?></div>
                                 </div>
-                                <div class="col-12 col-md-6 mb-2 text-truncate">
+                                <div class="col-12 col-md-6 mb-2">
                                     <?php
                                     $nombreCarreraMostrar = $estudiante["nombre_carrera"] ?? "General";
                                     if (isset($_SESSION["id_carrera"]) && $_SESSION["id_carrera"]) {
@@ -145,7 +145,7 @@ foreach ($historial as $h) {
                                     }
                                     ?>
                                     <span class="text-muted small">Carrera:</span>
-                                    <div class="fw-bold text-primary text-truncate" title="<?php echo htmlspecialchars($nombreCarreraMostrar); ?>"><?php echo htmlspecialchars($nombreCarreraMostrar); ?></div>
+                                    <div class="fw-bold text-primary" title="<?php echo htmlspecialchars($nombreCarreraMostrar); ?>"><?php echo htmlspecialchars($nombreCarreraMostrar); ?></div>
                                 </div>
                                 <div class="col-12 col-md-6 mb-2">
                                     <span class="text-muted small">Campus / Sede:</span>

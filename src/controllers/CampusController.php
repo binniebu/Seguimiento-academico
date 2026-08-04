@@ -8,9 +8,9 @@ use Dao\CampusDao;
 
 class CampusController
 {
-    public static function listar()
+    public static function listar($limit = null, $offset = null)
     {
-        return CampusDao::obtenerCampuses(true);
+        return CampusDao::obtenerCampuses(true, $limit, $offset);
     }
 
     public static function obtenerPorId($id)

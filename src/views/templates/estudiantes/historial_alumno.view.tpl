@@ -24,6 +24,8 @@ if (!$estudiante) {
     exit();
 }
 
+$carrerasEstudiante = EstudianteDao::obtenerCarrerasEstudiante($idEstudiante);
+
 // -----------------------------------------------------------------
 // VALIDACIÓN DE SEGURIDAD / SCOPE (Coordinador)
 // -----------------------------------------------------------------
@@ -31,17 +33,42 @@ if ($rolUsuario === "coordinador") {
     $facultadCoord = intval($_SESSION["id_facultad"] ?? 0);
     $campusCoord = intval($_SESSION["id_campus"] ?? 0);
 
-    $facultadEstudiante = intval($estudiante["id_facultad"] ?? 0);
     $campusEstudiante = intval($estudiante["id_campus"] ?? 0);
 
-    if ($facultadCoord !== $facultadEstudiante || $campusCoord !== $campusEstudiante) {
+    // Verificar si la facultad del coordinador coincide con alguna de las carreras activas del estudiante
+    $perteneceAFacultad = false;
+    foreach ($carrerasEstudiante as $cEst) {
+        if (intval($cEst["id_facultad"]) === $facultadCoord) {
+            $perteneceAFacultad = true;
+            break;
+        }
+    }
+    // Fallback por si no hay carreras registradas en estudiante_carreras (esquema anterior)
+    if (empty($carrerasEstudiante)) {
+        $perteneceAFacultad = ($facultadCoord === intval($estudiante["id_facultad"] ?? 0));
+    }
+
+    if (!$perteneceAFacultad || $campusCoord !== $campusEstudiante) {
         echo "<script>alert('No tiene permisos para ver el historial de este estudiante (Fuera de su campus o facultad).'); window.location='index.php?page=estudiantes';</script>";
         exit();
     }
 }
+$idCarreraSeleccionada = null;
 
-$historial = HistorialDao::obtenerHistorialAcademico($idEstudiante);
-$indices = HistorialDao::obtenerIndicesAcademicos($idEstudiante);
+if (count($carrerasEstudiante) > 1) {
+    $idCarreraSeleccionada = isset($_GET["id_carrera"]) ? intval($_GET["id_carrera"]) : null;
+    if (!$idCarreraSeleccionada) {
+        foreach ($carrerasEstudiante as $c) {
+            if ($c["es_principal"] == 1) {
+                $idCarreraSeleccionada = intval($c["id_carrera"]);
+                break;
+            }
+        }
+    }
+}
+
+$historial = HistorialDao::obtenerHistorialAcademico($idEstudiante, $idCarreraSeleccionada);
+$indices = HistorialDao::obtenerIndicesAcademicos($idEstudiante, $idCarreraSeleccionada);
 
 // Helper para calcular período de ingreso
 if (!function_exists('calcularPeriodoIngreso')) {
@@ -90,25 +117,34 @@ foreach ($historial as $h) {
             <div class="main-content-card">
                 
                 <!-- Cabecera del Historial -->
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center pb-3 mb-4 border-bottom gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn">
-                            <i class="bi bi-list"></i>
-                        </button>
-                        <h1 class="h2 page-title mb-0">Historial Académico</h1>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap w-100 w-md-auto">
-                        <a href="index.php?page=reporte_pdf&tipo=historial&id_estudiante=<?php echo intval($idEstudiante); ?>" class="btn btn-sm btn-outline-danger flex-grow-1 w-md-auto text-nowrap" target="_blank">
-                            <i class="bi bi-file-earmark-pdf"></i> Historial PDF
-                        </a>
-                        <a href="index.php?page=reporte_pdf&tipo=boleta_ultimo_periodo&id_estudiante=<?php echo intval($idEstudiante); ?>" class="btn btn-sm btn-danger flex-grow-1 w-md-auto text-nowrap" target="_blank">
-                            <i class="bi bi-file-earmark-text"></i> Boleta PDF
-                        </a>
-                        <a href="index.php?page=estudiantes" class="btn btn-sm btn-secondary flex-grow-1 w-md-auto text-nowrap">
-                            <i class="bi bi-arrow-left"></i> Volver
-                        </a>
-                    </div>
-                </div>
+                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center pb-3 mb-4 border-bottom gap-3">
+                     <div class="d-flex align-items-center gap-3 flex-wrap">
+                         <button id="toggleSidebarHeader" class="btn btn-sm btn-outline-secondary toggleSidebarBtn">
+                             <i class="bi bi-list"></i>
+                         </button>
+                         <h1 class="h2 page-title mb-0">Historial Académico</h1>
+                         <?php if (count($carrerasEstudiante) > 1): ?>
+                             <div class="d-flex align-items-center gap-2 ms-md-2 mt-2 mt-md-0">
+                                 <span class="badge bg-info text-dark px-2 py-1" style="font-size: 12px;"><i class="bi bi-arrow-left-right me-1"></i> Carrera Activa:</span>
+                                 <select onchange="window.location='index.php?page=historial_alumno&id=<?php echo $idEstudiante; ?>&id_carrera=' + this.value" class="form-select form-select-sm w-auto header-carrera-select" style="max-width: 250px;">
+                                     <?php foreach ($carrerasEstudiante as $car): ?>
+                                         <option value="<?php echo intval($car['id_carrera']); ?>" <?php echo intval($idCarreraSeleccionada) === intval($car['id_carrera']) ? 'selected' : ''; ?>>
+                                             <?php echo htmlspecialchars($car['nombre_carrera']); ?>
+                                         </option>
+                                     <?php endforeach; ?>
+                                 </select>
+                             </div>
+                         <?php endif; ?>
+                     </div>
+                     <div class="d-flex gap-2 flex-wrap w-100 w-md-auto">
+                         <a href="index.php?page=reporte_pdf&tipo=historial&id_estudiante=<?php echo intval($idEstudiante); ?><?php echo $idCarreraSeleccionada ? '&id_carrera=' . $idCarreraSeleccionada : ''; ?>" class="btn btn-sm btn-outline-danger flex-grow-1 w-md-auto text-nowrap" target="_blank">
+                             <i class="bi bi-file-earmark-pdf"></i> Historial PDF
+                         </a>
+                         <a href="index.php?page=estudiantes" class="btn btn-sm btn-secondary flex-grow-1 w-md-auto text-nowrap">
+                             <i class="bi bi-arrow-left"></i> Volver
+                         </a>
+                     </div>
+                 </div>
 
                 <!-- Resumen de Índices -->
                 <div class="row g-4 mb-4">
@@ -135,10 +171,20 @@ foreach ($historial as $h) {
                                     <span class="text-muted small">Cuenta/DNI:</span>
                                     <div class="fw-bold text-dark"><?php echo htmlspecialchars($estudiante["cuenta"]); ?></div>
                                 </div>
-                                <div class="col-12 col-md-6 mb-2 text-truncate">
-                                    <span class="text-muted small">Carrera:</span>
-                                    <div class="fw-bold text-primary text-truncate" title="<?php echo htmlspecialchars($estudiante["carrera"] ?? "General"); ?>"><?php echo htmlspecialchars($estudiante["carrera"] ?? "General"); ?></div>
-                                </div>
+                                 <div class="col-12 col-md-6 mb-2">
+                                     <span class="text-muted small">Carrera:</span>
+                                     <?php
+                                     $nombreCarreraMostrar = $estudiante["carrera"] ?? "General";
+                                     if ($idCarreraSeleccionada) {
+                                         require_once __DIR__ . "/../../../dao/CarreraDao.php";
+                                         $carreraActivaInfo = \Dao\CarreraDao::obtenerCarreraPorId($idCarreraSeleccionada);
+                                         if ($carreraActivaInfo) {
+                                             $nombreCarreraMostrar = $carreraActivaInfo["nombre_carrera"];
+                                         }
+                                     }
+                                     ?>
+                                     <div class="fw-bold text-primary" title="<?php echo htmlspecialchars($nombreCarreraMostrar); ?>"><?php echo htmlspecialchars($nombreCarreraMostrar); ?></div>
+                                 </div>
                                 <div class="col-12 col-md-6 mb-2">
                                     <span class="text-muted small">Campus / Sede:</span>
                                     <div class="fw-bold text-secondary"><?php echo htmlspecialchars($estudiante["campus"] ?? "Sin asignar"); ?></div>

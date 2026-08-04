@@ -2,6 +2,7 @@
 require_once __DIR__ . "/../../../dao/MaestroDao.php";
 require_once __DIR__ . "/../../../dao/FacultadDao.php";
 require_once __DIR__ . "/../../../dao/CarreraDao.php";
+require_once __DIR__ . "/../../../controllers/CampusController.php";
 
 $personal = null;
 $rolActual = 2; // Maestro por defecto
@@ -21,6 +22,7 @@ if (isset($_GET['id'])) {
 
 $todasFacultades = \Dao\FacultadDao::obtenerTodas();
 $todasCarreras = \Dao\CarreraDao::obtenerCarreras(false);
+$todasCampuses = \Controllers\CampusController::listar();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -80,8 +82,11 @@ $todasCarreras = \Dao\CarreraDao::obtenerCarreras(false);
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">DNI</label>
+                        <label class="form-label fw-semibold">DNI <span class="text-danger">*</span></label>
                         <input type="text" name="dni" class="form-control" 
+                               pattern="[0-9]{13}" maxlength="13" minlength="13"
+                               title="El DNI debe constar de exactamente 13 dígitos numéricos."
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                value="<?php echo htmlspecialchars($personal['dni'] ?? ''); ?>" required>
                     </div>
 
@@ -123,6 +128,31 @@ $todasCarreras = \Dao\CarreraDao::obtenerCarreras(false);
                             <select name="rol" id="select_rol" class="form-select" onchange="toggleFields()" required>
                                 <option value="2" <?php echo $rolActual == 2 ? 'selected' : ''; ?>>Maestro</option>
                                 <option value="4" <?php echo $rolActual == 4 ? 'selected' : ''; ?>>Coordinador</option>
+                            </select>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Campus / Sede <span class="text-danger">*</span></label>
+                        <?php if ($isEdit): ?>
+                            <!-- Bloqueamos el campus en edición tal como los estudiantes y usamos un hidden -->
+                            <input type="hidden" name="id_campus" value="<?php echo htmlspecialchars($personal['id_campus'] ?? ''); ?>">
+                            <select class="form-select" disabled>
+                                <option value="">-- Selecciona un campus --</option>
+                                <?php foreach ($todasCampuses as $cp): ?>
+                                    <option value="<?php echo $cp['id_campus']; ?>" <?php echo ($personal['id_campus'] ?? '') == $cp['id_campus'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($cp['nombre_campus']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php else: ?>
+                            <select name="id_campus" id="select_campus" class="form-select" required>
+                                <option value="">-- Selecciona un campus --</option>
+                                <?php foreach ($todasCampuses as $cp): ?>
+                                    <option value="<?php echo $cp['id_campus']; ?>">
+                                        <?php echo htmlspecialchars($cp['nombre_campus']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         <?php endif; ?>
                     </div>
@@ -262,6 +292,26 @@ window.onload = function() {
         filterCareers();
     }
 };
+</script>
+<script>
+// Mostrar alerta SweetAlert2 si existen parámetros de redirección en la URL
+<?php
+$msg = $_GET['msg'] ?? '';
+$tipo_msg = $_GET['tipo_msg'] ?? '';
+if ($msg && $tipo_msg):
+?>
+Swal.fire({
+    title: <?php echo json_encode($tipo_msg === "success" ? "¡Éxito!" : "Atención"); ?>,
+    text: <?php echo json_encode($msg); ?>,
+    icon: <?php echo json_encode($tipo_msg); ?>,
+    confirmButtonColor: '#0057d8',
+    confirmButtonText: 'Aceptar',
+    customClass: {
+        popup: 'rounded-4 shadow',
+        confirmButton: 'px-4 py-2 font-weight-bold'
+    }
+});
+<?php endif; ?>
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

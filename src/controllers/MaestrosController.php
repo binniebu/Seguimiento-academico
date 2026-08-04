@@ -12,18 +12,18 @@ class MaestrosController
     // LISTAR MAESTROS
     //=================================
 
-    public static function listarMaestros($estado = 'todos')
+    public static function listarMaestros($estado = 'todos', $idCampus = null, $limit = null, $offset = null)
     {
-        return MaestroDao::obtenerTodos($estado);
+        return MaestroDao::obtenerTodos($estado, $idCampus, $limit, $offset);
     }
 
     //=================================
     // LISTAR COORDINADORES
     //=================================
 
-    public static function listarCoordinadores($estado = 'todos')
+    public static function listarCoordinadores($estado = 'todos', $idCampus = null, $limit = null, $offset = null)
     {
-        return MaestroDao::obtenerCoordinadores($estado);
+        return MaestroDao::obtenerCoordinadores($estado, $idCampus, $limit, $offset);
     }
 
     //=================================
@@ -62,18 +62,18 @@ class MaestrosController
     // BUSCAR MAESTROS
     //=================================
 
-    public static function buscarMaestros($buscar, $estado = 'todos')
+    public static function buscarMaestros($buscar, $estado = 'todos', $idCampus = null, $limit = null, $offset = null)
     {
-        return MaestroDao::buscar($buscar, $estado);
+        return MaestroDao::buscar($buscar, $estado, $idCampus, $limit, $offset);
     }
 
     //=================================
     // BUSCAR COORDINADORES
     //=================================
 
-    public static function buscarCoordinadores($buscar, $estado = 'todos')
+    public static function buscarCoordinadores($buscar, $estado = 'todos', $idCampus = null, $limit = null, $offset = null)
     {
-        return MaestroDao::buscarCoordinadores($buscar, $estado);
+        return MaestroDao::buscarCoordinadores($buscar, $estado, $idCampus, $limit, $offset);
     }
 
     //=================================
@@ -120,60 +120,99 @@ class MaestrosController
         $idCoordinador = $_POST["id_coordinador"] ?? null;
         $isEdit = ($idMaestro !== null || $idCoordinador !== null);
 
+        $dni = trim($_POST["dni"] ?? "");
+        $correo = trim($_POST["correo"] ?? "");
+
         $data = [
             "nombre" => $_POST["nombre"],
-            "correo" => $_POST["correo"],
+            "correo" => $correo,
             "id_rol" => $_POST["rol"],
             "telefono" => $_POST["telefono"] ?? null,
             "titulo" => $_POST["titulo"],
             "id_facultad" => (!empty($_POST["id_facultad"]) ? intval($_POST["id_facultad"]) : null),
             "id_carrera" => (!empty($_POST["id_carrera"]) ? intval($_POST["id_carrera"]) : null),
-            "documento_dni" => $_POST["dni"] ?? null
+            "id_campus" => (!empty($_POST["id_campus"]) ? intval($_POST["id_campus"]) : null),
+            "documento_dni" => $dni
         ];
 
+        // Definir la URL de retorno en caso de error
         if ($isEdit) {
             $idUsuario = $_POST["id_usuario"];
             $data["id_usuario"] = $idUsuario;
             if ($idMaestro !== null) {
                 $data["id_maestro"] = $idMaestro;
-            }
-            if ($idCoordinador !== null) {
+                $backUrl = "index.php?page=maestro_nuevo&id=" . intval($idMaestro);
+            } else {
                 $data["id_coordinador"] = $idCoordinador;
+                $backUrl = "index.php?page=maestro_nuevo&id_coordinador=" . intval($idCoordinador);
+            }
+        } else {
+            $backUrl = "index.php?page=maestro_nuevo";
+        }
+
+        // 1. Validar formato de DNI (13 dígitos numéricos)
+        if (!preg_match('/^[0-9]{13}$/', $dni)) {
+            $msg = urlencode("El DNI debe constar de exactamente 13 dígitos numéricos.");
+            header("Location: $backUrl&msg=$msg&tipo_msg=error");
+            exit();
+        }
+
+        // 2. Validar correo vacío o DNI vacío
+        if (empty($correo) || empty($dni)) {
+            $msg = urlencode("El correo y el DNI son campos obligatorios.");
+            header("Location: $backUrl&msg=$msg&tipo_msg=error");
+            exit();
+        }
+
+        if ($isEdit) {
+            // 3. Validar correo duplicado excluyendo el usuario actual
+            if (MaestroDao::existeCorreoExcluyendo($correo, $idUsuario)) {
+                $msg = urlencode("El correo ya está registrado por otro usuario.");
+                header("Location: $backUrl&msg=$msg&tipo_msg=error");
+                exit();
             }
 
-            if (MaestroDao::existeCorreoExcluyendo($data["correo"], $idUsuario)) {
-                echo "<script>
-                        alert('El correo ya está registrado por otro usuario');
-                        history.back();
-                      </script>";
+            // 4. Validar DNI duplicado excluyendo el usuario actual
+            if (MaestroDao::existeDniExcluyendo($dni, $idUsuario)) {
+                $msg = urlencode("El DNI ya está registrado por otro usuario.");
+                header("Location: $backUrl&msg=$msg&tipo_msg=error");
                 exit();
             }
 
             if (MaestroDao::actualizarPersonal($data)) {
-                header("Location:index.php?page=maestros");
+                $msg = urlencode("Registro de personal actualizado con éxito.");
+                $tabParam = ($data["id_rol"] == 4) ? "coordinadores" : "maestros";
+                header("Location: index.php?page=maestros&msg=$msg&tipo_msg=success&tab=$tabParam");
                 exit();
             }
         } else {
             $data["password"] = $_POST["password"];
             $data["numero_empleado"] = $_POST["numero_empleado"] ?? ("EMP-" . time() . rand(1000, 9999));
 
-            if (MaestroDao::existeCorreo($data["correo"])) {
-                echo "<script>
-                        alert('El correo ya existe');
-                        history.back();
-                      </script>";
+            // 3. Validar correo duplicado
+            if (MaestroDao::existeCorreo($correo)) {
+                $msg = urlencode("El correo ya está registrado en el sistema.");
+                header("Location: $backUrl&msg=$msg&tipo_msg=error");
+                exit();
+            }
+
+            // 4. Validar DNI duplicado
+            if (MaestroDao::existeDni($dni)) {
+                $msg = urlencode("El DNI ya está registrado en el sistema.");
+                header("Location: $backUrl&msg=$msg&tipo_msg=error");
                 exit();
             }
 
             if (MaestroDao::insertarPersonal($data)) {
-                header("Location:index.php?page=maestros");
+                $msg = urlencode("Personal registrado con éxito.");
+                $tabParam = ($data["id_rol"] == 4) ? "coordinadores" : "maestros";
+                header("Location: index.php?page=maestros&msg=$msg&tipo_msg=success&tab=$tabParam");
                 exit();
             }
         }
 
-        echo "<script>
-                alert('Error al guardar');
-                history.back();
-              </script>";
+        $msg = urlencode("Ocurrió un error al guardar el registro en la base de datos.");
+        header("Location: $backUrl&msg=$msg&tipo_msg=error");
+        exit();
     }
 }

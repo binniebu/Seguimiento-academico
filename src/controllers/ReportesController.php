@@ -62,7 +62,7 @@ class ReportesController
             return;
         }
 
-        $idCarrera = $_SESSION["id_carrera"] ?? null;
+        $idCarrera = isset($_GET["id_carrera"]) ? intval($_GET["id_carrera"]) : ($_SESSION["id_carrera"] ?? null);
         $historial = HistorialDao::obtenerHistorialAcademico((int)$estudiante["id_estudiante"], $idCarrera);
         $indices = HistorialDao::obtenerIndicesAcademicos((int)$estudiante["id_estudiante"], $idCarrera);
 
@@ -94,6 +94,11 @@ class ReportesController
 
     private static function boletaUltimoPeriodo(): void
     {
+        if (($_SESSION["rol"] ?? "") !== "estudiante") {
+            self::pdfMensaje("Acceso Denegado", "La boleta de calificaciones solo puede ser consultada por el estudiante.");
+            return;
+        }
+
         $estudiante = self::estudianteActualOSeleccionado();
         if (!$estudiante) {
             self::pdfMensaje("Boleta ultimo periodo", "No se encontro estudiante para generar el reporte.");

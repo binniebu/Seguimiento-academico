@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . "/../../../dao/CarreraDao.php";
 require_once __DIR__ . "/../../../controllers/CarrerasController.php";
+require_once __DIR__ . "/../../../controllers/FacultadesController.php";
 
 $verInactivas = ($_GET['ver'] ?? '') === 'inactivas';
 
@@ -8,7 +9,6 @@ $verInactivas = ($_GET['ver'] ?? '') === 'inactivas';
 if (($_GET['accion'] ?? '') === 'inactivar' && isset($_GET['id'])) {
     $resultado = \Controllers\CarrerasController::inactivar($_GET['id']);
     echo '<script>
-        alert("' . htmlspecialchars($resultado['mensaje']) . '");
         window.location = "index.php?page=carreras";
     </script>';
     exit();
@@ -18,19 +18,28 @@ if (($_GET['accion'] ?? '') === 'activar' && isset($_GET['id'])) {
     $resultado = \Controllers\CarrerasController::activar($_GET['id']);
     $redir = $verInactivas ? "index.php?page=carreras&ver=inactivas" : "index.php?page=carreras";
     echo '<script>
-        alert("' . htmlspecialchars($resultado['mensaje']) . '");
         window.location = "' . $redir . '";
     </script>';
     exit();
 }
 
-// 2. Obtener lista de carreras de la DB
+// 2. Obtener lista de carreras de la DB (Paginada a 4 por página)
 $id_facultad = $_GET['id_facultad'] ?? null;
+$p = intval($_GET['p'] ?? 1);
+if ($p < 1) $p = 1;
+$limit = 4;
+$offset = ($p - 1) * $limit;
+
 if ($_SESSION["rol"] === "coordinador" && isset($_SESSION["id_facultad"])) {
-    $carreras = \Dao\CarreraDao::obtenerCarreras($verInactivas, $_SESSION["id_facultad"]);
+    $facultadFiltro = $_SESSION["id_facultad"];
 } else {
-    $carreras = \Dao\CarreraDao::obtenerCarreras($verInactivas, $id_facultad);
+    $facultadFiltro = $id_facultad;
 }
+
+$totalCarreras = \Dao\CarreraDao::obtenerTotalCarreras($verInactivas, $facultadFiltro);
+$totalPages = ceil($totalCarreras / $limit);
+
+$carreras = \Dao\CarreraDao::obtenerCarreras($verInactivas, $facultadFiltro, $limit, $offset);
 
 if (!function_exists('fixDoubleEncoding')) {
     function fixDoubleEncoding($str) {
@@ -80,9 +89,9 @@ if (!function_exists('fixDoubleEncoding')) {
                                 <a href="index.php?page=carreras&ver=inactivas" class="btn btn-outline-secondary">
                                     <i class="bi bi-eye-slash"></i> Ver Inactivas
                                 </a>
-                                <a href="index.php?page=carrera_nueva" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle"></i> Nueva Carrera
-                                </a>
+                                 <button type="button" data-bs-toggle="modal" data-bs-target="#modalCarrera" class="btn btn-primary">
+                                     <i class="bi bi-plus-circle"></i> Nueva Carrera
+                                 </button>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
@@ -164,10 +173,16 @@ if (!function_exists('fixDoubleEncoding')) {
                                                              <i class="bi bi-check-circle"></i> Activar
                                                          </a>
                                                      <?php else: ?>
-                                                         <a href="index.php?page=carrera_nueva&id=<?php echo $c['id_carrera']; ?>"
-                                                            class="btn btn-sm btn-warning">
+                                                         <button type="button"
+                                                            class="btn btn-sm btn-warning btn-editar-carrera"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#modalCarrera"
+                                                            data-id="<?php echo $c['id_carrera']; ?>"
+                                                            data-nombre="<?php echo htmlspecialchars($nombreFixed); ?>"
+                                                            data-facultad="<?php echo $c['id_facultad']; ?>"
+                                                            data-estado="<?php echo htmlspecialchars($c['estado']); ?>">
                                                              <i class="bi bi-pencil"></i> Editar
-                                                         </a>
+                                                         </button>
                                                          <a href="index.php?page=carreras&accion=inactivar&id=<?php echo $c['id_carrera']; ?>"
                                                             class="btn btn-sm btn-danger"
                                                             data-confirmar="¿Estás seguro de que deseas dar de baja esta carrera?"
@@ -185,6 +200,48 @@ if (!function_exists('fixDoubleEncoding')) {
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Control de Paginación -->
+                    <?php if ($totalPages > 1): ?>
+                        <nav class="mt-4" aria-label="Navegación de páginas">
+                            <ul class="pagination justify-content-center">
+                                <!-- Anterior -->
+                                <li class="page-item <?php echo $p <= 1 ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="index.php?page=carreras<?php 
+                                        echo ($verInactivas ? '&ver=inactivas' : '') . 
+                                             ($id_facultad !== null ? '&id_facultad=' . urlencode($id_facultad) : '') . 
+                                             '&p=' . ($p - 1); 
+                                     ?>" aria-label="Anterior">
+                                         <span aria-hidden="true">&laquo; Anterior</span>
+                                    </a>
+                                </li>
+
+                                <!-- Páginas -->
+                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                    <li class="page-item <?php echo $p === $i ? 'active' : ''; ?>">
+                                        <a class="page-link" href="index.php?page=carreras<?php 
+                                            echo ($verInactivas ? '&ver=inactivas' : '') . 
+                                                 ($id_facultad !== null ? '&id_facultad=' . urlencode($id_facultad) : '') . 
+                                                 '&p=' . $i; 
+                                        ?>">
+                                            <?php echo $i; ?>
+                                        </a>
+                                    </li>
+                                <?php endfor; ?>
+
+                                <!-- Siguiente -->
+                                <li class="page-item <?php echo $p >= $totalPages ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="index.php?page=carreras<?php 
+                                        echo ($verInactivas ? '&ver=inactivas' : '') . 
+                                             ($id_facultad !== null ? '&id_facultad=' . urlencode($id_facultad) : '') . 
+                                             '&p=' . ($p + 1); 
+                                     ?>" aria-label="Siguiente">
+                                         <span aria-hidden="true">Siguiente &raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
                 <?php else: ?>
                     <div class="alert alert-info">
                         <?php if ($verInactivas): ?>
@@ -199,15 +256,92 @@ if (!function_exists('fixDoubleEncoding')) {
     </div>
 </div>
 
+<!-- Modal de Carrera -->
+<div class="modal fade" id="modalCarrera" tabindex="-1" aria-labelledby="modalCarreraLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalCarreraLabel"><i class="bi bi-tags-fill me-2"></i>Nueva Carrera</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="index.php?page=carrera_guardar">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id_carrera" id="modal_id_carrera" value="">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Nombre de la Carrera</label>
+                        <input type="text" name="nombre_carrera" id="modal_nombre_carrera" class="form-control shadow-sm" placeholder="Ej: Ingeniería en Sistemas" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Facultad Perteneciente <span class="text-danger">*</span></label>
+                        <select name="id_facultad" id="modal_id_facultad" class="form-select shadow-sm" required>
+                            <option value="">-- Selecciona una facultad --</option>
+                            <?php
+                            $facultades = \Controllers\FacultadesController::listar();
+                            foreach ($facultades as $fac): ?>
+                                <option value="<?php echo $fac['id_facultad']; ?>">
+                                    <?php echo htmlspecialchars($fac['nombre_facultad']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 d-none" id="modal_estado_container">
+                        <label class="form-label fw-bold text-secondary">Estado</label>
+                        <select name="estado" id="modal_estado" class="form-select shadow-sm">
+                            <option value="activa">Activa</option>
+                            <option value="inactiva">Inactiva</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top p-3">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success px-4"><i class="bi bi-save me-1"></i>Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+const modalEl = document.getElementById('modalCarrera');
+if (modalEl) {
+    modalEl.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        if (!button) return;
+        
+        const isEdit = button.classList.contains('btn-editar-carrera');
+        if (isEdit) {
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+            const idFacultad = button.getAttribute('data-facultad');
+            const estado = button.getAttribute('data-estado');
+            
+            document.getElementById('modalCarreraLabel').innerHTML = '<i class="bi bi-pencil-fill me-2"></i>Editar Carrera';
+            document.getElementById('modal_id_carrera').value = id || '';
+            document.getElementById('modal_nombre_carrera').value = nombre || '';
+            document.getElementById('modal_id_facultad').value = idFacultad || '';
+            document.getElementById('modal_estado_container').classList.remove('d-none');
+            document.getElementById('modal_estado').value = estado || 'activa';
+        } else {
+            document.getElementById('modalCarreraLabel').innerHTML = '<i class="bi bi-tags-fill me-2"></i>Registrar Nueva Carrera';
+            document.getElementById('modal_id_carrera').value = '';
+            document.getElementById('modal_nombre_carrera').value = '';
+            document.getElementById('modal_id_facultad').value = '';
+            document.getElementById('modal_estado_container').classList.add('d-none');
+            document.getElementById('modal_estado').value = 'activa';
+        }
+    });
+}
 
 document.getElementById('buscadorCarreras')?.addEventListener('keyup', function() {
     const term = this.value.toLowerCase();
     const rows = document.querySelectorAll('tbody tr');
     
     rows.forEach(row => {
-        const tdNombre = row.querySelector('td:nth-child(2)');
+        const tdNombre = row.querySelector('td:first-child');
         if (tdNombre) {
             const nombre = tdNombre.textContent.toLowerCase();
             if (nombre.includes(term)) {
@@ -218,6 +352,25 @@ document.getElementById('buscadorCarreras')?.addEventListener('keyup', function(
         }
     });
 });
+
+// Mostrar alerta SweetAlert2 si existen parámetros de redirección en la URL
+<?php
+$msg = $_GET['msg'] ?? '';
+$tipo_msg = $_GET['tipo_msg'] ?? '';
+if ($msg && $tipo_msg):
+?>
+Swal.fire({
+    title: <?php echo json_encode($tipo_msg === "success" ? "¡Éxito!" : "Atención"); ?>,
+    text: <?php echo json_encode($msg); ?>,
+    icon: '<?php echo htmlspecialchars($tipo_msg); ?>',
+    confirmButtonColor: '#0057d8',
+    confirmButtonText: 'Aceptar',
+    customClass: {
+        popup: 'rounded-4 shadow',
+        confirmButton: 'px-4 py-2 font-weight-bold'
+    }
+});
+<?php endif; ?>
 </script>
 </body>
 </html>

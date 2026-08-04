@@ -7,7 +7,7 @@ require_once __DIR__ . "/Table.php";
 
 class CampusDao extends Table
 {
-    public static function obtenerCampuses($incluirInactivos = false)
+    public static function obtenerCampuses($incluirInactivos = false, $limit = null, $offset = null)
     {
         $sqlstr = "SELECT id_campus, nombre_campus, departamento, estado 
                    FROM campus";
@@ -15,7 +15,20 @@ class CampusDao extends Table
             $sqlstr .= " WHERE estado = 'activo'";
         }
         $sqlstr .= " ORDER BY nombre_campus ASC";
+        if ($limit !== null && $offset !== null) {
+            $sqlstr .= " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
+        }
         return self::obtenerRegistros($sqlstr);
+    }
+
+    public static function obtenerTotalCampuses($incluirInactivos = false)
+    {
+        $sqlstr = "SELECT COUNT(*) AS total FROM campus";
+        if (!$incluirInactivos) {
+            $sqlstr .= " WHERE estado = 'activo'";
+        }
+        $res = self::obtenerUnRegistro($sqlstr);
+        return intval($res["total"] ?? 0);
     }
 
     public static function obtenerCampusPorId($idCampus)

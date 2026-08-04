@@ -212,7 +212,16 @@ function cargarAlumnos(btn) {
 function mkInput(pref, id, val) {
     return '<td class="text-center"><input type="number" class="nota-input" id="' + pref + '_' + id
         + '" min="0" max="100" step="0.01" placeholder="0-100" value="' + val
-        + '" oninput="calcProm(\'' + id + '\')" onblur="validar(this)"></td>';
+        + '" oninput="calcProm(\'' + id + '\'); habilitarGuardar(\'' + id + '\')" onblur="validar(this)"></td>';
+}
+
+function habilitarGuardar(id) {
+    const btn = document.getElementById('btn_' + id);
+    if (btn && btn.disabled) {
+        btn.innerHTML = '<i class="bi bi-save me-1"></i>Guardar';
+        btn.className = 'btn btn-sm btn-success';
+        btn.disabled = false;
+    }
 }
 
 function calcProm(id) {
@@ -259,12 +268,12 @@ function guardar(id) {
         .then(data => {
             if (data.exito) {
                 btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Guardado';
-                btn.classList.replace('btn-success','btn-outline-success');
+                btn.className = 'btn btn-sm btn-outline-success';
+                btn.disabled = true;
                 if (data.promedio !== null) {
                     const c = data.promedio >= 70 ? 'text-success':'text-danger';
                     document.getElementById('prom_'+id).innerHTML = '<span class="fw-bold '+c+'">'+parseFloat(data.promedio).toFixed(2)+'%</span>';
                 }
-                setTimeout(() => { btn.innerHTML='<i class="bi bi-save me-1"></i>Guardar'; btn.classList.replace('btn-outline-success','btn-success'); btn.disabled=false; }, 3000);
             } else {
                 btn.disabled=false; btn.innerHTML='<i class="bi bi-save me-1"></i>Guardar';
                 Swal.fire({ icon:'error', title:'Error', text: data.mensaje || 'Intente nuevamente.', confirmButtonColor:'#0057d8' });

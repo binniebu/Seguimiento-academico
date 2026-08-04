@@ -78,6 +78,7 @@ class MatriculaDao extends Table
                    FROM secciones sec
                    INNER JOIN materias mat ON sec.id_materia = mat.id_materia
                    INNER JOIN maestros mae ON sec.id_maestro = mae.id_maestro
+                   INNER JOIN estudiantes est ON est.id_estudiante = :id_estudiante AND mae.id_campus = est.id_campus
                    INNER JOIN usuarios u ON mae.id_usuario = u.id_usuario
                    LEFT JOIN materias req ON mat.id_requisito = req.id_materia
                    WHERE sec.id_periodo = :id_periodo

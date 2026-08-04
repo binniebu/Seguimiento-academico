@@ -7,7 +7,7 @@ require_once __DIR__ . "/Table.php";
 
 class CarreraDao extends Table
 {
-    public static function obtenerCarreras($incluirInactivas = false, $id_facultad = null)
+    public static function obtenerCarreras($incluirInactivas = false, $id_facultad = null, $limit = null, $offset = null)
     {
         $sqlstr = "SELECT c.id_carrera, c.nombre_carrera, c.estado, c.id_facultad,
                           (SELECT COUNT(*) FROM materias m
@@ -29,7 +29,29 @@ class CarreraDao extends Table
         }
         
         $sqlstr .= " ORDER BY c.nombre_carrera ASC";
+        if ($limit !== null && $offset !== null) {
+            $sqlstr .= " LIMIT " . intval($limit) . " OFFSET " . intval($offset);
+        }
         return self::obtenerRegistros($sqlstr, $params);
+    }
+
+    public static function obtenerTotalCarreras($incluirInactivas = false, $id_facultad = null)
+    {
+        $sqlstr = "SELECT COUNT(*) AS total FROM carreras c";
+        if ($incluirInactivas) {
+            $sqlstr .= " WHERE c.estado = 'inactiva'";
+        } else {
+            $sqlstr .= " WHERE c.estado = 'activa'";
+        }
+        
+        $params = [];
+        if ($id_facultad !== null) {
+            $sqlstr .= " AND c.id_facultad = :id_facultad";
+            $params['id_facultad'] = $id_facultad;
+        }
+        
+        $res = self::obtenerUnRegistro($sqlstr, $params);
+        return intval($res["total"] ?? 0);
     }
 
     public static function obtenerCarrerasParaRegistro()

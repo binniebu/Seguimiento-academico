@@ -8,6 +8,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="public/css/style.css">
+    <style>
+    /* Ocultar caja de búsqueda de TomSelect cuando se alcanza el límite de selección */
+    .ts-wrapper.full .ts-control input {
+        display: none !important;
+    }
+    .ts-wrapper.full .ts-control::placeholder {
+        display: none !important;
+    }
+    </style>
 </head>
 <body>
 <div class="container-fluid">
@@ -175,6 +184,26 @@ if (document.getElementById('carreraSelect')) {
         plugins: ['remove_button'],
         maxOptions: 30,
         maxItems: 2,
+        onInitialize: function() {
+            this.checkLimit();
+        },
+        onItemAdd: function() {
+            this.checkLimit();
+        },
+        onItemRemove: function() {
+            this.checkLimit();
+        },
+        checkLimit: function() {
+            const input = this.control_input;
+            if (input) {
+                if (this.items.length >= this.settings.maxItems) {
+                    input.style.display = 'none';
+                    input.blur();
+                } else {
+                    input.style.display = 'inline-block';
+                }
+            }
+        }
     });
     const hiddenPrincipal = document.getElementById('carreraPrincipal');
     const syncPrincipal = () => {

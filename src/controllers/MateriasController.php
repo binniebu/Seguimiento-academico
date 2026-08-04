@@ -175,17 +175,17 @@ class MateriasController
         return MateriaDao::obtenerCarrerasActivas();
     }
 
-    public static function listarSecciones($buscar = "", $naturaleza = "todas", $filtroCarrera = "todas")
+    public static function listarSecciones($buscar = "")
     {
-        $periodoActivo = SeccionDao::obtenerPeriodoActivo();
-        $idPeriodo = $periodoActivo["id_periodo"] ?? null;
+        $idPeriodo = SeccionDao::obtenerPeriodoActivo()["id_periodo"] ?? null;
         $idFacultad = self::facultadCoordinadorActual();
-
-        if (!$idPeriodo) {
-            return [];
+        $naturaleza = $_GET["naturaleza"] ?? "todas";
+        $filtroCarrera = $_GET["carrera"] ?? "todas";
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
-
-        return SeccionDao::obtenerSecciones($buscar, $idPeriodo, $idFacultad, $naturaleza, $filtroCarrera);
+        $idCampus = $_SESSION["id_campus"] ?? null;
+        return SeccionDao::obtenerSecciones($buscar, $idPeriodo, $idFacultad, $naturaleza, $filtroCarrera, $idCampus);
     }
 
     public static function obtenerPeriodoActivo()
@@ -217,7 +217,11 @@ class MateriasController
     public static function obtenerMaestrosSeleccionables()
     {
         $periodoActivo = SeccionDao::obtenerPeriodoActivo();
-        return SeccionDao::obtenerMaestrosSeleccionables(!empty($periodoActivo));
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $idCampus = $_SESSION["id_campus"] ?? null;
+        return SeccionDao::obtenerMaestrosSeleccionables(!empty($periodoActivo), $idCampus);
     }
 
     public static function guardarSeccion()
